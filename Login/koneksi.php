@@ -2,11 +2,11 @@
 // Nonaktifkan mysqli strict exception agar PHP 8.1+ tidak melempar Uncaught mysqli_sql_exception
 mysqli_report(MYSQLI_REPORT_OFF);
 
-$host     = getenv('DB_HOST')     ?: getenv('MYSQLHOST')     ?: 'localhost';
-$user     = getenv('DB_USER')     ?: getenv('MYSQLUSER')     ?: 'root';
-$password = getenv('DB_PASSWORD') ?: getenv('MYSQLPASSWORD') ?: '';
-$database = getenv('DB_NAME')     ?: getenv('MYSQLDATABASE') ?: 'db_internspace';
-$port     = getenv('DB_PORT')     ?: getenv('MYSQLPORT')     ?: '3306';
+$host     = getenv('MYSQLHOST')     ?: getenv('DB_HOST')     ?: 'localhost';
+$user     = getenv('MYSQLUSER')     ?: getenv('DB_USER')     ?: 'root';
+$password = getenv('MYSQLPASSWORD') ?: getenv('DB_PASSWORD') ?: '';
+$database = getenv('MYSQLDATABASE') ?: getenv('DB_NAME')     ?: 'db_internspace';
+$port     = getenv('MYSQLPORT')     ?: getenv('DB_PORT')     ?: '3306';
 
 // 1. Coba koneksi langsung ke database
 $conn = @mysqli_connect($host, $user, $password, $database, (int)$port);
