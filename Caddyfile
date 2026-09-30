@@ -1,11 +1,17 @@
 {
-    # Matikan HTTPS internal agar tidak bentrok dengan SSL Railway
+    # Matikan HTTPS internal — SSL ditangani oleh Railway di luar container
     auto_https off
+    admin off
 }
 
 :8080 {
-    # Lokasi root aplikasi PHP (seluruh file project di /app)
+    # Root ke folder /app tempat semua file PHP berada
     root * /app
     encode zstd gzip
+
+    # Handle file statis (CSS, JS, gambar) langsung tanpa PHP
+    file_server
+
+    # Jalankan file PHP via FrankenPHP
     php_server
 }

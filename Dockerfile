@@ -1,7 +1,15 @@
 FROM dunglas/frankenphp
 
-# Install ekstensi mysqli dan pdo_mysql yang dibutuhkan PHP
+# Install ekstensi PHP yang dibutuhkan
 RUN install-php-extensions mysqli pdo_mysql
 
-# Copy seluruh file project ke direktori kerja container
+# Matikan HTTPS otomatis via environment variable bawaan FrankenPHP
+ENV SERVER_NAME=":8080"
+ENV FRANKENPHP_CONFIG="/app/Caddyfile"
+
+# Copy seluruh file project ke /app
 COPY . /app
+
+WORKDIR /app
+
+EXPOSE 8080
