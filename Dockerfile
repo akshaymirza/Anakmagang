@@ -1,15 +1,7 @@
-FROM php:8.2-apache
+FROM dunglas/frankenphp
 
-# Install ekstensi PHP yang dibutuhkan untuk MySQL
-RUN docker-php-ext-install mysqli pdo pdo_mysql
+# Install ekstensi mysqli dan pdo_mysql yang dibutuhkan PHP
+RUN install-php-extensions mysqli pdo_mysql
 
-# Enable mod_rewrite jika diperlukan
-RUN a2enmod rewrite
-
-# Copy seluruh file aplikasi ke web root Apache
-COPY . /var/www/html/
-
-# Atur izin direktori jika diperlukan
-RUN chown -R www-data:www-data /var/www/html
-
-EXPOSE 80
+# Copy seluruh file project ke direktori kerja container
+COPY . /app
