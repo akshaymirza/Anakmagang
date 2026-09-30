@@ -1,13 +1,11 @@
 {
-    # Matikan auto-HTTPS bawaan Caddy
+    # Matikan HTTPS internal agar tidak bentrok dengan SSL Railway
     auto_https off
 }
 
-# Pakai {$PORT} agar Caddy membaca Port dari Railway, atau gunakan :8080 / :80
-:{$PORT:8080} {
-    # Lokasi root aplikasi PHP
+:8080 {
+    # Lokasi root aplikasi PHP (seluruh file project di /app)
     root * /app
-    
-    # Jalankan FrankenPHP
+    encode zstd gzip
     php_server
 }
