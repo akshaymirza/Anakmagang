@@ -1,0 +1,47 @@
+[
+    {
+        "id": 1,
+        "event_name": "Showcase Sprint & Grand Demo Day Batch 2026",
+        "event_type": "Grand Showcase",
+        "event_date": "2026-09-10",
+        "location": "Main Auditorium Kedayweb & Online Streaming",
+        "organizer": "Dev & HR Management",
+        "summary": "Ajang pameran akhir program magang tempat peserta mendemonstrasikan sistem Portal InternSpace, modul absensi berbasis lokasi, dan dashboard analitik di hadapan para mentor senior serta direksi perusahaan.",
+        "image_url": "https:\/\/images.unsplash.com\/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1000&q=80",
+        "created_at": "2026-09-10 08:45:41"
+    },
+    {
+        "id": 2,
+        "event_name": "Hackathon Internal 24-Hour Innovation Sprint",
+        "event_type": "Hackathon",
+        "event_date": "2026-08-25",
+        "location": "Kedayweb Innovation Lab",
+        "organizer": "Panitia Hackathon Kedayweb",
+        "summary": "Kompetisi merancang dan membangun prototipe aplikasi cepat dalam kurun waktu 24 jam nonstop. Tim gabungan anak magang memenangkan Juara Favorit kategori Solusi Alur Kerja Internal.",
+        "image_url": "https:\/\/images.unsplash.com\/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1000&q=80",
+        "created_at": "2026-08-26 08:45:41"
+    },
+    {
+        "id": 3,
+        "event_name": "Workshop Technical Architecture & Git Flow Best Practices",
+        "event_type": "Workshop & Training",
+        "event_date": "2026-08-05",
+        "location": "Training Center & Zoom Room",
+        "organizer": "Tech Lead Team",
+        "summary": "Sesi pelatihan mendalam mengenai pengelolaan repository bersama, teknik branching Git Flow, penanganan konflik koding, dan pengoptimalan kueri database MySQL.",
+        "image_url": "https:\/\/images.unsplash.com\/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=1000&q=80",
+        "created_at": "2026-08-06 08:45:41"
+    },
+    {
+        "item_id": 4,
+        "id": 4,
+        "event_name": "Welcoming Ceremony & Kickoff Orientation Batch 2026",
+        "event_type": "Welcoming Party",
+        "event_date": "2026-07-15",
+        "location": "Kedayweb Rooftop & Lounge",
+        "organizer": "HR & Internship Committee",
+        "summary": "Acara peresmian pembukaan magang gelombang baru, sesi pengenalan budaya kerja agile, penyerahan akun dan laptop kerja, diakhiri makan siang bersama tim direksi.",
+        "image_url": "https:\/\/images.unsplash.com\/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1000&q=80",
+        "created_at": "2026-07-17 08:45:41"
+    }
+]

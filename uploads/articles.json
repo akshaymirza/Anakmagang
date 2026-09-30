@@ -1,0 +1,46 @@
+[
+    {
+        "id": 2,
+        "title": "Showcase Sprint 1 - Demonstrasi Fitur Baru Portal InternSpace",
+        "category": "Project & Coding",
+        "author": "Tim Web Developer",
+        "excerpt": "Anak-anak magang sukses mempresentasikan modul Kanban Board dan Realtime Shift Timer di depan manajemen.",
+        "content": "<p>Pada sesi Showcase Sprint 1, tim anak magang menunjukkan pencapaian luar biasa dalam mengembangkan portal InternSpace. Modul papan Kanban interaktif dan sistem absensi berbasis jam kerja berhasil diselesaikan tepat waktu.<\/p><p>Pengujian fitur dilakukan secara langsung dengan skenario beban kerja riil. Manajemen memberikan apresiasi tinggi atas kualitas UI\/UX berbasis Material Design 3 yang terlihat sangat intuitif dan responsif.<\/p>",
+        "image_url": "https:\/\/images.unsplash.com\/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=1000&q=80",
+        "is_featured": 0,
+        "created_at": "2026-09-10 04:58:50"
+    },
+    {
+        "id": 3,
+        "title": "Workshop UI\/UX Design System & Material Design 3 Implementation",
+        "category": "Workshop & Mentoring",
+        "author": "Lead UI Designer",
+        "excerpt": "Sesi berbagai ilmu mengenai perancangan komponen UI konsisten, tata warna HSL, dan mikro-interaksi web modern.",
+        "content": "<p>Desain aplikasi yang memukau bukan hanya soal warna indah, melainkan juga hierarki visual dan aksesibilitas. Dalam workshop berdurasi 3 jam ini, peserta magang dipandu secara praktis untuk mengimplementasikan variabel Tailwind CSS dan token desain.<\/p><p>Hasil dari workshop ini langsung diterapkan dalam perbaikan antarmuka dashboard magang yang kini lebih rapi dan nyaman dipandang.<\/p>",
+        "image_url": "https:\/\/images.unsplash.com\/photo-1581291518633-83b4ebd1d83e?auto=format&fit=crop&w=1000&q=80",
+        "is_featured": 0,
+        "created_at": "2026-09-08 04:58:50"
+    },
+    {
+        "id": 4,
+        "title": "Daily Standup Routine & Pair Programming Session",
+        "category": "Aktivitas Harian",
+        "author": "Alex Doe",
+        "excerpt": "Setiap pagi jam 09.00 WIB, anak magang berkumpul untuk menyelaraskan target harian dan menyelesaikan blocker koding bersama.",
+        "content": "<p>Budaya kolaborasi merupakan kunci utama di Kedayweb. Melalui sesi Daily Standup 15 menit, setiap peserta menyampaikan apa yang dikerjakan kemarin, apa yang akan dibuat hari ini, dan kendala yang dihadapi.<\/p><p>Metode Pair Programming sering diterapkan jika menemukan bug yang rumit, sehingga pengetahuan antar anggota tim dapat saling melengkapi secara efisien.<\/p>",
+        "image_url": "https:\/\/images.unsplash.com\/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1000&q=80",
+        "is_featured": 0,
+        "created_at": "2026-09-05 04:58:50"
+    },
+    {
+        "id": 5,
+        "title": "Penghargaan Intern of the Month Periode Kuartal Pertama",
+        "category": "Prestasi",
+        "author": "Super Admin",
+        "excerpt": "Apresiasi khusus atas dedikasi, inisiatif tinggi, dan kontribusi kode terbaik selama bulan pertama masa magang.",
+        "content": "<p>Selamat kepada peserta magang terpilih yang berhasil memenangkan sertifikat kriteria Intern of the Month. Penilaian dilakukan berdasar kedisiplinan absensi, penyelesaian tugas Kanban, serta keaktifan dalam sesi diskusi kelompok.<\/p><p>Semoga penghargaan ini menjadi pemacu semangat bagi seluruh peserta magang lainnya untuk terus berkembang dan memberikan karya terbaik!<\/p>",
+        "image_url": "https:\/\/images.unsplash.com\/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1000&q=80",
+        "is_featured": 0,
+        "created_at": "2026-09-01 04:58:50"
+    }
+]

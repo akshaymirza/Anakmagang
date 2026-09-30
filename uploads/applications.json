@@ -1,0 +1,46 @@
+[
+    {
+        "id": "1790319152600",
+        "first_name": "pra",
+        "last_name": "bowo",
+        "email": "fgeagfhedfjsh@gmail.com",
+        "position": "Magang UI\/UX Designer",
+        "portfolio": "",
+        "cv_file": "uploads\/cv\/1790319152_6ab61a3049758.docx",
+        "status": "review",
+        "created_at": "2026-09-25 06:52:32"
+    },
+    {
+        "id": "1789463501516",
+        "first_name": "El",
+        "last_name": "Fairuz",
+        "email": "fairuzemiralifiansyah@gmail.com",
+        "position": "Magang Web Developer",
+        "portfolio": "",
+        "cv_file": "uploads\/cv\/1789463501_6aa90bcdecb35.pdf",
+        "status": "review",
+        "created_at": "2026-09-15 09:11:41"
+    },
+    {
+        "id": "1789461781511",
+        "first_name": "El",
+        "last_name": "Fairuz",
+        "email": "fairuzemiralifiansyah@gmail.com",
+        "position": "Magang UI\/UX Designer",
+        "portfolio": "",
+        "cv_file": "uploads\/cv\/1789461781_6aa905155c54f.pdf",
+        "status": "review",
+        "created_at": "2026-09-15 08:43:01"
+    },
+    {
+        "id": "1789454306373",
+        "first_name": "Akshay",
+        "last_name": "Mirza",
+        "email": "akshaymirza5@gmail.com",
+        "position": "Magang Web Developer",
+        "portfolio": "a",
+        "cv_file": "",
+        "status": "review",
+        "created_at": "2026-09-15 06:38:26"
+    }
+]

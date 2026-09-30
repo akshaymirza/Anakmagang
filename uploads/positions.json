@@ -1,0 +1,18 @@
+[
+    {
+        "id": 1,
+        "title": "Magang Web Developer",
+        "category": "Teknik",
+        "icon": "code",
+        "description": "Bergabunglah dengan tim frontend kami untuk membangun antarmuka web modern, cepat, dan interaktif. Bekerja sama langsung dengan engineer senior.",
+        "location": "Remote \/ Hybrid"
+    },
+    {
+        "id": 2,
+        "title": "Magang UI\/UX Designer",
+        "category": "Desain",
+        "icon": "design_services",
+        "description": "Bantu rancang pengalaman produk terbaik. Buat riset pengguna, wireframe, dan prototipe desain aplikasi berstandar industri.",
+        "location": "Banyuwangi \/ Remote"
+    }
+]

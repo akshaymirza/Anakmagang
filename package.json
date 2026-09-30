@@ -1,0 +1,23 @@
+{
+  "name": "internspace-management-portal",
+  "version": "1.0.0",
+  "description": "Internship Portal Frontend Management System",
+  "main": "project-store.js",
+  "scripts": {
+    "dev": "npx @tailwindcss/cli -i ./src/input.css -o ./output.css --watch",
+    "build": "npx @tailwindcss/cli -i ./src/input.css -o ./output.css --minify",
+    "test": "node test-suite.js"
+  },
+  "keywords": [
+    "internship",
+    "portal",
+    "kanban",
+    "management"
+  ],
+  "author": "Kedayweb Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.0.0",
+    "tailwindcss": "^4.0.0"
+  }
+}

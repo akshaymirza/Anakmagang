@@ -1,0 +1,109 @@
+/* ==============================================================
+   Kedayweb — Kedaiweb Banyuwangi Internship Portal
+   Shared stylesheet used by every page.
+   Design tokens (colors, spacing, font tokens) still live in
+   shared-config.js (Tailwind config) — this file only holds
+   custom CSS that Tailwind utility classes can't express.
+   ============================================================== */
+
+/* ---------- Base typography ---------- */
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+/* ---------- Icons ----------
+   Was previously only defined in applications.html & projects.html,
+   so Material Symbols rendered inconsistently (filled on some pages,
+   pure outline on others). Now applied globally for a consistent look. */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 500;
+}
+.filled-icon {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* ---------- Scrollbars ---------- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #c5c5d3; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #757682; }
+
+.kanban-scroll { scroll-behavior: smooth; }
+.kanban-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
+.kanban-scroll::-webkit-scrollbar-track { background: #f8f9ff; border-radius: 4px; }
+.kanban-scroll::-webkit-scrollbar-thumb { background: #c5c5d3; border-radius: 4px; }
+.kanban-scroll::-webkit-scrollbar-thumb:hover { background: #757682; }
+
+/* ---------- Card / panel elevation ---------- */
+.glass-card,
+.custom-shadow {
+  box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.05), 0 2px 4px -1px rgba(30, 58, 138, 0.03);
+  transition: all 0.3s ease;
+}
+.glass-card:hover,
+.custom-shadow-hover:hover,
+.hover-card-shadow:hover {
+  box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.08), 0 4px 6px -2px rgba(30, 58, 138, 0.04);
+}
+.glass-card:hover {
+  transform: translateY(-2px);
+}
+.soft-shadow {
+  box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.05), 0 4px 6px -2px rgba(30, 58, 138, 0.02);
+}
+
+/* Project / task cards (projects.html board) */
+.card { transition: all 0.2s ease; }
+.card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(30, 58, 138, 0.08); }
+
+/* Modal backdrop */
+.modal { background: rgba(11, 28, 48, 0.45); }
+
+/* Sidebar / tab active states */
+.nav:hover { background: #eff4ff; color: #00236f; }
+.tab.active { color: #00236f; border-color: #00236f; }
+
+/* Kanban drag target highlight (tasks.html) */
+.drag-target-active {
+  outline: 2px dashed #1e3a8a;
+  background-color: rgba(220, 233, 255, 0.5) !important;
+}
+
+/* ---------- Attendance status dots & badges ---------- */
+.status-dot-green  { background-color: #10b981; }
+.status-dot-red    { background-color: #ef4444; }
+.status-dot-yellow { background-color: #f59e0b; }
+.status-badge-green  { background-color: #d1fae5; color: #065f46; }
+.status-badge-red    { background-color: #fee2e2; color: #991b1b; }
+.status-badge-yellow { background-color: #fef3c7; color: #92400e; }
+
+.calendar-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+.calendar-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 6px;
+}
+
+/* ---------- Kedaiweb Banyuwangi brand accents ---------- */
+[data-brand-lockup] {
+  border-bottom: 2px solid rgba(0, 35, 111, 0.08);
+  padding-bottom: 0.75rem;
+}
+.brand-org-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #1e3a8a;
+}
