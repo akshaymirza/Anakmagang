@@ -5,7 +5,8 @@
   "main": "project-store.js",
   "scripts": {
     "dev": "npx @tailwindcss/cli -i ./src/input.css -o ./output.css --watch",
-    "build": "npx @tailwindcss/cli -i ./src/input.css -o ./output.css --minify",
+    "postinstall": "chmod +x ./node_modules/@tailwindcss/cli/bin/index.js || true",
+    "build": "tailwindcss -i ./src/input.css -o ./output.css --minify",
     "test": "node test-suite.js"
   },
   "keywords": [
