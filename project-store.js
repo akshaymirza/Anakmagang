@@ -2,17 +2,23 @@ const ProjectStore = {
   _cache: [],
   _activeProjectId: localStorage.getItem('active_project_id') || null,
 
+  _getApiUrl(endpoint) {
+    const isSubfolder = window.location.pathname.includes('/admin/');
+    const prefix = isSubfolder ? '../' : '';
+    return prefix + endpoint;
+  },
+
   async init() {
     try {
       // 1. Fetch Projects dari MySQL API
-      const resProj = await fetch('projects.php?action=api');
+      const resProj = await fetch(this._getApiUrl('projects.php?action=api'));
       if (!resProj.ok) throw new Error('Gagal memuat projects');
       const projects = await resProj.json();
 
       // 2. Fetch Tasks secara terpisah agar project tetap tampil jika task gagal dimuat
       let tasks = [];
       try {
-        const resTasks = await fetch('projects.php?action=tasks');
+        const resTasks = await fetch(this._getApiUrl('projects.php?action=tasks'));
         if (resTasks.ok) {
           tasks = await resTasks.json();
         }
@@ -59,7 +65,7 @@ const ProjectStore = {
   // CREATE Task
   async createTask(projectId, taskData) {
     try {
-      await fetch('projects.php?action=tasks', {
+      await fetch(this._getApiUrl('projects.php?action=tasks'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ project_id: projectId, ...taskData })
@@ -71,7 +77,7 @@ const ProjectStore = {
   // UPDATE Task
   async updateTask(projectId, taskId, taskData) {
     try {
-      await fetch('projects.php?action=tasks', {
+      await fetch(this._getApiUrl('projects.php?action=tasks'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: taskId, ...taskData })
@@ -83,7 +89,7 @@ const ProjectStore = {
   // MOVE Task (Quick Status Update)
   async moveTask(projectId, taskId, status) {
     try {
-      await fetch('projects.php?action=tasks', {
+      await fetch(this._getApiUrl('projects.php?action=tasks'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: taskId, status: status })
@@ -95,7 +101,7 @@ const ProjectStore = {
   // DELETE Task
   async deleteTask(projectId, taskId) {
     try {
-      await fetch(`projects.php?action=tasks&id=${taskId}`, { method: 'DELETE' });
+      await fetch(this._getApiUrl(`projects.php?action=tasks&id=${taskId}`), { method: 'DELETE' });
       await this.init();
     } catch (err) { console.error(err); }
   },
@@ -103,7 +109,7 @@ const ProjectStore = {
   // CREATE Project
   async createProject(data) {
     try {
-      await fetch('projects.php?action=api', {
+      await fetch(this._getApiUrl('projects.php?action=api'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -119,7 +125,7 @@ const ProjectStore = {
   // UPDATE Project
   async updateProject(id, data) {
     try {
-      await fetch('projects.php?action=api', {
+      await fetch(this._getApiUrl('projects.php?action=api'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -136,7 +142,7 @@ const ProjectStore = {
   // DELETE Project
   async deleteProject(id) {
     try {
-      await fetch(`projects.php?action=api&id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      await fetch(this._getApiUrl(`projects.php?action=api&id=${encodeURIComponent(id)}`), { method: 'DELETE' });
       await this.init();
     } catch (err) { console.error(err); }
   },
@@ -152,5 +158,4 @@ const ProjectStore = {
 };
 
 // Pastikan ProjectStore bisa diakses lewat window.ProjectStore
-// (const/let di top-level tidak otomatis jadi properti window)
 window.ProjectStore = ProjectStore;
