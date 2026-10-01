@@ -147,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="bg-slate-100 p-1 rounded-lg flex mb-6">
               <button type="button" id="tab-intern" onclick="switchRole('intern')" class="flex-1 py-2 text-xs font-semibold rounded-md bg-blue-900 text-white transition-all shadow-sm">
-                <i class="fa-solid fa-user-graduate mr-1"></i>Intern
+                <i class="fa-solid fa-user-graduate mr-1"></i> Peserta Magang / Intern
               </button>
               <button type="button" id="tab-admin" onclick="switchRole('admin')" class="flex-1 py-2 text-xs font-semibold rounded-md text-slate-600 hover:text-slate-900 transition-all">
                 <i class="fa-solid fa-user-shield mr-1"></i> Admin
@@ -169,9 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <div>
                 <label id="idLabel" class="block text-xs font-semibold text-slate-700 mb-1">ID Magang</label>
                 <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-sm">
-                    <i class="fa-solid fa-id-badge"></i>
-                  </div>
+                  <i class="fa-solid fa-id-badge absolute left-3 top-3 text-slate-400 text-sm"></i>
                   <input type="text" name="username" id="username" placeholder="Masukkan ID Magang Anda (misal: INT-2024-001)" required
                          class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all">
                 </div>
@@ -179,12 +177,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
               <div>
                 <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-sm">
-                    <i class="fa-solid fa-lock"></i>
-                  </div>
+                  <i class="fa-solid fa-lock absolute left-3 top-3 text-slate-400 text-sm"></i>
                   <input type="password" name="password" id="password" placeholder="••••••••" required
                          class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 pl-9 pr-9 text-xs focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all">
-                  <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                  <button type="button" onclick="togglePassword()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">
                     <i id="eyeIcon" class="fa-regular fa-eye text-xs"></i>
                   </button>
                 </div>

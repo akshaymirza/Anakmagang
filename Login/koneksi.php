@@ -2,13 +2,14 @@
 // Nonaktifkan mysqli strict exception agar PHP 8.1+ tidak melempar Uncaught mysqli_sql_exception
 mysqli_report(MYSQLI_REPORT_OFF);
 
-$host     = "localhost";
-$user     = "root";      // Username default XAMPP / Laragon
-$password = "";          // Kosongkan jika default
-$database = "db_internspace";
+$host     = getenv('MYSQLHOST')     ?: getenv('DB_HOST')     ?: 'localhost';
+$user     = getenv('MYSQLUSER')     ?: getenv('DB_USER')     ?: 'root';
+$password = getenv('MYSQLPASSWORD') ?: getenv('DB_PASSWORD') ?: '';
+$database = getenv('MYSQLDATABASE') ?: getenv('DB_NAME')     ?: 'db_internspace';
+$port     = getenv('MYSQLPORT')     ?: getenv('DB_PORT')     ?: '3306';
 
 // 1. Coba koneksi langsung ke database
-$conn = @mysqli_connect($host, $user, $password, $database);
+$conn = @mysqli_connect($host, $user, $password, $database, (int)$port);
 
 // 2. Jika database belum ada atau koneksi gagal, coba buat database otomatis
 if (!$conn) {

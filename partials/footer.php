@@ -18,6 +18,6 @@ $footer_root = file_exists('verification.php') ? '' : '../';
             <a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Syarat & Ketentuan</a>
             <a class="text-primary font-semibold hover:underline transition-all" href="<?php echo $footer_root; ?>verification.php">Verifikasi Sertifikat</a>
         </nav>
-        <div class="font-body-sm text-on-surface-variant text-center md:text-right">© <?php echo date('Y'); ?> Kedayweb Platform. Hak cipta dilindungi.</div>
+        <div class="font-body-sm text-on-surface-variant">© <?php echo date('Y'); ?> Kedayweb Platform. Hak cipta dilindungi.</div>
     </div>
 </footer>

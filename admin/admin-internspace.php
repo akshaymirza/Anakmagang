@@ -206,12 +206,12 @@ include '../partials/sidebar-admin.php';
 
             <!-- PAGE 2: Tasks History Section (Forced Page Break in PDF) -->
             <div class="pdf-page-break">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 border-b border-slate-200 pb-3">
-                    <h3 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary text-[22px] shrink-0" style="font-variation-settings: 'FILL' 1;">assignment_turned_in</span>
-                        <span class="leading-normal">Daftar Pekerjaan Anak Magang <span class="inline-block whitespace-nowrap">(<span id="results-count">0</span>)</span></span>
+                <div class="flex items-center justify-between mb-4 border-b border-slate-200 pb-3">
+                    <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-[22px]" style="font-variation-settings: 'FILL' 1;">assignment_turned_in</span>
+                        Daftar Pekerjaan Anak Magang (<span id="results-count">0</span>)
                     </h3>
-                    <a href="../tasks.php" class="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline no-print shrink-0">
+                    <a href="../tasks.php" class="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline no-print">
                         Kelola di Papan Kanban <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
                     </a>
                 </div>
