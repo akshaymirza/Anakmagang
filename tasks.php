@@ -55,7 +55,7 @@ require_login();
     </style>
 </head>
 
-<body class="bg-surface text-on-surface font-body-md text-body-md h-screen overflow-hidden flex">
+<body class="bg-surface text-on-surface font-body-md text-body-md flex flex-col md:flex-row md:h-screen md:overflow-hidden">
 
 <?php 
 $active = 'tasks'; 
@@ -67,7 +67,7 @@ if (is_admin()) {
 ?>
 
     <!-- Main Content Area -->
-    <main class="flex-1 md:ml-[16.5rem] flex flex-col h-full bg-surface min-w-0 overflow-x-hidden">
+    <main class="flex-1 md:ml-[16.5rem] flex flex-col md:h-full bg-surface min-w-0 overflow-x-hidden">
         <!-- Top Action Bar showing Active Project Name -->
         <header class="min-h-20 px-gutter py-3 flex flex-col xl:flex-row items-start xl:items-center justify-between border-b border-outline-variant bg-surface-container-lowest flex-shrink-0 gap-md w-full min-w-0">
             <div class="flex items-center gap-md flex-wrap max-w-full">
@@ -113,11 +113,11 @@ if (is_admin()) {
         </header>
 
         <!-- Kanban Board Container -->
-        <div class="flex-1 overflow-x-auto overflow-y-hidden p-gutter kanban-scroll min-w-0 w-full">
-            <div class="flex gap-gutter h-full pb-sm items-start min-w-max pr-8">
+        <div class="md:flex-1 overflow-x-auto overflow-y-visible md:overflow-y-hidden p-gutter kanban-scroll min-w-0 w-full">
+            <div class="flex gap-gutter md:h-full pb-sm items-start min-w-max pr-8">
 
                 <!-- Column: To Do -->
-                <div class="w-80 flex flex-col gap-md h-full flex-shrink-0">
+                <div class="w-72 md:w-80 flex flex-col gap-md md:h-full flex-shrink-0">
                     <div class="flex items-center justify-between bg-surface-container-low px-md py-sm rounded-lg border border-outline-variant">
                         <h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-sm font-semibold">
                             <span class="w-3 h-3 rounded-full bg-outline"></span>
@@ -130,7 +130,7 @@ if (is_admin()) {
                             </button>
                         </div>
                     </div>
-                    <div id="todo-col" class="flex-1 overflow-y-auto kanban-scroll flex flex-col gap-sm pr-xs pb-xl transition-all duration-150" ondragover="allowDrop(event, 'todo')" ondragleave="removeDragHighlight('todo')" ondrop="drop(event, 'todo')">
+                    <div id="todo-col" class="md:flex-1 overflow-y-visible md:overflow-y-auto kanban-scroll flex flex-col gap-sm pr-xs pb-sm md:pb-xl transition-all duration-150" ondragover="allowDrop(event, 'todo')" ondragleave="removeDragHighlight('todo')" ondrop="drop(event, 'todo')">
                     </div>
                     <button type="button" onclick="openTaskModal(null, 'todo')" class="w-full py-2 px-3 rounded-xl border border-dashed border-outline-variant text-primary font-semibold text-xs hover:bg-surface-container-high transition-colors flex items-center justify-center gap-1 cursor-pointer">
                         <span class="material-symbols-outlined text-[16px]">add</span> Tambah Task
@@ -138,7 +138,7 @@ if (is_admin()) {
                 </div>
 
                 <!-- Column: In Progress -->
-                <div class="w-80 flex flex-col gap-md h-full flex-shrink-0">
+                <div class="w-72 md:w-80 flex flex-col gap-md md:h-full flex-shrink-0">
                     <div class="flex items-center justify-between bg-primary-fixed border border-primary-fixed-dim px-md py-sm rounded-lg shadow-sm">
                         <h3 class="font-headline-md text-headline-md text-on-primary-fixed flex items-center gap-sm font-semibold">
                             <span class="w-3 h-3 rounded-full bg-primary animate-pulse"></span>
@@ -151,7 +151,7 @@ if (is_admin()) {
                             </button>
                         </div>
                     </div>
-                    <div id="inprogress-col" class="flex-1 overflow-y-auto kanban-scroll flex flex-col gap-sm pr-xs pb-xl transition-all duration-150" ondragover="allowDrop(event, 'inprogress')" ondragleave="removeDragHighlight('inprogress')" ondrop="drop(event, 'inprogress')">
+                    <div id="inprogress-col" class="md:flex-1 overflow-y-visible md:overflow-y-auto kanban-scroll flex flex-col gap-sm pr-xs pb-sm md:pb-xl transition-all duration-150" ondragover="allowDrop(event, 'inprogress')" ondragleave="removeDragHighlight('inprogress')" ondrop="drop(event, 'inprogress')">
                     </div>
                     <button type="button" onclick="openTaskModal(null, 'inprogress')" class="w-full py-2 px-3 rounded-xl border border-dashed border-outline-variant text-primary font-semibold text-xs hover:bg-surface-container-high transition-colors flex items-center justify-center gap-1 cursor-pointer">
                         <span class="material-symbols-outlined text-[16px]">add</span> Tambah Task
@@ -159,7 +159,7 @@ if (is_admin()) {
                 </div>
 
                 <!-- Column: Under Review -->
-                <div class="w-80 flex flex-col gap-md h-full flex-shrink-0">
+                <div class="w-72 md:w-80 flex flex-col gap-md md:h-full flex-shrink-0">
                     <div class="flex items-center justify-between bg-secondary-fixed border border-secondary-fixed-dim px-md py-sm rounded-lg">
                         <h3 class="font-headline-md text-headline-md text-on-secondary-fixed flex items-center gap-sm font-semibold">
                             <span class="material-symbols-outlined text-[18px]">visibility</span>
@@ -172,7 +172,7 @@ if (is_admin()) {
                             </button>
                         </div>
                     </div>
-                    <div id="underreview-col" class="flex-1 overflow-y-auto kanban-scroll flex flex-col gap-sm pr-xs pb-xl transition-all duration-150" ondragover="allowDrop(event, 'underreview')" ondragleave="removeDragHighlight('underreview')" ondrop="drop(event, 'underreview')">
+                    <div id="underreview-col" class="md:flex-1 overflow-y-visible md:overflow-y-auto kanban-scroll flex flex-col gap-sm pr-xs pb-sm md:pb-xl transition-all duration-150" ondragover="allowDrop(event, 'underreview')" ondragleave="removeDragHighlight('underreview')" ondrop="drop(event, 'underreview')">
                     </div>
                     <button type="button" onclick="openTaskModal(null, 'underreview')" class="w-full py-2 px-3 rounded-xl border border-dashed border-outline-variant text-primary font-semibold text-xs hover:bg-surface-container-high transition-colors flex items-center justify-center gap-1 cursor-pointer">
                         <span class="material-symbols-outlined text-[16px]">add</span> Tambah Task
@@ -180,7 +180,7 @@ if (is_admin()) {
                 </div>
 
                 <!-- Column: Done -->
-                <div class="w-80 flex flex-col gap-md h-full flex-shrink-0">
+                <div class="w-72 md:w-80 flex flex-col gap-md md:h-full flex-shrink-0">
                     <div class="flex items-center justify-between bg-surface-container-lowest border border-outline-variant px-md py-sm rounded-lg shadow-sm relative overflow-hidden">
                         <div class="absolute inset-0 bg-gradient-to-r from-surface-container-lowest to-secondary-fixed opacity-50 z-0"></div>
                         <h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-sm relative z-10 font-semibold">
@@ -194,7 +194,7 @@ if (is_admin()) {
                             </button>
                         </div>
                     </div>
-                    <div id="done-col" class="flex-1 overflow-y-auto kanban-scroll flex flex-col gap-sm pr-xs pb-xl transition-all duration-150" ondragover="allowDrop(event, 'done')" ondragleave="removeDragHighlight('done')" ondrop="drop(event, 'done')">
+                    <div id="done-col" class="md:flex-1 overflow-y-visible md:overflow-y-auto kanban-scroll flex flex-col gap-sm pr-xs pb-sm md:pb-xl transition-all duration-150" ondragover="allowDrop(event, 'done')" ondragleave="removeDragHighlight('done')" ondrop="drop(event, 'done')">
                     </div>
                     <button type="button" onclick="openTaskModal(null, 'done')" class="w-full py-2 px-3 rounded-xl border border-dashed border-outline-variant text-primary font-semibold text-xs hover:bg-surface-container-high transition-colors flex items-center justify-center gap-1 cursor-pointer">
                         <span class="material-symbols-outlined text-[16px]">add</span> Tambah Task

@@ -89,36 +89,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="bg-white rounded-2xl shadow-2xl flex flex-col md:flex-row w-full overflow-hidden border border-slate-200">
         
         <!-- Panel Kiri: Selamat Datang Anak Magang -->
-        <div class="md:w-5/12 bg-blue-900 bg-grid text-white p-8 flex flex-col justify-between relative">
+        <div class="md:w-5/12 bg-blue-900 bg-grid text-white p-4 md:p-8 flex flex-col justify-between relative">
           <div>
-            <span class="inline-block bg-blue-800/80 text-blue-200 text-xs px-3 py-1 rounded-full font-semibold mb-6 border border-blue-700">
+            <span class="inline-block bg-blue-800/80 text-blue-200 text-[10px] md:text-xs px-2.5 py-0.5 rounded-full font-semibold mb-2 md:mb-6 border border-blue-700">
               <i class="fa-solid fa-shield-halved mr-1"></i> Sistem Karir Terintegrasi v3.4
             </span>
-            <h1 class="text-2xl font-bold leading-tight mb-3">Selamat Datang Anak Magang</h1>
-            <p class="text-xs text-blue-200 leading-relaxed mb-8">
+            <h1 class="text-lg md:text-2xl font-bold leading-tight mb-1 md:mb-3">Selamat Datang Anak Magang</h1>
+            <p class="text-[11px] md:text-xs text-blue-200 leading-tight mb-3 md:mb-8">
               Platform Terpadu Manajemen Magang, Presensi & Gamifikasi Portofolio Talenta Digital Indonesia.
             </p>
 
-            <div class="space-y-3">
-              <div class="bg-blue-800/40 border border-blue-700/50 rounded-xl p-3 flex items-start gap-3 backdrop-blur-sm">
-                <i class="fa-solid fa-location-dot mt-1 text-blue-300"></i>
+            <div class="grid grid-cols-1 gap-2 md:flex md:flex-col md:gap-0 md:space-y-3">
+              <div class="bg-blue-800/40 border border-blue-700/50 rounded-lg md:rounded-xl p-2 md:p-3 flex items-start gap-2 md:gap-3 backdrop-blur-sm">
+                <i class="fa-solid fa-location-dot mt-0.5 text-xs md:text-sm text-blue-300 flex-shrink-0"></i>
                 <div>
-                  <h4 class="text-xs font-semibold">Presensi Geofencing & Real-Time</h4>
-                  <p class="text-[10px] text-blue-200">Verifikasi lokasi GPS instan & rekap otomatis.</p>
+                  <h4 class="text-[11px] md:text-xs font-semibold leading-snug">Presensi Geofencing & Real-Time</h4>
+                  <p class="text-[9px] md:text-[10px] text-blue-200 leading-tight">Verifikasi lokasi GPS instan & rekap otomatis.</p>
                 </div>
               </div>
-              <div class="bg-blue-800/40 border border-blue-700/50 rounded-xl p-3 flex items-start gap-3 backdrop-blur-sm">
-                <i class="fa-solid fa-gamepad mt-1 text-blue-300"></i>
+              <div class="bg-blue-800/40 border border-blue-700/50 rounded-lg md:rounded-xl p-2 md:p-3 flex items-start gap-2 md:gap-3 backdrop-blur-sm">
+                <i class="fa-solid fa-gamepad mt-0.5 text-xs md:text-sm text-blue-300 flex-shrink-0"></i>
                 <div>
-                  <h4 class="text-xs font-semibold">Kanban XP & Gamifikasi Tugas</h4>
-                  <p class="text-[10px] text-blue-200">Kumpulkan poin pengalaman dan buka badge.</p>
+                  <h4 class="text-[11px] md:text-xs font-semibold leading-snug">Kanban XP & Gamifikasi Tugas</h4>
+                  <p class="text-[9px] md:text-[10px] text-blue-200 leading-tight">Kumpulkan poin pengalaman dan buka badge.</p>
                 </div>
               </div>
-              <div class="bg-blue-800/40 border border-blue-700/50 rounded-xl p-3 flex items-start gap-3 backdrop-blur-sm">
-                <i class="fa-solid fa-certificate mt-1 text-blue-300"></i>
+              <div class="bg-blue-800/40 border border-blue-700/50 rounded-xl p-2 md:p-3 flex items-start gap-2 md:gap-3 backdrop-blur-sm">
+                <i class="fa-solid fa-certificate mt-0.5 text-xs md:text-sm text-blue-300 flex-shrink-0"></i>
                 <div>
-                  <h4 class="text-xs font-semibold">Sertifikat Digital Terverifikasi</h4>
-                  <p class="text-[10px] text-blue-200">QR terenkripsi yang diakui 200+ mitra industri.</p>
+                  <h4 class="text-[11px] md:text-xs font-semibold leading-snug">Sertifikat Digital Terverifikasi</h4>
+                  <p class="text-[9px] md:text-[10px] text-blue-200 leading-tight">QR terenkripsi yang diakui 200+ mitra industri.</p>
                 </div>
               </div>
             </div>

@@ -72,7 +72,7 @@ if (is_admin()) {
                 </button>
                 <span class="material-symbols-outlined text-primary text-2xl shrink-0" style="font-variation-settings: 'FILL' 1;">history_edu</span>
                 <div class="min-w-0">
-                    <h2 class="font-headline-sm text-headline-sm font-bold text-on-surface truncate">Portfolio & Riwayat Tugas</h2>
+                    <h2 class="font-headline-sm text-headline-sm font-bold text-on-surface truncate">Portfolio</h2>
                     <p class="text-xs text-on-surface-variant hidden sm:block truncate">Daftar tugas yang telah Anda kerjakan di Papan Kanban</p>
                 </div>
             </div>
@@ -215,16 +215,16 @@ if (is_admin()) {
 
             <!-- PAGE 2: Tasks History Section (Forced Page Break in PDF) -->
             <div class="pdf-page-break">
-                <div class="flex items-center justify-between mb-4 border-b border-slate-200 pb-3">
-                    <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary text-[22px]" style="font-variation-settings: 'FILL' 1;">assignment_turned_in</span>
-                        Daftar Pekerjaan Anak Magang (<span id="results-count">0</span>)
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 border-b border-slate-200 pb-3">
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-[22px] shrink-0" style="font-variation-settings: 'FILL' 1;">assignment_turned_in</span>
+                        <span class="leading-normal">Daftar Pekerjaan Anak Magang <span class="inline-block whitespace-nowrap">(<span id="results-count">0</span>)</span></span>
                     </h3>
-                    <div class="flex items-center gap-3 no-print">
-                        <button type="button" onclick="window.print()" class="text-xs font-bold text-slate-700 hover:text-primary flex items-center gap-1 cursor-pointer">
+                    <div class="flex items-center gap-3 no-print shrink-0">
+                        <button type="button" onclick="window.print()" class="text-xs font-bold text-slate-700 hover:text-primary flex items-center gap-1 cursor-pointer whitespace-nowrap">
                             <span class="material-symbols-outlined text-[16px]">print</span> Cetak PDF
                         </button>
-                        <a href="tasks.php" class="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline">
+                        <a href="tasks.php" class="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline whitespace-nowrap">
                             Buka Papan Kanban <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
                         </a>
                     </div>
