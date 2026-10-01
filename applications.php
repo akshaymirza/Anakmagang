@@ -110,25 +110,27 @@ $count_offer = count(array_filter($applications, fn($a) => ($a['status'] ?? '') 
 <body class="bg-background text-on-surface font-body-md flex h-screen overflow-hidden">
 <?php $active = 'applications'; include 'partials/sidebar-admin.php'; ?>
   <main class="flex-1 md:ml-[16.5rem] flex flex-col h-screen overflow-y-auto">
-    <header class="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-outline-variant bg-surface-container-lowest px-5 md:px-8">
-      <div class="flex items-center gap-3">
-        <button onclick="toggleMobileSidebar()" class="md:hidden text-on-surface hover:text-primary focus:outline-none flex items-center" aria-label="Toggle Sidebar">
+    <!-- Top Navigation Header -->
+    <header class="w-full h-20 bg-surface-container-lowest border-b border-outline-variant sticky top-0 flex items-center justify-between px-gutter z-10 shrink-0">
+      <div class="flex items-center gap-3 min-w-0 flex-1">
+        <button onclick="toggleMobileSidebar()" class="md:hidden text-on-surface hover:text-primary focus:outline-none flex items-center shrink-0 p-1 rounded-lg hover:bg-surface-container-high" aria-label="Toggle Sidebar">
             <span class="material-symbols-outlined text-2xl">menu</span>
         </button>
-        <div class="relative w-full max-w-md hidden sm:block">
-          <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400">search</span>
-          <input id="searchInput" onkeyup="filterApplications()" class="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-10 pr-4 text-sm outline-none focus:border-blue-600 focus:bg-white transition-colors" placeholder="Cari pelamar (nama, email, posisi)..." type="search">
+        <span class="material-symbols-outlined text-primary text-2xl shrink-0" style="font-variation-settings: 'FILL' 1;">description</span>
+        <div class="min-w-0">
+            <h2 class="font-headline-sm text-headline-sm font-bold text-on-surface truncate">Pendaftaran</h2>
+            <p class="text-xs text-on-surface-variant hidden sm:block truncate">Kelola pendaftaran masuk dari form dashboard utama</p>
         </div>
       </div>
-      <div class="ml-auto flex items-center gap-3">
-        <span class="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1 pl-1 pr-3 text-sm font-semibold text-slate-700">
-          <span class="material-symbols-outlined rounded-full bg-blue-100 p-1 text-blue-700">account_circle</span>
-          <?php echo htmlspecialchars(current_user_name(), ENT_QUOTES, 'UTF-8'); ?>
-          <span class="ml-1 rounded-full bg-blue-600 px-2 py-0.5 text-[10px] text-white uppercase tracking-wider"><?php echo htmlspecialchars(current_user_role(), ENT_QUOTES, 'UTF-8'); ?></span>
-        </span>
-        <a href="logout.php" class="text-slate-500 hover:text-red-600 transition-colors" title="Keluar">
-          <span class="material-symbols-outlined">logout</span>
-        </a>
+      <div class="flex items-center gap-sm shrink-0">
+        <div class="flex items-center gap-sm p-1.5 px-3 rounded-full border border-outline-variant bg-surface-bright shadow-2xs">
+          <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container overflow-hidden shrink-0">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+          </div>
+          <span class="hidden sm:inline-block font-label-md"><?php echo htmlspecialchars(current_user_name(), ENT_QUOTES, 'UTF-8'); ?></span>
+          <span class="hidden sm:inline-block rounded-full bg-blue-600 px-2 py-0.5 text-[10px] text-white font-bold uppercase tracking-wider"><?php echo htmlspecialchars(current_user_role(), ENT_QUOTES, 'UTF-8'); ?></span>
+          <a href="logout.php" class="text-error hover:text-red-700 hover:bg-red-50 p-1.5 rounded-full transition-colors flex items-center justify-center" title="Keluar" aria-label="Keluar"><span class="material-symbols-outlined text-[20px]">logout</span></a>
+        </div>
       </div>
     </header>
 
@@ -139,14 +141,6 @@ $count_offer = count(array_filter($applications, fn($a) => ($a['status'] ?? '') 
           <?php echo htmlspecialchars($action_msg, ENT_QUOTES, 'UTF-8'); ?>
         </div>
       <?php endif; ?>
-
-      <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
-          <p class="mb-1 text-xs font-bold uppercase tracking-wider text-blue-700">Admin Control Center</p>
-          <h1 class="font-geist text-3xl font-bold">Data Pendaftaran Magang</h1>
-          <p class="mt-1 text-slate-600 text-sm">Kelola pendaftaran masuk dari form dashboard utama.</p>
-        </div>
-      </div>
 
       <!-- Stats -->
       <section class="mb-7 grid gap-4 sm:grid-cols-4">
@@ -186,6 +180,11 @@ $count_offer = count(array_filter($applications, fn($a) => ($a['status'] ?? '') 
           <div>
             <h2 class="font-geist text-lg font-bold">Daftar Pendaftar Magang</h2>
             <p class="text-xs text-slate-500 mt-0.5">Semua aplikasi yang dikirimkan via form magang di index page.</p>
+          </div>
+          <!-- Search Input -->
+          <div class="relative w-full sm:w-72">
+            <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+            <input id="searchInput" onkeyup="filterApplications()" class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium focus:border-blue-600 focus:bg-white outline-none transition-colors" placeholder="Cari pelamar (nama, email, posisi)..." type="search">
           </div>
         </div>
 

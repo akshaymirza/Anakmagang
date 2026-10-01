@@ -67,14 +67,14 @@ if (is_admin()) {
 ?>
 
     <!-- Main Content Area -->
-    <main class="flex-1 md:ml-[16.5rem] flex flex-col h-full bg-surface overflow-x-auto">
+    <main class="flex-1 md:ml-[16.5rem] flex flex-col h-full bg-surface min-w-0 overflow-x-hidden">
         <!-- Top Action Bar showing Active Project Name -->
-        <header class="min-h-20 px-gutter py-3 flex flex-col md:flex-row items-start md:items-center justify-between border-b border-outline-variant bg-surface-container-lowest flex-shrink-0 gap-md min-w-max">
-            <div class="flex items-center gap-md">
+        <header class="min-h-20 px-gutter py-3 flex flex-col xl:flex-row items-start xl:items-center justify-between border-b border-outline-variant bg-surface-container-lowest flex-shrink-0 gap-md w-full min-w-0">
+            <div class="flex items-center gap-md flex-wrap max-w-full">
                 <button onclick="toggleMobileSidebar()" type="button" class="md:hidden p-2 text-on-surface hover:bg-surface-container-high rounded-lg shrink-0" aria-label="Buka Menu Sidebar">
                     <span class="material-symbols-outlined text-2xl">menu</span>
                 </button>
-                <div class="flex flex-col sm:flex-row sm:items-center gap-md">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-md flex-wrap max-w-full">
                     <div>
                         <div class="flex items-center gap-sm">
                             <h2 id="project-title-display" data-no-i18n="true" class="font-headline-lg text-headline-lg text-on-surface font-bold">Memuat...</h2>
@@ -83,29 +83,29 @@ if (is_admin()) {
                     <p id="project-desc-display" data-no-i18n="true" class="font-body-sm text-body-sm text-on-surface-variant max-w-md truncate">Sprint Kanban Project Management</p>
                 </div>
                 <!-- Project Dropdown Switcher -->
-                <div class="flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm">
+                <div class="flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm max-w-full overflow-hidden">
                     <label for="project-selector" class="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Project:</label>
-                    <select id="project-selector" onchange="switchProject(this.value)" aria-label="Select Project" class="bg-transparent text-sm font-bold text-blue-900 py-1 pl-1 pr-8 border-none focus:ring-0 focus:outline-none cursor-pointer min-w-[160px] max-w-[240px] truncate">
+                    <select id="project-selector" onchange="switchProject(this.value)" aria-label="Select Project" class="bg-transparent text-sm font-bold text-blue-900 py-1 pl-1 pr-8 border-none focus:ring-0 focus:outline-none cursor-pointer min-w-[140px] max-w-[200px] truncate">
                         <option value="">-- Pilih Project --</option>
                     </select>
-                    <a href="projects.php" title="Kelola Semua Project" class="p-1 rounded-lg text-slate-400 hover:text-blue-900 hover:bg-slate-100 transition-colors flex items-center">
+                    <a href="projects.php" title="Kelola Semua Project" class="p-1 rounded-lg text-slate-400 hover:text-blue-900 hover:bg-slate-100 transition-colors flex items-center shrink-0">
                         <span class="material-symbols-outlined text-[20px]">manage_accounts</span>
                     </a>
                 </div>
             </div>
-            <div class="flex flex-wrap items-center gap-sm w-full md:w-auto">
+            <div class="flex flex-wrap items-center gap-sm w-full xl:w-auto">
                 <div class="relative flex-1 md:w-64">
                     <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
                     <input id="kanban-search" oninput="filterKanban()" type="search" placeholder="Search tasks..." class="w-full pl-8 pr-3 py-1.5 rounded-lg bg-surface-bright border border-outline-variant font-body-sm text-body-sm focus:ring-2 focus:ring-primary focus:outline-none">
                 </div>
-                <div class="flex items-center gap-1 bg-surface-container-low p-1 rounded-lg border border-outline-variant text-xs">
-                    <button type="button" onclick="setPriorityFilter('All')" id="filter-all" class="px-2.5 py-1 rounded-md font-semibold bg-white text-primary shadow-sm cursor-pointer">All</button>
-                    <button type="button" onclick="setPriorityFilter('High')" id="filter-high" class="px-2.5 py-1 rounded-md text-on-surface-variant hover:text-primary cursor-pointer">High</button>
-                    <button type="button" onclick="setPriorityFilter('Medium')" id="filter-medium" class="px-2.5 py-1 rounded-md text-on-surface-variant hover:text-primary cursor-pointer">Medium</button>
-                    <button type="button" onclick="setPriorityFilter('Low')" id="filter-low" class="px-2.5 py-1 rounded-md text-on-surface-variant hover:text-primary cursor-pointer">Low</button>
+                <div class="flex items-center gap-1 bg-surface-container-low p-1 rounded-lg border border-outline-variant text-xs overflow-x-auto max-w-full">
+                    <button type="button" onclick="setPriorityFilter('All')" id="filter-all" class="px-2.5 py-1 rounded-md font-semibold bg-white text-primary shadow-sm cursor-pointer whitespace-nowrap">All</button>
+                    <button type="button" onclick="setPriorityFilter('High')" id="filter-high" class="px-2.5 py-1 rounded-md text-on-surface-variant hover:text-primary cursor-pointer whitespace-nowrap">High</button>
+                    <button type="button" onclick="setPriorityFilter('Medium')" id="filter-medium" class="px-2.5 py-1 rounded-md text-on-surface-variant hover:text-primary cursor-pointer whitespace-nowrap">Medium</button>
+                    <button type="button" onclick="setPriorityFilter('Low')" id="filter-low" class="px-2.5 py-1 rounded-md text-on-surface-variant hover:text-primary cursor-pointer whitespace-nowrap">Low</button>
                 </div>
                 <!-- Primary Add Task Button -->
-                <button type="button" id="btn-add-task-header" onclick="openTaskModal()" class="bg-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg flex items-center gap-xs hover:bg-primary-container transition-colors active:scale-95 shadow-sm cursor-pointer">
+                <button type="button" id="btn-add-task-header" onclick="openTaskModal()" class="bg-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg flex items-center gap-xs hover:bg-primary-container transition-colors active:scale-95 shadow-sm cursor-pointer shrink-0">
                     <span class="material-symbols-outlined text-[18px]">add</span>
                     <span data-i18n="btn_new_task">New Task</span>
                 </button>
@@ -113,7 +113,7 @@ if (is_admin()) {
         </header>
 
         <!-- Kanban Board Container -->
-        <div class="flex-1 overflow-x-auto overflow-y-hidden p-gutter kanban-scroll">
+        <div class="flex-1 overflow-x-auto overflow-y-hidden p-gutter kanban-scroll min-w-0 w-full">
             <div class="flex gap-gutter h-full pb-sm items-start min-w-max pr-8">
 
                 <!-- Column: To Do -->
@@ -203,7 +203,7 @@ if (is_admin()) {
 
             </div>
         </div>
-        <div class="shrink-0 mt-auto w-full">
+        <div class="shrink-0 mt-auto w-full min-w-0 overflow-hidden">
             <?php include 'partials/footer.php'; ?>
         </div>
     </main>
