@@ -14,7 +14,15 @@ if (!function_exists('require_login')) {
 	function require_login(): void
 	{
 		if (!is_logged_in()) {
-			$login_url = file_exists(__DIR__ . '/Login/login.php') ? 'Login/login.php' : '../Login/login.php';
+			if (isset($_GET['action'])) {
+				http_response_code(401);
+				header('Content-Type: application/json; charset=utf-8');
+				echo json_encode(['error' => 'Unauthenticated']);
+				exit;
+			}
+			$script_name = $_SERVER['SCRIPT_NAME'] ?? '';
+			$is_admin = strpos($script_name, '/admin/') !== false;
+			$login_url = $is_admin ? '../Login/login.php' : 'Login/login.php';
 			header('Location: ' . $login_url);
 			exit;
 		}

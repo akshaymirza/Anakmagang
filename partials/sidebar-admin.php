@@ -22,7 +22,7 @@ $root_prefix = $is_in_admin_dir ? '../' : '';
 $admin_nav_items = [
     'dashboard'    => ['label' => 'Dashboard',            'icon' => 'dashboard',        'href' => $admin_prefix . 'admin-dashboard.php'],
     'tasks'        => ['label' => 'Kanban Board',         'icon' => 'view_kanban',      'href' => $root_prefix . 'tasks.php'],
-    'internspace'  => ['label' => 'Riwayat Tugas Intern', 'icon' => 'history_edu',     'href' => $admin_prefix . 'admin-internspace.php'],
+    'internspace'  => ['label' => 'Tugas Intern', 'icon' => 'history_edu',     'href' => $admin_prefix . 'admin-internspace.php'],
     'applications' => ['label' => 'Pendaftaran',          'icon' => 'description',      'href' => $root_prefix . 'applications.php'],
     'users'        => ['label' => 'Users',                'icon' => 'people',           'href' => $admin_prefix . 'admin-users.php'],
     'attendance'   => ['label' => 'Kehadiran Intern',     'icon' => 'event_available',  'href' => $admin_prefix . 'admin-attendance.php'],

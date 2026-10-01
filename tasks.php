@@ -17,9 +17,9 @@ require_login();
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet" />
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="shared-config.js"></script>
-    <script src="project-store.js"></script>
-    <script src="intern-store.js"></script>
+    <script src="shared-config.js?v=<?php echo time(); ?>"></script>
+    <script src="project-store.js?v=<?php echo time(); ?>"></script>
+    <script src="intern-store.js?v=<?php echo time(); ?>"></script>
     <style>
         .kanban-scroll::-webkit-scrollbar {
             height: 8px;

@@ -18,9 +18,9 @@ $userName = current_user_name();
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="../shared-config.js"></script>
-    <script src="../project-store.js"></script>
-    <script src="../intern-store.js"></script>
+    <script src="../shared-config.js?v=<?php echo time(); ?>"></script>
+    <script src="../project-store.js?v=<?php echo time(); ?>"></script>
+    <script src="../intern-store.js?v=<?php echo time(); ?>"></script>
     <style>
         body { font-family: Inter, sans-serif; }
         .font-geist { font-family: Geist, sans-serif; }
@@ -66,7 +66,7 @@ include '../partials/sidebar-admin.php';
                 </button>
                 <span class="material-symbols-outlined text-primary text-2xl shrink-0" style="font-variation-settings: 'FILL' 1;">history_edu</span>
                 <div class="min-w-0">
-                    <h2 class="font-headline-sm text-headline-sm font-bold text-on-surface truncate">Monitoring Pekerjaan Magang</h2>
+                    <h2 class="font-headline-sm text-headline-sm font-bold text-on-surface truncate">Tugas Intern</h2>
                     <p class="text-xs text-on-surface-variant hidden sm:block truncate">Pantau seluruh pencapaian dan riwayat tugas Kanban anak magang</p>
                 </div>
             </div>
