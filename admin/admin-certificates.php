@@ -42,33 +42,36 @@ include '../partials/sidebar-admin.php';
 
 <main class="flex-1 flex flex-col md:ml-[16.5rem] h-screen overflow-y-auto">
     <!-- Header -->
-    <header class="w-full h-20 bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-10 flex justify-between items-center px-6 shrink-0">
-        <h2 class="font-headline-lg font-bold text-on-surface flex items-center gap-2">
-            <button onclick="toggleMobileSidebar()" class="md:hidden text-on-surface hover:text-primary focus:outline-none flex items-center mr-1 p-1 rounded-lg hover:bg-surface-container-high" aria-label="Toggle Sidebar">
+    <header class="w-full h-20 bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-10 flex justify-between items-center px-4 sm:px-6 shrink-0">
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 mr-2 sm:mr-4">
+            <button onclick="toggleMobileSidebar()" class="md:hidden text-on-surface hover:text-primary focus:outline-none flex items-center p-1 rounded-lg hover:bg-surface-container-high shrink-0" aria-label="Toggle Sidebar">
                 <span class="material-symbols-outlined text-2xl">menu</span>
             </button>
-            <span class="material-symbols-outlined filled-icon text-primary">workspace_premium</span>
-            Kelola Sertifikat
-        </h2>
-        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined filled-icon text-primary text-2xl shrink-0">workspace_premium</span>
+            <h2 class="font-headline-sm sm:font-headline-lg font-bold text-on-surface truncate whitespace-nowrap">
+                Kelola Sertifikat
+            </h2>
+        </div>
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
             <button id="btn-add" onclick="openModal()"
-                    class="bg-primary text-on-primary px-4 py-2 rounded-xl font-label-md flex items-center gap-2 hover:opacity-90 transition-all active:scale-95 shadow cursor-pointer">
-                <span class="material-symbols-outlined text-[20px]">add_circle</span>
-                <span>Tambah Sertifikat</span>
+                    class="bg-primary text-on-primary px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:font-label-md flex items-center gap-1.5 sm:gap-2 hover:opacity-90 transition-all active:scale-95 shadow cursor-pointer shrink-0">
+                <span class="material-symbols-outlined text-[18px] sm:text-[20px]">add_circle</span>
+                <span class="hidden sm:inline">Tambah Sertifikat</span>
+                <span class="sm:hidden font-semibold">Tambah</span>
             </button>
-            <div class="flex items-center gap-sm p-1.5 px-3 rounded-full border border-outline-variant bg-surface-bright shadow-2xs">
-                <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container overflow-hidden shrink-0">
-                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+            <div class="flex items-center gap-1 sm:gap-sm p-1 sm:p-1.5 px-2 sm:px-3 rounded-full border border-outline-variant bg-surface-bright shadow-2xs shrink-0">
+                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container overflow-hidden shrink-0">
+                    <span class="material-symbols-outlined text-[18px] sm:text-[20px]" style="font-variation-settings: 'FILL' 1;">account_circle</span>
                 </div>
                 <span class="hidden sm:inline-block font-label-md"><?php echo htmlspecialchars(current_user_name(), ENT_QUOTES, 'UTF-8'); ?></span>
-                <a href="../logout.php" class="text-error hover:text-red-700 hover:bg-red-50 p-1.5 rounded-full transition-colors flex items-center justify-center" title="Keluar" aria-label="Keluar"><span class="material-symbols-outlined text-[20px]">logout</span></a>
+                <a href="../logout.php" class="text-error hover:text-red-700 hover:bg-red-50 p-1 sm:p-1.5 rounded-full transition-colors flex items-center justify-center" title="Keluar" aria-label="Keluar"><span class="material-symbols-outlined text-[18px] sm:text-[20px]">logout</span></a>
             </div>
         </div>
     </header>
 
-    <div class="p-6 space-y-6 flex-1">
+    <div class="p-4 sm:p-6 space-y-6 flex-1">
         <!-- Stats Row -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4">
                 <p class="font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Total</p>
                 <p id="stat-total" class="font-headline-lg text-primary font-bold">—</p>
