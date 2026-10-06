@@ -123,6 +123,18 @@ if (!is_array($positions) || empty($positions)) {
             background-size: contain;
             background-repeat: no-repeat;
         }
+
+        /* ── Responsive Mobile Adjustment for Floating Batik ── */
+        @media (max-width: 768px) {
+            .batik-float {
+                max-width: 110px !important;
+                max-height: 110px !important;
+                opacity: 0.04 !important;
+            }
+            .batik-desktop-only {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -133,13 +145,13 @@ if (!is_array($positions) || empty($positions)) {
     ═════════════════════════════════════════════════════ -->
     <div id="batik-layer" aria-hidden="true">
         <div class="batik-float" style="width:260px;height:260px;top:4%;left:-4%;opacity:0.07;transform:rotate(-15deg)"></div>
-        <div class="batik-float" style="width:180px;height:180px;top:12%;right:2%;opacity:0.05;transform:rotate(22deg)"></div>
-        <div class="batik-float" style="width:320px;height:320px;top:38%;left:55%;opacity:0.06;transform:rotate(8deg)"></div>
-        <div class="batik-float" style="width:200px;height:200px;top:52%;left:-2%;opacity:0.07;transform:rotate(-30deg)"></div>
-        <div class="batik-float" style="width:240px;height:240px;top:70%;right:-3%;opacity:0.05;transform:rotate(40deg)"></div>
-        <div class="batik-float" style="width:150px;height:150px;top:80%;left:30%;opacity:0.08;transform:rotate(-5deg)"></div>
-        <div class="batik-float" style="width:280px;height:280px;top:25%;left:20%;opacity:0.04;transform:rotate(55deg)"></div>
-        <div class="batik-float" style="width:170px;height:170px;top:60%;right:25%;opacity:0.06;transform:rotate(-18deg)"></div>
+        <div class="batik-float" style="width:180px;height:180px;top:12%;right:-2%;opacity:0.05;transform:rotate(22deg)"></div>
+        <div class="batik-float batik-desktop-only" style="width:320px;height:320px;top:38%;left:55%;opacity:0.06;transform:rotate(8deg)"></div>
+        <div class="batik-float" style="width:200px;height:200px;top:52%;left:-3%;opacity:0.07;transform:rotate(-30deg)"></div>
+        <div class="batik-float" style="width:240px;height:240px;top:70%;right:-4%;opacity:0.05;transform:rotate(40deg)"></div>
+        <div class="batik-float" style="width:150px;height:150px;top:85%;left:25%;opacity:0.06;transform:rotate(-5deg)"></div>
+        <div class="batik-float batik-desktop-only" style="width:280px;height:280px;top:25%;left:20%;opacity:0.04;transform:rotate(55deg)"></div>
+        <div class="batik-float batik-desktop-only" style="width:170px;height:170px;top:60%;right:25%;opacity:0.05;transform:rotate(-18deg)"></div>
     </div>
 
     <?php include 'partials/topnav-public.php'; ?>
