@@ -623,9 +623,9 @@ require_login(); ?>
 
             <!-- Responsive Video/Canvas Container -->
             <div id="att-video-wrap"
-                class="relative rounded-xl overflow-hidden border border-outline-variant mb-3 bg-black flex items-center justify-center min-h-[260px] sm:min-h-[300px] max-h-[55vh] aspect-[3/4] sm:aspect-[4/3] mx-auto transition-all">
-                <video id="att-video" autoplay playsinline class="w-full h-full object-cover transition-transform duration-300"></video>
-                <canvas id="att-canvas" class="hidden w-full h-full object-contain max-h-[55vh]"></canvas>
+                class="relative rounded-xl overflow-hidden border border-outline-variant mb-3 bg-black flex items-center justify-center min-h-[260px] sm:min-h-[320px] max-h-[60vh] w-full mx-auto transition-all">
+                <video id="att-video" autoplay playsinline class="w-full h-full object-cover transition-transform duration-300 max-h-[60vh]"></video>
+                <canvas id="att-canvas" class="hidden w-full h-auto object-contain max-h-[60vh] rounded-xl"></canvas>
 
                 <!-- Floating Switch Camera Button (Depan/Belakang) -->
                 <button id="att-switch-cam-btn" onclick="attSwitchCamera()" type="button"
@@ -1495,21 +1495,25 @@ require_login(); ?>
             img.src = tempCanvas.toDataURL('image/jpeg');
         }
 
-        function attWrapAddress(addr, maxLen) {
-            maxLen = maxLen || 42;
-            const words = addr.split(' ');
+        function attWrapAddressDynamic(ctx, addr, maxWidth) {
+            if (!addr) return [];
+            const words = String(addr).split(' ');
             const lines = [];
-            let line = '';
-            words.forEach(w => {
-                if ((line + ' ' + w).trim().length > maxLen) {
-                    lines.push(line.trim());
-                    line = w;
+            let currentLine = '';
+
+            for (let i = 0; i < words.length; i++) {
+                const word = words[i];
+                const testLine = currentLine ? currentLine + ' ' + word : word;
+                const metrics = ctx.measureText(testLine);
+                if (metrics.width > maxWidth && currentLine) {
+                    lines.push(currentLine);
+                    currentLine = word;
                 } else {
-                    line += ' ' + w;
+                    currentLine = testLine;
                 }
-            });
-            if (line.trim()) lines.push(line.trim());
-            return lines.slice(0, 3);
+            }
+            if (currentLine) lines.push(currentLine);
+            return lines.slice(0, 4);
         }
 
         function attComposeAndShow(img) {
@@ -1523,7 +1527,8 @@ require_login(); ?>
             if (confirmBtn) confirmBtn.disabled = true;
             if (statusEl) statusEl.textContent = 'Mengambil lokasi...';
 
-            const maxW = 900;
+            // Skala gambar hingga max 1280px agar tajam dan konsisten di semua layar
+            const maxW = 1280;
             const scale = Math.min(1, maxW / img.width);
             canvas.width = Math.round(img.width * scale);
             canvas.height = Math.round(img.height * scale);
@@ -1587,59 +1592,112 @@ require_login(); ?>
                 }
             }
 
-            function draw(addressLines, coordStr) {
+            function draw(addressInput, coordStr) {
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                const extraLines = (coordStr ? 1 : 0) + addressLines.length;
-                const padX = Math.round(canvas.width * 0.05);
-                const lineH = Math.round(canvas.height * 0.035);
-                const boxH = Math.round(canvas.height * 0.25 + (extraLines * lineH));
+                const w = canvas.width;
+                const h = canvas.height;
 
-                const grad = ctx.createLinearGradient(0, canvas.height - boxH, 0, canvas.height);
-                grad.addColorStop(0, 'rgba(0,0,0,0)');
-                grad.addColorStop(0.35, 'rgba(0,0,0,0.60)');
-                grad.addColorStop(1, 'rgba(0,0,0,0.92)');
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, canvas.height - boxH, canvas.width, boxH);
+                // Padding dan skala font adaptif berdasarkan ukuran canvas
+                const padX = Math.max(16, Math.round(w * 0.045));
+                const padY = Math.max(16, Math.round(h * 0.04));
+                const maxTextWidth = w - (padX * 2);
 
-                ctx.fillStyle = '#ffffff';
-                ctx.textBaseline = 'alphabetic';
+                // Font size adaptif dinamis
+                const timeFontSize = Math.max(26, Math.round(w * 0.065));
+                const dateFontSize = Math.max(11, Math.round(timeFontSize * 0.36));
+                const addrFontSize = Math.max(12, Math.round(w * 0.030));
+                const coordFontSize = Math.max(12, Math.round(w * 0.026));
 
-                const timeFontSize = Math.round(canvas.width * 0.065);
-                ctx.font = `800 ${timeFontSize}px sans-serif`;
+                // Line height dinamis (Dijamin minimal 1.38x font size untuk mencegah tabrakan/tumpang tindih baris teks)
+                const addrLineH = Math.round(addrFontSize * 1.38);
+                const coordLineH = Math.round(coordFontSize * 1.38);
 
-                const yBase = canvas.height - (extraLines * lineH) - Math.round(canvas.height * 0.04);
-                ctx.fillText(timeStr, padX, yBase);
-                const timeWidth = ctx.measureText(timeStr).width;
+                // Set font untuk pengukuran wrapping teks alamat secara akurat
+                ctx.font = `500 ${addrFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
 
-                ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(padX + timeWidth + 10, yBase - timeFontSize * 0.75);
-                ctx.lineTo(padX + timeWidth + 10, yBase);
-                ctx.stroke();
-
-                const dateFontSize = Math.round(timeFontSize * 0.35);
-                ctx.font = `600 ${dateFontSize}px sans-serif`;
-                ctx.fillText(dateStr, padX + timeWidth + 18, yBase - dateFontSize * 1.1);
-                ctx.fillText(dayStr, padX + timeWidth + 18, yBase);
-
-                const addrFontSize = Math.round(canvas.width * 0.030);
-                ctx.font = `500 ${addrFontSize}px sans-serif`;
-                let ay = yBase + Math.round(lineH * 1.1);
-                addressLines.forEach(line => {
-                    ctx.fillText(line, padX, ay);
-                    ay += lineH;
-                });
-
-                if (coordStr) {
-                    const coordFontSize = Math.round(canvas.width * 0.026);
-                    ctx.font = `600 ${coordFontSize}px monospace`;
-                    ctx.fillStyle = '#93c5fd'; // Warna aksen biru muda untuk koordinat
-                    ctx.fillText(coordStr, padX, ay);
+                let addressLines = [];
+                if (Array.isArray(addressInput)) {
+                    addressInput.forEach(part => {
+                        const wrapped = attWrapAddressDynamic(ctx, part, maxTextWidth);
+                        addressLines.push(...wrapped);
+                    });
+                    addressLines = addressLines.slice(0, 4);
+                } else {
+                    addressLines = attWrapAddressDynamic(ctx, addressInput || '', maxTextWidth);
                 }
 
-                attPendingDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                const timeBlockH = Math.max(timeFontSize, dateFontSize * 2.2);
+                const numAddrLines = addressLines.length;
+                const hasCoord = !!coordStr;
+
+                const totalTextH = timeBlockH + Math.round(addrFontSize * 0.5) + (numAddrLines * addrLineH) + (hasCoord ? coordLineH + 6 : 0);
+                const boxH = totalTextH + (padY * 2);
+
+                // Background gradient agar teks stempel waktu dan lokasi selalu terbaca jelas & estetik
+                const grad = ctx.createLinearGradient(0, h - boxH, 0, h);
+                grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+                grad.addColorStop(0.25, 'rgba(0, 0, 0, 0.55)');
+                grad.addColorStop(1, 'rgba(0, 0, 0, 0.94)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, h - boxH, w, boxH);
+
+                // Setting baseline dan bayangan teks halus
+                ctx.textBaseline = 'top';
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+
+                let currentY = h - boxH + padY;
+
+                // 1. Waktu (Jam:Menit)
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `800 ${timeFontSize}px -apple-system, BlinkMacSystemFont, "Geist", "Inter", sans-serif`;
+                ctx.fillText(timeStr, padX, currentY);
+
+                const timeWidth = ctx.measureText(timeStr).width;
+                const sepX = padX + timeWidth + Math.round(w * 0.016);
+
+                // 2. Garis Pemisah Vertikal
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+                ctx.lineWidth = Math.max(1.5, Math.round(w * 0.003));
+                ctx.beginPath();
+                ctx.moveTo(sepX, currentY + Math.round(timeFontSize * 0.1));
+                ctx.lineTo(sepX, currentY + Math.round(timeFontSize * 0.9));
+                ctx.stroke();
+
+                // 3. Tanggal & Hari
+                const dateX = sepX + Math.round(w * 0.016);
+                ctx.font = `700 ${dateFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+                ctx.fillText(dateStr, dateX, currentY + Math.round(timeFontSize * 0.06));
+                ctx.font = `600 ${dateFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+                ctx.fillText(dayStr, dateX, currentY + Math.round(timeFontSize * 0.52));
+
+                // Pindah posisi Y ke bawah area jam/tanggal
+                currentY += timeBlockH + Math.round(addrFontSize * 0.4);
+
+                // 4. Baris Teks Alamat Lokasi
+                ctx.font = `500 ${addrFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+                ctx.fillStyle = '#ffffff';
+                addressLines.forEach(line => {
+                    ctx.fillText(line, padX, currentY);
+                    currentY += addrLineH;
+                });
+
+                // 5. Baris Koordinat GPS
+                if (coordStr) {
+                    currentY += 4;
+                    ctx.font = `700 ${coordFontSize}px "Courier New", Courier, monospace`;
+                    ctx.fillStyle = '#93c5fd';
+                    ctx.fillText(coordStr, padX, currentY);
+                }
+
+                // Reset shadow
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+
+                attPendingDataUrl = canvas.toDataURL('image/jpeg', 0.88);
                 checkGeofenceStatus();
             }
 
@@ -1649,7 +1707,7 @@ require_login(); ?>
 
             if (!navigator.geolocation) {
                 if (statusEl) statusEl.textContent = 'Lokasi tidak tersedia di perangkat ini.';
-                draw(['Lokasi tidak tersedia'], null);
+                draw('Lokasi tidak tersedia', null);
                 return;
             }
 
@@ -1665,17 +1723,17 @@ require_login(); ?>
                         .then(data => {
                             const addr = data && data.display_name ? data.display_name : `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
                             attPendingAddress = addr;
-                            draw(attWrapAddress(addr), coordStr);
+                            draw(addr, coordStr);
                         })
                         .catch(() => {
                             attPendingAddress = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-                            draw([attPendingAddress], coordStr);
+                            draw(attPendingAddress, coordStr);
                         });
                 },
                 () => {
                     if (statusEl) statusEl.textContent = 'Izin lokasi ditolak — foto disimpan tanpa lokasi.';
                     attPendingAddress = 'Lokasi tidak diizinkan';
-                    draw(['Lokasi tidak diizinkan'], null);
+                    draw('Lokasi tidak diizinkan', null);
                 },
                 { enableHighAccuracy: true, timeout: 8000 }
             );
