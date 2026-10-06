@@ -342,13 +342,29 @@ if (!is_array($positions) || empty($positions)) {
                         <div class="flex flex-col gap-xs">
                             <label class="font-label-md text-label-md text-on-surface" data-i18n="recruit_role">Posisi
                                 yang Dilamar</label>
-                            <select id="role"
-                                class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/20 transition-all appearance-none cursor-pointer">
-                                <option value="" data-i18n="recruit_select">Pilih posisi magang...</option>
-                                <?php foreach ($positions as $pos): ?>
-                                    <option value="<?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            <div id="role-wrapper" class="relative group rounded-xl transition-all duration-300">
+                                <select id="role"
+                                    class="w-full bg-surface border border-outline-variant rounded-xl px-md py-sm pr-10 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/30 transition-all duration-300 appearance-none cursor-pointer shadow-sm hover:border-primary/50">
+                                    <option value="" data-i18n="recruit_select">Pilih posisi magang...</option>
+                                    <?php foreach ($positions as $pos): ?>
+                                        <option value="<?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?></option>
+                                    <?php endforeach; ?>
+                                    <option value="Lainnya" data-i18n="recruit_role_other">✏️ Posisi Lainnya (Ketik Sendiri)...</option>
+                                </select>
+                                <div id="roleArrow" class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-md text-on-surface-variant transition-transform duration-300">
+                                    <span class="material-symbols-outlined text-[22px]">expand_more</span>
+                                </div>
+                            </div>
+                            <!-- Container Input Posisi Custom (Hidden by default, animated via anime.js) -->
+                            <div id="customRoleContainer" class="hidden opacity-0 origin-top mt-xs">
+                                <div class="relative flex items-center">
+                                    <span class="absolute left-md text-primary material-symbols-outlined text-[20px]">edit_note</span>
+                                    <input id="customRole"
+                                        class="w-full bg-surface border border-primary/60 rounded-xl pl-10 pr-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/30 transition-all duration-300 shadow-sm"
+                                        placeholder="Ketikkan posisi yang ingin Anda lamar..." type="text" />
+                                </div>
+                                <span class="text-body-sm text-outline text-[12px] pl-xs mt-1 block">Silakan ketikkan nama posisi magang yang ingin Anda tuju.</span>
+                            </div>
                         </div>
                         <!-- Upload area -->
                         <div class="flex flex-col gap-xs mt-md">
@@ -480,12 +496,80 @@ if (!is_array($positions) || empty($positions)) {
 
         /* ─── Real-time Step 2: Posisi yang Dilamar ─── */
         function checkStep2() {
-            const role = document.getElementById('role').value;
-            if (role && role !== '') {
+            const roleVal = document.getElementById('role') ? document.getElementById('role').value : '';
+            let isValid = false;
+            if (roleVal === 'Lainnya') {
+                const customVal = document.getElementById('customRole') ? document.getElementById('customRole').value.trim() : '';
+                isValid = customVal !== '';
+            } else if (roleVal && roleVal !== '') {
+                isValid = true;
+            }
+
+            if (isValid) {
                 activateStep(2);
             } else {
                 deactivateStep(2);
             }
+        }
+
+        /* ─── Handler Perubahan Posisi Dropdown (dengan Animasi Anime.js) ─── */
+        function handleRoleChange() {
+            const roleSelect = document.getElementById('role');
+            const container = document.getElementById('customRoleContainer');
+            const roleWrapper = document.getElementById('role-wrapper');
+
+            // Animasikan pulsa micro-interaction pada wrapper dropdown dengan Anime.js
+            if (window.anime && roleWrapper) {
+                anime({
+                    targets: roleWrapper,
+                    scale: [1, 1.018, 1],
+                    duration: 350,
+                    easing: 'easeOutQuad'
+                });
+            }
+
+            if (roleSelect && roleSelect.value === 'Lainnya') {
+                if (container && container.classList.contains('hidden')) {
+                    container.classList.remove('hidden');
+                    if (window.anime) {
+                        anime({
+                            targets: container,
+                            opacity: [0, 1],
+                            translateY: [-14, 0],
+                            scale: [0.96, 1],
+                            duration: 400,
+                            easing: 'easeOutCubic'
+                        });
+                    } else {
+                        container.classList.remove('opacity-0');
+                    }
+                }
+                const customInput = document.getElementById('customRole');
+                if (customInput) customInput.focus();
+            } else if (container) {
+                if (!container.classList.contains('hidden')) {
+                    if (window.anime) {
+                        anime({
+                            targets: container,
+                            opacity: [1, 0],
+                            translateY: [0, -10],
+                            duration: 250,
+                            easing: 'easeInCubic',
+                            complete: function () {
+                                container.classList.add('hidden');
+                                const customInput = document.getElementById('customRole');
+                                if (customInput) customInput.value = '';
+                                checkStep2();
+                            }
+                        });
+                    } else {
+                        container.classList.add('hidden', 'opacity-0');
+                        const customInput = document.getElementById('customRole');
+                        if (customInput) customInput.value = '';
+                    }
+                }
+            }
+            checkStep2();
         }
 
         /* ─── Real-time Step 3: Upload CV ─── */
@@ -518,9 +602,43 @@ if (!is_array($positions) || empty($positions)) {
                 if (el) el.addEventListener('input', checkStep1);
             });
 
-            // Step 2 listener
+            // Step 2 dropdown & anime.js micro-animation listeners
             const roleEl = document.getElementById('role');
-            if (roleEl) roleEl.addEventListener('change', checkStep2);
+            if (roleEl) {
+                roleEl.addEventListener('change', handleRoleChange);
+                roleEl.addEventListener('focus', function () {
+                    const arrow = document.getElementById('roleArrow');
+                    if (arrow) arrow.classList.add('rotate-180', 'text-primary');
+                    if (window.anime) {
+                        anime({
+                            targets: '#role-wrapper',
+                            borderColor: ['#e2e8f0', '#3b82f6'],
+                            duration: 300,
+                            easing: 'easeOutQuad'
+                        });
+                    }
+                });
+                roleEl.addEventListener('blur', function () {
+                    const arrow = document.getElementById('roleArrow');
+                    if (arrow) arrow.classList.remove('rotate-180', 'text-primary');
+                });
+            }
+
+            // Custom Role input listener & focus animation
+            const customRoleInput = document.getElementById('customRole');
+            if (customRoleInput) {
+                customRoleInput.addEventListener('input', checkStep2);
+                customRoleInput.addEventListener('focus', function () {
+                    if (window.anime) {
+                        anime({
+                            targets: '#customRoleContainer',
+                            scale: [1, 1.01, 1],
+                            duration: 300,
+                            easing: 'easeOutQuad'
+                        });
+                    }
+                });
+            }
 
             // Step 3 listener (sudah di-handle oleh handleFileUpload via onchange)
         });
@@ -530,7 +648,13 @@ if (!is_array($positions) || empty($positions)) {
             const firstName = document.getElementById('firstName').value.trim();
             const lastName  = document.getElementById('lastName').value.trim();
             const email     = document.getElementById('email').value.trim();
-            const role      = document.getElementById('role').value;
+            const roleSelect = document.getElementById('role').value;
+            let role = roleSelect;
+            if (roleSelect === 'Lainnya') {
+                const customVal = document.getElementById('customRole') ? document.getElementById('customRole').value.trim() : '';
+                role = customVal;
+            }
+
             const portfolio = document.getElementById('portfolio') ? document.getElementById('portfolio').value.trim() : '';
             const fileInput = document.getElementById('fileInput');
 
@@ -567,8 +691,10 @@ if (!is_array($positions) || empty($positions)) {
                     modal.classList.remove('hidden');
                     modal.classList.add('flex');
 
-                    // Reset form
+                    // Reset form & custom role container
                     document.getElementById('application-form-el').reset();
+                    const container = document.getElementById('customRoleContainer');
+                    if (container) container.classList.add('hidden', 'opacity-0');
                     document.getElementById('upload-text').textContent = 'Klik untuk mengunggah atau seret file ke sini';
                     document.getElementById('upload-area').classList.remove('border-primary', 'bg-primary-fixed');
 
