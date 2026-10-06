@@ -35,24 +35,36 @@ require_login(); ?>
             font-variation-settings: 'FILL' 0, 'wght' 500;
         }
 
-        /* Calendar */
+        /* Calendar Responsive Cell */
         .cal-cell {
             aspect-ratio: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.15s ease;
             position: relative;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             font-weight: 600;
-            border: 1.5px solid transparent;
+            border: 1px solid transparent;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            min-width: 0;
+            width: 100%;
+        }
+
+        @media (min-width: 640px) {
+            .cal-cell {
+                font-size: 0.85rem;
+                border-radius: 12px;
+                border-width: 1.5px;
+            }
         }
 
         .cal-cell:hover {
-            transform: scale(1.07);
+            transform: scale(1.05);
             border-color: var(--color-primary, #2563eb);
         }
 
@@ -108,11 +120,19 @@ require_login(); ?>
         }
 
         .status-dot {
-            width: 6px;
-            height: 6px;
+            width: 5px;
+            height: 5px;
             border-radius: 50%;
             position: absolute;
-            bottom: 5px;
+            bottom: 4px;
+        }
+
+        @media (min-width: 640px) {
+            .status-dot {
+                width: 6px;
+                height: 6px;
+                bottom: 5px;
+            }
         }
 
         /* Badge */
@@ -154,6 +174,15 @@ require_login(); ?>
             background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
         }
 
+        /* Hide scrollbars for filter pill row */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
         /* Smooth scroll */
         html {
             scroll-behavior: smooth;
@@ -193,7 +222,7 @@ require_login(); ?>
     </style>
 </head>
 
-<body class="bg-surface text-on-surface font-body-md min-h-screen flex">
+<body class="bg-surface text-on-surface font-body-md min-h-screen flex overflow-x-hidden">
 
     <!-- SideNavBar -->
     <?php $active = 'attendance';
@@ -202,28 +231,28 @@ require_login(); ?>
     <?php include 'partials/topnav-mobile.php'; ?>
 
     <!-- Main Content -->
-    <main class="flex-1 md:ml-[16.5rem] pt-20 md:pt-0 min-h-screen flex flex-col">
-        <div class="flex-1 pb-10 px-4 md:px-8 max-w-[1400px] mx-auto w-full">
+    <main class="flex-1 md:ml-[16.5rem] pt-16 md:pt-0 min-h-screen flex flex-col w-full max-w-full overflow-x-hidden min-w-0">
+        <div class="flex-1 pb-10 px-2.5 sm:px-4 md:px-8 max-w-[1400px] mx-auto w-full min-w-0">
 
         <!-- Page Header -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 mt-6 md:mt-8">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3 mt-4 md:mt-8">
             <div>
-                <p class="text-xs font-bold uppercase tracking-widest text-primary mb-1" id="page-eyebrow">PKL Tracker
+                <p class="text-xs font-bold uppercase tracking-widest text-primary mb-0.5" id="page-eyebrow">PKL Tracker
                 </p>
-                <h2 class="font-geist text-3xl md:text-4xl font-bold text-on-surface" id="page-title">Kehadiran Saya
+                <h2 class="font-geist text-2xl sm:text-3xl md:text-4xl font-bold text-on-surface" id="page-title">Kehadiran Saya
                 </h2>
-                <p class="text-sm text-on-surface-variant mt-1" id="page-subtitle">Pantau presensi, status kedatangan,
+                <p class="text-xs sm:text-sm text-on-surface-variant mt-0.5" id="page-subtitle">Pantau presensi, status kedatangan,
                     dan riwayat selama masa PKL.</p>
             </div>
-            <div class="flex gap-2 w-full md:w-auto">
+            <div class="flex gap-2 w-full sm:w-auto shrink-0 mt-1 sm:mt-0">
                 <button id="main-input-btn" onclick="attStartCapture()"
-                    class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all shadow-sm active:scale-95">
+                    class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold hover:opacity-90 transition-all shadow-sm active:scale-95">
                     <span class="material-symbols-outlined text-[18px]"
                         style="font-variation-settings:'FILL' 1;">photo_camera</span>
                     Clock In
                 </button>
                 <button onclick="exportAttendanceCSV()"
-                    class="flex-1 md:flex-none flex items-center justify-center gap-2 border border-outline-variant text-on-surface bg-surface-container-lowest px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-surface-container-low transition-colors">
+                    class="flex-1 sm:flex-none flex items-center justify-center gap-2 border border-outline-variant text-on-surface bg-surface-container-lowest px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-surface-container-low transition-colors">
                     <span class="material-symbols-outlined text-[18px]">download</span>
                     Export CSV
                 </button>
@@ -232,216 +261,233 @@ require_login(); ?>
 
         <!-- Tracker mode info banner -->
         <div
-            class="mb-6 flex items-center gap-3 bg-blue-50 border border-blue-200 text-blue-900 px-4 py-3 rounded-xl text-sm shadow-sm">
-            <span class="material-symbols-outlined text-blue-600 text-[20px]">info</span>
+            class="mb-5 flex items-center gap-2.5 bg-blue-50 border border-blue-200 text-blue-900 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm shadow-sm">
+            <span class="material-symbols-outlined text-blue-600 text-[18px] sm:text-[20px] shrink-0">info</span>
             <span>Halaman ini berfungsi sebagai <strong>Tracker Kehadiran</strong>. Pengeditan dan pencatatan data
                 kehadiran dilakukan oleh <strong>Admin</strong>.</span>
         </div>
 
         <!-- Admin preview banner (hanya tampil jika dibuka via ?intern=Nama oleh Admin) -->
         <div id="admin-preview-banner"
-            class="hidden mb-6 flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 rounded-xl text-sm">
-            <span class="material-symbols-outlined text-amber-600">visibility</span>
+            class="hidden mb-5 flex items-center gap-2.5 bg-amber-50 border border-amber-200 text-amber-900 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm">
+            <span class="material-symbols-outlined text-amber-600 shrink-0">visibility</span>
             <span>Anda (Admin) sedang melihat kehadiran milik <strong id="admin-preview-name"></strong> dalam mode
                 baca-saja.</span>
         </div>
 
         <!-- Stats Row -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-            <div class="stat-present rounded-2xl p-4 border border-green-200">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="material-symbols-outlined text-green-700 text-[20px]"
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 mb-6">
+            <div class="stat-present rounded-2xl p-3 sm:p-4 border border-green-200">
+                <div class="flex items-center gap-1.5 mb-1.5">
+                    <span class="material-symbols-outlined text-green-700 text-[18px] sm:text-[20px]"
                         style="font-variation-settings:'FILL' 1;">check_circle</span>
-                    <span class="text-xs font-bold uppercase tracking-wider text-green-700">Hadir</span>
+                    <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-green-700">Hadir</span>
                 </div>
-                <div id="stat-present" class="text-3xl font-geist font-bold text-green-800">0</div>
-                <div class="text-xs text-green-700 mt-0.5">hari</div>
+                <div id="stat-present" class="text-2xl sm:text-3xl font-geist font-bold text-green-800">0</div>
+                <div class="text-[11px] sm:text-xs text-green-700 mt-0.5">hari</div>
             </div>
-            <div class="stat-late rounded-2xl p-4 border border-amber-200">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="material-symbols-outlined text-amber-700 text-[20px]"
+            <div class="stat-late rounded-2xl p-3 sm:p-4 border border-amber-200">
+                <div class="flex items-center gap-1.5 mb-1.5">
+                    <span class="material-symbols-outlined text-amber-700 text-[18px] sm:text-[20px]"
                         style="font-variation-settings:'FILL' 1;">schedule</span>
-                    <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Terlambat</span>
+                    <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-amber-700">Terlambat</span>
                 </div>
-                <div id="stat-late" class="text-3xl font-geist font-bold text-amber-800">0</div>
-                <div class="text-xs text-amber-700 mt-0.5">hari</div>
+                <div id="stat-late" class="text-2xl sm:text-3xl font-geist font-bold text-amber-800">0</div>
+                <div class="text-[11px] sm:text-xs text-amber-700 mt-0.5">hari</div>
             </div>
-            <div class="stat-absent rounded-2xl p-4 border border-red-200">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="material-symbols-outlined text-red-700 text-[20px]"
+            <div class="stat-absent rounded-2xl p-3 sm:p-4 border border-red-200">
+                <div class="flex items-center gap-1.5 mb-1.5">
+                    <span class="material-symbols-outlined text-red-700 text-[18px] sm:text-[20px]"
                         style="font-variation-settings:'FILL' 1;">cancel</span>
-                    <span class="text-xs font-bold uppercase tracking-wider text-red-700">Tidak Masuk</span>
+                    <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-red-700">Tidak Masuk</span>
                 </div>
-                <div id="stat-absent" class="text-3xl font-geist font-bold text-red-800">0</div>
-                <div class="text-xs text-red-700 mt-0.5">hari</div>
+                <div id="stat-absent" class="text-2xl sm:text-3xl font-geist font-bold text-red-800">0</div>
+                <div class="text-[11px] sm:text-xs text-red-700 mt-0.5">hari</div>
             </div>
-            <div class="stat-rate rounded-2xl p-4 border border-blue-200">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="material-symbols-outlined text-blue-700 text-[20px]"
+            <div class="stat-rate rounded-2xl p-3 sm:p-4 border border-blue-200">
+                <div class="flex items-center gap-1.5 mb-1.5">
+                    <span class="material-symbols-outlined text-blue-700 text-[18px] sm:text-[20px]"
                         style="font-variation-settings:'FILL' 1;">insights</span>
-                    <span class="text-xs font-bold uppercase tracking-wider text-blue-700">Kehadiran</span>
+                    <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-blue-700">Kehadiran</span>
                 </div>
-                <div id="stat-rate" class="text-3xl font-geist font-bold text-blue-800">0%</div>
-                <div class="text-xs text-blue-700 mt-0.5">tingkat hadir</div>
+                <div id="stat-rate" class="text-2xl sm:text-3xl font-geist font-bold text-blue-800">0%</div>
+                <div class="text-[11px] sm:text-xs text-blue-700 mt-0.5">tingkat hadir</div>
             </div>
         </div>
 
-        <!-- Main Bento Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+        <!-- Main Bento Grid (Prioritize Calendar on Mobile) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-6 sm:mb-8 min-w-0 w-full">
 
-            <!-- Left: Streak + Legend -->
-            <div class="lg:col-span-4 flex flex-col gap-4">
+            <!-- Right: Calendar (First on Mobile screens for fast access) -->
+            <div class="lg:col-span-8 order-1 lg:order-2 bg-surface-container-lowest rounded-2xl border border-outline-variant p-3 sm:p-5 min-w-0 w-full overflow-hidden">
+                <!-- Calendar Header -->
+                <div class="flex justify-between items-center mb-3 sm:mb-5">
+                    <h3 id="cal-title" class="font-geist text-base sm:text-xl font-bold text-on-surface">September 2026</h3>
+                    <div class="flex items-center gap-1">
+                        <button id="cal-prev" onclick="changeMonth(-1)"
+                            class="p-1.5 sm:p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-primary">
+                            <span class="material-symbols-outlined text-xl">chevron_left</span>
+                        </button>
+                        <button onclick="goToday()"
+                            class="px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold bg-primary-container text-on-primary-container hover:opacity-80 transition-opacity">
+                            Hari Ini
+                        </button>
+                        <button id="cal-next" onclick="changeMonth(1)"
+                            class="p-1.5 sm:p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-primary">
+                            <span class="material-symbols-outlined text-xl">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Day Headers (7 Columns Fit) -->
+                <div class="grid grid-cols-7 gap-1 sm:gap-1.5 mb-2 text-center w-full min-w-0">
+                    <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-red-500 truncate">Min</div>
+                    <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Sen</div>
+                    <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Sel</div>
+                    <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Rab</div>
+                    <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Kam</div>
+                    <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Jum</div>
+                    <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Sab</div>
+                </div>
+                <!-- Calendar Grid -->
+                <div id="cal-grid" class="grid grid-cols-7 gap-1 sm:gap-1.5 w-full min-w-0"></div>
+            </div>
+
+            <!-- Left: Streak + Legend + Summary (Second on Mobile screens) -->
+            <div class="lg:col-span-4 order-2 lg:order-1 flex flex-col gap-4">
 
                 <!-- Streak Card -->
                 <div
-                    class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-5 flex flex-col items-center text-center">
-                    <span class="material-symbols-outlined text-[44px] text-amber-400 mb-2"
+                    class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4 sm:p-5 flex flex-col items-center text-center">
+                    <span class="material-symbols-outlined text-[36px] sm:text-[44px] text-amber-400 mb-1 sm:mb-2"
                         style="font-variation-settings:'FILL' 1;">local_fire_department</span>
-                    <div id="streak-count" class="font-geist text-5xl font-black streak-badge mb-1">0</div>
-                    <p class="font-semibold text-on-surface mb-0.5">Hari Berturut-turut</p>
+                    <div id="streak-count" class="font-geist text-4xl sm:text-5xl font-black streak-badge mb-1">0</div>
+                    <p class="font-semibold text-sm sm:text-base text-on-surface mb-0.5">Hari Berturut-turut</p>
                     <p id="streak-desc" class="text-xs text-on-surface-variant">Belum ada data kehadiran</p>
                 </div>
 
                 <!-- Legend Card -->
-                <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-5">
+                <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4 sm:p-5">
                     <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Keterangan
                         Kalender</h3>
                     <div class="space-y-2.5">
                         <div class="flex items-center gap-3">
                             <div
-                                class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-700 text-xs font-bold">
+                                class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-700 text-xs font-bold shrink-0">
                                 12</div>
                             <div>
-                                <div class="text-sm font-semibold text-on-surface">Hadir Tepat Waktu</div>
-                                <div class="text-xs text-on-surface-variant">Masuk sebelum pukul 09:00</div>
+                                <div class="text-xs sm:text-sm font-semibold text-on-surface">Hadir Tepat Waktu</div>
+                                <div class="text-[11px] sm:text-xs text-on-surface-variant">Masuk sebelum pukul 09:00</div>
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
                             <div
-                                class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 text-xs font-bold">
+                                class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 text-xs font-bold shrink-0">
                                 12</div>
                             <div>
-                                <div class="text-sm font-semibold text-on-surface">Terlambat</div>
-                                <div class="text-xs text-on-surface-variant">Masuk setelah pukul 09:00</div>
+                                <div class="text-xs sm:text-sm font-semibold text-on-surface">Terlambat</div>
+                                <div class="text-[11px] sm:text-xs text-on-surface-variant">Masuk setelah pukul 09:00</div>
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
                             <div
-                                class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-700 text-xs font-bold">
+                                class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-700 text-xs font-bold shrink-0">
                                 12</div>
                             <div>
-                                <div class="text-sm font-semibold text-on-surface">Tidak Masuk</div>
-                                <div class="text-xs text-on-surface-variant">Izin / Sakit / Alpha</div>
+                                <div class="text-xs sm:text-sm font-semibold text-on-surface">Tidak Masuk</div>
+                                <div class="text-[11px] sm:text-xs text-on-surface-variant">Izin / Sakit / Alpha</div>
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
                             <div
-                                class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold">
+                                class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold shrink-0">
                                 12</div>
                             <div>
-                                <div class="text-sm font-semibold text-on-surface">Akhir Pekan / Kosong</div>
-                                <div class="text-xs text-on-surface-variant">Weekend atau belum diisi</div>
+                                <div class="text-xs sm:text-sm font-semibold text-on-surface">Akhir Pekan / Kosong</div>
+                                <div class="text-[11px] sm:text-xs text-on-surface-variant">Weekend atau belum diisi</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Quick summary for current month -->
-                <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-5">
+                <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4 sm:p-5">
                     <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Bulan Ini</h3>
                     <div class="space-y-2" id="monthly-summary">
-                        <div class="flex justify-between items-center text-sm">
+                        <div class="flex justify-between items-center text-xs sm:text-sm">
                             <span class="text-on-surface-variant">Hadir</span>
                             <span id="month-present" class="font-bold text-green-700">0 hari</span>
                         </div>
-                        <div class="flex justify-between items-center text-sm">
+                        <div class="flex justify-between items-center text-xs sm:text-sm">
                             <span class="text-on-surface-variant">Terlambat</span>
                             <span id="month-late" class="font-bold text-amber-700">0 hari</span>
                         </div>
-                        <div class="flex justify-between items-center text-sm">
+                        <div class="flex justify-between items-center text-xs sm:text-sm">
                             <span class="text-on-surface-variant">Tidak Masuk</span>
                             <span id="month-absent" class="font-bold text-red-700">0 hari</span>
                         </div>
                         <div class="h-px bg-outline-variant my-1"></div>
-                        <div class="flex justify-between items-center text-sm">
+                        <div class="flex justify-between items-center text-xs sm:text-sm">
                             <span class="text-on-surface-variant font-semibold">Total Hari Kerja</span>
                             <span id="month-total" class="font-bold text-on-surface">0 hari</span>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Right: Calendar -->
-            <div class="lg:col-span-8 bg-surface-container-lowest rounded-2xl border border-outline-variant p-5">
-                <!-- Calendar Header -->
-                <div class="flex justify-between items-center mb-5">
-                    <h3 id="cal-title" class="font-geist text-xl font-bold text-on-surface">September 2026</h3>
-                    <div class="flex items-center gap-1">
-                        <button id="cal-prev" onclick="changeMonth(-1)"
-                            class="p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-primary">
-                            <span class="material-symbols-outlined">chevron_left</span>
-                        </button>
-                        <button onclick="goToday()"
-                            class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary-container text-on-primary-container hover:opacity-80 transition-opacity">
-                            Hari Ini
-                        </button>
-                        <button id="cal-next" onclick="changeMonth(1)"
-                            class="p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-primary">
-                            <span class="material-symbols-outlined">chevron_right</span>
-                        </button>
-                    </div>
-                </div>
-                <!-- Day Headers -->
-                <div class="grid grid-cols-7 gap-1.5 mb-2 text-center">
-                    <div class="text-xs font-bold uppercase tracking-wider text-red-400">Min</div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Sen</div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Sel</div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Rab</div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Kam</div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Jum</div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Sab</div>
-                </div>
-                <!-- Calendar Grid -->
-                <div id="cal-grid" class="grid grid-cols-7 gap-1.5"></div>
-            </div>
         </div>
 
         <!-- History Table -->
         <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant overflow-hidden">
             <div
-                class="p-5 border-b border-outline-variant flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                class="p-4 sm:p-5 border-b border-outline-variant flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h3 class="font-geist text-lg font-bold text-on-surface">Riwayat Kehadiran</h3>
+                    <h3 class="font-geist text-base sm:text-lg font-bold text-on-surface">Riwayat Kehadiran</h3>
                     <p class="text-xs text-on-surface-variant mt-0.5">Semua catatan kehadiran selama PKL</p>
                 </div>
-                <!-- Filter -->
+                <!-- Filter Pills (Scrollable on Mobile) -->
                 <div
-                    class="flex items-center gap-1.5 bg-surface-container-low rounded-xl p-1 border border-outline-variant text-xs">
+                    class="flex items-center gap-1 bg-surface-container-low rounded-xl p-1 border border-outline-variant text-xs max-w-full overflow-x-auto no-scrollbar w-full sm:w-auto">
                     <button onclick="setFilter('all')" id="filter-all"
-                        class="px-3 py-1.5 rounded-lg font-semibold bg-white text-primary shadow-sm">Semua</button>
+                        class="px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold bg-white text-primary shadow-sm shrink-0">Semua</button>
                     <button onclick="setFilter('present')" id="filter-present"
-                        class="px-3 py-1.5 rounded-lg font-semibold text-on-surface-variant hover:text-green-700">Hadir</button>
+                        class="px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold text-on-surface-variant hover:text-green-700 shrink-0">Hadir</button>
                     <button onclick="setFilter('late')" id="filter-late"
-                        class="px-3 py-1.5 rounded-lg font-semibold text-on-surface-variant hover:text-amber-700">Terlambat</button>
+                        class="px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold text-on-surface-variant hover:text-amber-700 shrink-0">Terlambat</button>
                     <button onclick="setFilter('absent')" id="filter-absent"
-                        class="px-3 py-1.5 rounded-lg font-semibold text-on-surface-variant hover:text-red-700">Tidak
-                        Masuk</button>
+                        class="px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold text-on-surface-variant hover:text-red-700 shrink-0">Tidak Masuk</button>
                 </div>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="w-full text-xs sm:text-sm">
                     <thead>
                         <tr class="bg-surface-container-low border-b border-outline-variant">
                             <th
-                                class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant">
+                                class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">
                                 Tanggal</th>
                             <th
-                                class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant">
+                                class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">
                                 Jam Masuk</th>
                             <th
-                                class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant">
+                                class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">
                                 Jam Keluar</th>
                             <th
+                                class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">
+                                Status</th>
+                            <th
+                                class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">
+                                Alasan / Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="att-table-body" class="divide-y divide-outline-variant">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+                <div id="att-empty" class="hidden text-center py-12 sm:py-16">
+                    <span class="material-symbols-outlined text-4xl sm:text-5xl text-on-surface-variant mb-2 sm:mb-3">event_busy</span>
+                    <p class="font-semibold text-sm sm:text-base text-on-surface">Belum ada catatan kehadiran</p>
+                    <p class="text-xs text-on-surface-variant mt-1">Data kehadiran diperbarui oleh Admin</p>
+                </div>
+            </div>
+        </div>
                                 class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant">
                                 Status</th>
                             <th
@@ -658,7 +704,7 @@ require_login(); ?>
 
     <!-- Toast Notification -->
     <div id="att-toast"
-        class="fixed bottom-6 right-6 z-[100] flex items-center gap-3 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl hide pointer-events-none text-sm font-semibold">
+        class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-auto z-[100] flex items-center justify-center sm:justify-start gap-2.5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl hide pointer-events-none text-xs sm:text-sm font-semibold">
         <span id="att-toast-icon" class="material-symbols-outlined text-[18px]">check_circle</span>
         <span id="att-toast-msg">Tersimpan!</span>
     </div>
