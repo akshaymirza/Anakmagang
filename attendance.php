@@ -669,14 +669,14 @@ require_login(); ?>
 
             <!-- Responsive Video/Canvas Container -->
             <div id="att-video-wrap"
-                class="relative rounded-xl overflow-hidden border border-outline-variant mb-3 bg-black flex items-center justify-center min-h-[260px] sm:min-h-[320px] max-h-[60vh] w-full mx-auto transition-all">
-                <video id="att-video" autoplay playsinline class="w-full h-full object-cover transition-transform duration-300 max-h-[60vh]"></video>
-                <canvas id="att-canvas" class="hidden w-full h-auto object-contain max-h-[60vh] rounded-xl"></canvas>
+                class="relative rounded-xl overflow-hidden border border-outline-variant mb-3 w-full mx-auto transition-all">
+                <video id="att-video" autoplay playsinline class="w-full block rounded-xl transition-transform duration-300"></video>
+                <canvas id="att-canvas" class="hidden w-full block rounded-xl"></canvas>
 
                 <!-- Floating Switch Camera Button (Depan/Belakang) -->
                 <button id="att-switch-cam-btn" onclick="attSwitchCamera()" type="button"
                     title="Ganti Kamera (Depan/Belakang)"
-                    class="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white p-2.5 rounded-full backdrop-blur-md transition-all flex items-center justify-center shadow-lg border border-white/20 active:scale-95">
+                    class="absolute top-3 right-3 bg-black/50 hover:bg-black/70 text-white p-2.5 rounded-full backdrop-blur-md transition-all flex items-center justify-center shadow-lg border border-white/20 active:scale-95">
                     <span class="material-symbols-outlined text-lg">flip_camera_ios</span>
                 </button>
             </div>
@@ -1465,6 +1465,20 @@ require_login(); ?>
 
                 attStream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = attStream;
+
+                // Auto-resize: set tinggi video sesuai aspek rasio kamera & ukuran layar
+                video.addEventListener('loadedmetadata', function onMeta() {
+                    video.removeEventListener('loadedmetadata', onMeta);
+                    const vw = video.videoWidth || 1;
+                    const vh = video.videoHeight || 1;
+                    const ar = vh / vw;                          // aspect ratio (tinggi/lebar)
+                    const maxH = Math.floor(window.innerHeight * 0.58); // max 58% tinggi layar
+                    const containerW = video.parentElement?.offsetWidth || video.offsetWidth || window.innerWidth;
+                    const idealH = Math.min(Math.round(containerW * ar), maxH);
+                    video.style.height = idealH + 'px';
+                    video.style.maxHeight = maxH + 'px';
+                }, { once: true });
+
                 statusEl.textContent = currentFacingMode === 'user' 
                     ? 'Posisikan wajah Anda lalu tekan Ambil Foto.' 
                     : 'Arahkan kamera ke objek/sekitar lalu tekan Ambil Foto.';
@@ -1474,6 +1488,17 @@ require_login(); ?>
                     // Fallback jika perangkat tidak mendukung ideal resolution
                     attStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                     video.srcObject = attStream;
+                    video.addEventListener('loadedmetadata', function onMetaFallback() {
+                        video.removeEventListener('loadedmetadata', onMetaFallback);
+                        const vw = video.videoWidth || 1;
+                        const vh = video.videoHeight || 1;
+                        const ar = vh / vw;
+                        const maxH = Math.floor(window.innerHeight * 0.58);
+                        const containerW = video.parentElement?.offsetWidth || video.offsetWidth || window.innerWidth;
+                        const idealH = Math.min(Math.round(containerW * ar), maxH);
+                        video.style.height = idealH + 'px';
+                        video.style.maxHeight = maxH + 'px';
+                    }, { once: true });
                     statusEl.textContent = 'Posisikan wajah Anda lalu tekan Ambil Foto.';
                 } catch (fallbackErr) {
                     console.error('Camera access error:', fallbackErr);
