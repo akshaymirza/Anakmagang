@@ -339,28 +339,59 @@ if (!is_array($positions) || empty($positions)) {
                                 class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/20 transition-all"
                                 placeholder="alex.chen@kampus.ac.id" type="email" />
                         </div>
-                        <div class="flex flex-col gap-xs">
-                            <label class="font-label-md text-label-md text-on-surface" data-i18n="recruit_role">Posisi
-                                yang Dilamar</label>
-                            <div id="role-wrapper" class="relative group rounded-xl transition-all duration-300">
-                                <select id="role"
-                                    class="w-full bg-surface border border-outline-variant rounded-xl px-md py-sm pr-10 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/30 transition-all duration-300 appearance-none cursor-pointer shadow-sm hover:border-primary/50">
-                                    <option value="" data-i18n="recruit_select">Pilih posisi magang...</option>
+                        <div class="flex flex-col gap-xs relative" id="customSelectContainer">
+                            <label class="font-label-md text-label-md text-on-surface" data-i18n="recruit_role">Posisi yang Dilamar</label>
+
+                            <!-- Hidden standard select element for 100% JS/Form compatibility -->
+                            <select id="role" class="hidden">
+                                <option value="" data-i18n="recruit_select">Pilih posisi magang...</option>
+                                <?php foreach ($positions as $pos): ?>
+                                    <option value="<?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?></option>
+                                <?php endforeach; ?>
+                                <option value="Lainnya" data-i18n="recruit_role_other">Posisi Lainnya (Ketik Sendiri)...</option>
+                            </select>
+
+                            <!-- Custom Styled Trigger Button (Beautiful rounded corners: rounded-2xl) -->
+                            <div id="role-wrapper" class="relative group">
+                                <button type="button" id="customSelectBtn"
+                                    class="w-full bg-surface border border-outline-variant rounded-2xl px-md py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/30 transition-all duration-300 shadow-sm hover:border-primary/60 flex items-center justify-between cursor-pointer">
+                                    <span id="customSelectLabel" class="text-on-surface-variant font-medium select-none">Pilih posisi magang...</span>
+                                    <span id="roleArrow" class="material-symbols-outlined text-[22px] text-on-surface-variant transition-transform duration-300">expand_more</span>
+                                </button>
+
+                                <!-- Custom Floating Dropdown Menu Overlay (Rounded-2xl, soft shadow, backdrop blur, animated with anime.js) -->
+                                <div id="customSelectMenu"
+                                    class="absolute left-0 right-0 top-full mt-2 bg-surface/95 backdrop-blur-md border border-outline-variant/80 rounded-2xl p-2 shadow-2xl z-50 hidden opacity-0 origin-top overflow-hidden space-y-1">
+                                    <div class="custom-option rounded-xl px-4 py-2.5 text-body-md text-on-surface-variant hover:bg-primary-fixed/40 hover:text-primary transition-all cursor-pointer flex items-center justify-between font-medium group"
+                                        data-value="" data-label="Pilih posisi magang...">
+                                        <span>Pilih posisi magang...</span>
+                                    </div>
                                     <?php foreach ($positions as $pos): ?>
-                                        <option value="<?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?></option>
+                                        <div class="custom-option rounded-xl px-4 py-2.5 text-body-md text-on-surface hover:bg-primary-fixed/40 hover:text-primary transition-all cursor-pointer flex items-center justify-between font-medium group"
+                                            data-value="<?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-label="<?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?>">
+                                            <span><?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                            <span class="material-symbols-outlined text-[18px] opacity-0 group-hover:opacity-100 transition-opacity text-primary">check</span>
+                                        </div>
                                     <?php endforeach; ?>
-                                    <option value="Lainnya" data-i18n="recruit_role_other">Posisi Lainnya (Ketik Sendiri)...</option>
-                                </select>
-                                <div id="roleArrow" class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-md text-on-surface-variant transition-transform duration-300">
-                                    <span class="material-symbols-outlined text-[22px]">expand_more</span>
+                                    <div class="border-t border-outline-variant/40 my-1"></div>
+                                    <div class="custom-option rounded-xl px-4 py-2.5 text-body-md text-primary bg-primary/5 hover:bg-primary/10 transition-all cursor-pointer flex items-center justify-between font-semibold group"
+                                        data-value="Lainnya" data-label="Posisi Lainnya (Ketik Sendiri)...">
+                                        <span class="flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-[18px]">edit_note</span>
+                                            Posisi Lainnya (Ketik Sendiri)...
+                                        </span>
+                                        <span class="material-symbols-outlined text-[18px] opacity-0 group-hover:opacity-100 transition-opacity">add</span>
+                                    </div>
                                 </div>
                             </div>
+
                             <!-- Container Input Posisi Custom (Hidden by default, animated via anime.js) -->
                             <div id="customRoleContainer" class="hidden opacity-0 origin-top mt-xs">
                                 <div class="relative flex items-center">
                                     <span class="absolute left-md text-primary material-symbols-outlined text-[20px]">edit_note</span>
                                     <input id="customRole"
-                                        class="w-full bg-surface border border-primary/60 rounded-xl pl-10 pr-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/30 transition-all duration-300 shadow-sm"
+                                        class="w-full bg-surface border border-primary/60 rounded-2xl pl-10 pr-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/30 transition-all duration-300 shadow-sm"
                                         placeholder="Ketikkan posisi yang ingin Anda lamar..." type="text" />
                                 </div>
                                 <span class="text-body-sm text-outline text-[12px] pl-xs mt-1 block">Silakan ketikkan nama posisi magang yang ingin Anda tuju.</span>
@@ -494,6 +525,129 @@ if (!is_array($positions) || empty($positions)) {
             }
         }
 
+        /* ─── Custom Select Component Controls ─── */
+        let isCustomSelectOpen = false;
+
+        function toggleCustomSelect() {
+            if (isCustomSelectOpen) {
+                closeCustomSelect();
+            } else {
+                openCustomSelect();
+            }
+        }
+
+        function openCustomSelect() {
+            const menu = document.getElementById('customSelectMenu');
+            const arrow = document.getElementById('roleArrow');
+            const btn = document.getElementById('customSelectBtn');
+
+            if (!menu || isCustomSelectOpen) return;
+            isCustomSelectOpen = true;
+
+            menu.classList.remove('hidden');
+            if (btn) btn.classList.add('border-primary', 'ring-2', 'ring-primary-container/30');
+
+            if (arrow) {
+                if (window.anime) {
+                    anime({
+                        targets: arrow,
+                        rotate: 180,
+                        duration: 300,
+                        easing: 'easeOutCubic'
+                    });
+                } else {
+                    arrow.classList.add('rotate-180');
+                }
+            }
+
+            if (window.anime) {
+                anime({
+                    targets: menu,
+                    opacity: [0, 1],
+                    translateY: [-12, 0],
+                    scale: [0.96, 1],
+                    duration: 300,
+                    easing: 'easeOutCubic'
+                });
+            } else {
+                menu.classList.remove('opacity-0');
+            }
+        }
+
+        function closeCustomSelect() {
+            const menu = document.getElementById('customSelectMenu');
+            const arrow = document.getElementById('roleArrow');
+            const btn = document.getElementById('customSelectBtn');
+
+            if (!menu || !isCustomSelectOpen) return;
+            isCustomSelectOpen = false;
+
+            if (btn) btn.classList.remove('border-primary', 'ring-2', 'ring-primary-container/30');
+
+            if (arrow) {
+                if (window.anime) {
+                    anime({
+                        targets: arrow,
+                        rotate: 0,
+                        duration: 300,
+                        easing: 'easeOutCubic'
+                    });
+                } else {
+                    arrow.classList.remove('rotate-180');
+                }
+            }
+
+            if (window.anime) {
+                anime({
+                    targets: menu,
+                    opacity: [1, 0],
+                    translateY: [0, -8],
+                    scale: [1, 0.96],
+                    duration: 220,
+                    easing: 'easeInCubic',
+                    complete: function () {
+                        menu.classList.add('hidden');
+                    }
+                });
+            } else {
+                menu.classList.add('hidden', 'opacity-0');
+            }
+        }
+
+        function selectRoleValue(val, labelText) {
+            const roleSelect = document.getElementById('role');
+            const customSelectLabel = document.getElementById('customSelectLabel');
+
+            if (roleSelect) {
+                roleSelect.value = val;
+            }
+
+            if (customSelectLabel) {
+                customSelectLabel.textContent = labelText;
+                if (val === '') {
+                    customSelectLabel.classList.add('text-on-surface-variant');
+                    customSelectLabel.classList.remove('text-on-surface', 'font-semibold');
+                } else {
+                    customSelectLabel.classList.remove('text-on-surface-variant');
+                    customSelectLabel.classList.add('text-on-surface', 'font-semibold');
+                }
+            }
+
+            // Animasikan tombol saat pilihan diklik dengan Anime.js
+            const btn = document.getElementById('customSelectBtn');
+            if (window.anime && btn) {
+                anime({
+                    targets: btn,
+                    scale: [1, 1.015, 1],
+                    duration: 300,
+                    easing: 'easeOutQuad'
+                });
+            }
+
+            closeCustomSelect();
+            handleRoleChange();
+        }
+
         /* ─── Real-time Step 2: Posisi yang Dilamar ─── */
         function checkStep2() {
             const roleVal = document.getElementById('role') ? document.getElementById('role').value : '';
@@ -516,17 +670,6 @@ if (!is_array($positions) || empty($positions)) {
         function handleRoleChange() {
             const roleSelect = document.getElementById('role');
             const container = document.getElementById('customRoleContainer');
-            const roleWrapper = document.getElementById('role-wrapper');
-
-            // Animasikan pulsa micro-interaction pada wrapper dropdown dengan Anime.js
-            if (window.anime && roleWrapper) {
-                anime({
-                    targets: roleWrapper,
-                    scale: [1, 1.018, 1],
-                    duration: 350,
-                    easing: 'easeOutQuad'
-                });
-            }
 
             if (roleSelect && roleSelect.value === 'Lainnya') {
                 if (container && container.classList.contains('hidden')) {
@@ -602,27 +745,32 @@ if (!is_array($positions) || empty($positions)) {
                 if (el) el.addEventListener('input', checkStep1);
             });
 
-            // Step 2 dropdown & anime.js micro-animation listeners
-            const roleEl = document.getElementById('role');
-            if (roleEl) {
-                roleEl.addEventListener('change', handleRoleChange);
-                roleEl.addEventListener('focus', function () {
-                    const arrow = document.getElementById('roleArrow');
-                    if (arrow) arrow.classList.add('rotate-180', 'text-primary');
-                    if (window.anime) {
-                        anime({
-                            targets: '#role-wrapper',
-                            borderColor: ['#e2e8f0', '#3b82f6'],
-                            duration: 300,
-                            easing: 'easeOutQuad'
-                        });
-                    }
-                });
-                roleEl.addEventListener('blur', function () {
-                    const arrow = document.getElementById('roleArrow');
-                    if (arrow) arrow.classList.remove('rotate-180', 'text-primary');
+            // Trigger custom dropdown menu
+            const btn = document.getElementById('customSelectBtn');
+            if (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    toggleCustomSelect();
                 });
             }
+
+            // Option items click handler
+            document.querySelectorAll('.custom-option').forEach(function (opt) {
+                opt.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const val = this.getAttribute('data-value');
+                    const label = this.getAttribute('data-label') || this.innerText.trim();
+                    selectRoleValue(val, label);
+                });
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function (e) {
+                const container = document.getElementById('customSelectContainer');
+                if (container && !container.contains(e.target)) {
+                    closeCustomSelect();
+                }
+            });
 
             // Custom Role input listener & focus animation
             const customRoleInput = document.getElementById('customRole');
@@ -639,8 +787,6 @@ if (!is_array($positions) || empty($positions)) {
                     }
                 });
             }
-
-            // Step 3 listener (sudah di-handle oleh handleFileUpload via onchange)
         });
 
         /* ─── Submit Application ─── */
@@ -691,8 +837,14 @@ if (!is_array($positions) || empty($positions)) {
                     modal.classList.remove('hidden');
                     modal.classList.add('flex');
 
-                    // Reset form & custom role container
+                    // Reset form & custom role container & select label
                     document.getElementById('application-form-el').reset();
+                    const customSelectLabel = document.getElementById('customSelectLabel');
+                    if (customSelectLabel) {
+                        customSelectLabel.textContent = 'Pilih posisi magang...';
+                        customSelectLabel.classList.add('text-on-surface-variant');
+                        customSelectLabel.classList.remove('text-on-surface', 'font-semibold');
+                    }
                     const container = document.getElementById('customRoleContainer');
                     if (container) container.classList.add('hidden', 'opacity-0');
                     document.getElementById('upload-text').textContent = 'Klik untuk mengunggah atau seret file ke sini';
