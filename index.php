@@ -63,18 +63,19 @@ if (!is_array($positions) || empty($positions)) {
 
     <main class="flex-grow">
         <!-- Hero Section -->
-        <section class="w-full px-gutter py-3xl max-w-container-max mx-auto flex flex-col items-center text-center">
-            <span
-                class="inline-block px-md py-xs rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm mb-lg border border-primary-fixed-dim font-semibold"
+        <section class="w-full px-gutter py-3xl max-w-container-max mx-auto flex flex-col items-center text-center relative">
+
+            <span id="hero-badge"
+                class="inline-block px-md py-xs rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm mb-lg border border-primary-fixed-dim font-semibold opacity-0"
                 data-i18n="recruit_careers">Pendaftaran</span>
-            <h1 class="font-headline-xl text-headline-xl text-on-surface mb-md max-w-3xl" data-i18n="recruit_title">
+            <h1 id="hero-title" class="font-headline-xl text-headline-xl text-on-surface mb-md max-w-3xl font-extrabold opacity-0" data-i18n="recruit_title">
                 Pendaftaran Anak Magang</h1>
-            <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mb-xl" data-i18n="recruit_subtitle">
+            <p id="hero-subtitle" class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mb-xl opacity-0" data-i18n="recruit_subtitle">
                 Mulai perjalanan karir Anda dengan pengalaman nyata, bimbingan mentor industri, dan proyek langsung di
                 Kedayweb.
             </p>
-            <div
-                class="w-full h-64 md:h-[400px] rounded-[24px] overflow-hidden border border-outline-variant shadow-sm relative group mt-lg">
+            <div id="hero-img-box"
+                class="w-full h-64 md:h-[400px] rounded-[24px] overflow-hidden border border-outline-variant shadow-md relative group mt-lg opacity-0">
                 <img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuAf2c_JxDXo1KbLpFVJDn67XVBHdj1mnsNi7Qu-7UAr2hB9SmuW7CS49bF7djDMStwPzGjvpclkK49Gm3gICdZjnkqfw8eMc1C9LlUFSkErmQKK3ET0KGrdDyMNWDu08Q2u1EtP56g_-1VLvNfqAP18yuc1d9zVmLfS0atyrhngTBfqKaeYzexH-xYF_I88LmVkG9rqfcd2ezl-1Rc9TgUKQMA3dRkKV7M9c7e_8_88cJC15aMskLXb"
                     alt="Modern collaborative workspace" />
@@ -175,9 +176,9 @@ if (!is_array($positions) || empty($positions)) {
                         yang sesuai dengan minat dan keahlian Anda.</p>
                 </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-lg">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-lg" id="positions-grid">
                 <?php foreach ($positions as $pos): ?>
-                    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg custom-shadow-hover transition-all duration-300 flex flex-col h-full group">
+                    <div class="position-card bg-surface-container-lowest border border-outline-variant rounded-xl p-lg custom-shadow-hover transition-all duration-300 flex flex-col h-full group opacity-0">
                         <div class="flex justify-between items-start mb-md">
                             <div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-primary group-hover:bg-primary-container group-hover:text-on-primary transition-colors">
                                 <span class="material-symbols-outlined"><?php echo htmlspecialchars($pos['icon'] ?? 'work', ENT_QUOTES, 'UTF-8'); ?></span>
@@ -200,6 +201,116 @@ if (!is_array($positions) || empty($positions)) {
                         </div>
                     </div>
                 <?php endforeach; ?>
+            </div>
+        </section>
+
+        <!-- Timeline Section: Alur Magang -->
+        <section class="w-full px-gutter py-2xl max-w-container-max mx-auto border-t border-outline-variant/50" id="timeline">
+            <div class="text-center max-w-2xl mx-auto mb-2xl">
+                <span class="inline-block px-md py-xs rounded-full bg-surface-container-high text-primary font-label-sm text-label-sm mb-sm border border-outline-variant font-semibold">
+                    Tahapan Program
+                </span>
+                <h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs font-bold">
+                    Alur Program Magang
+                </h2>
+                <p class="font-body-md text-body-md text-on-surface-variant">
+                    Proses transparan dan terstruktur dari pendaftaran hingga penyelesaian program magang.
+                </p>
+            </div>
+
+            <div class="relative max-w-4xl mx-auto px-4" id="timeline-container">
+                <!-- Vertical line: Left-aligned on mobile, center-aligned on desktop -->
+                <div class="absolute left-6 md:left-1/2 top-4 bottom-4 w-0.5 bg-gradient-to-b from-primary via-primary/40 to-transparent -translate-x-1/2"></div>
+
+                <div class="space-y-6 md:space-y-12">
+                    <!-- Step 1 -->
+                    <div class="timeline-step flex flex-row items-start md:items-center gap-4 md:gap-6 opacity-0">
+                        <!-- Icon (Mobile Only) -->
+                        <div class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background md:hidden">
+                            <span class="material-symbols-outlined text-[24px]">app_registration</span>
+                        </div>
+
+                        <!-- Content Card -->
+                        <div class="flex-1 md:w-1/2 md:text-right pr-0 md:pr-8 bg-surface-container-lowest md:bg-transparent p-4 md:p-0 rounded-2xl border border-outline-variant md:border-none shadow-xs md:shadow-none">
+                            <span class="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs mb-1">Langkah 01</span>
+                            <h3 class="font-headline-sm font-bold text-on-surface text-lg">Pendaftaran Online</h3>
+                            <p class="font-body-sm text-on-surface-variant mt-1 text-sm">Isi formulir data diri dan unggah berkas CV serta portofolio terbaru melalui halaman ini.</p>
+                        </div>
+
+                        <!-- Icon (Desktop Only) -->
+                        <div class="hidden md:flex w-12 h-12 rounded-full bg-primary text-on-primary items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background">
+                            <span class="material-symbols-outlined text-[24px]">app_registration</span>
+                        </div>
+
+                        <div class="hidden md:block md:w-1/2 pl-8"></div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="timeline-step flex flex-row items-start md:items-center gap-4 md:gap-6 opacity-0">
+                        <!-- Icon (Mobile Only) -->
+                        <div class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background md:hidden">
+                            <span class="material-symbols-outlined text-[24px]">quick_reference_all</span>
+                        </div>
+
+                        <div class="hidden md:block md:w-1/2 pr-8"></div>
+
+                        <!-- Icon (Desktop Only) -->
+                        <div class="hidden md:flex w-12 h-12 rounded-full bg-primary text-on-primary items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background">
+                            <span class="material-symbols-outlined text-[24px]">quick_reference_all</span>
+                        </div>
+
+                        <!-- Content Card -->
+                        <div class="flex-1 md:w-1/2 pl-0 md:pl-8 bg-surface-container-lowest md:bg-transparent p-4 md:p-0 rounded-2xl border border-outline-variant md:border-none shadow-xs md:shadow-none">
+                            <span class="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs mb-1">Langkah 02</span>
+                            <h3 class="font-headline-sm font-bold text-on-surface text-lg">Seleksi Berkas & Wawancara</h3>
+                            <p class="font-body-sm text-on-surface-variant mt-1 text-sm">Tim Kedayweb meninjau aplikasi Anda dan mengundang ke sesi diskusi & wawancara online.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="timeline-step flex flex-row items-start md:items-center gap-4 md:gap-6 opacity-0">
+                        <!-- Icon (Mobile Only) -->
+                        <div class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background md:hidden">
+                            <span class="material-symbols-outlined text-[24px]">rocket_launch</span>
+                        </div>
+
+                        <!-- Content Card -->
+                        <div class="flex-1 md:w-1/2 md:text-right pr-0 md:pr-8 bg-surface-container-lowest md:bg-transparent p-4 md:p-0 rounded-2xl border border-outline-variant md:border-none shadow-xs md:shadow-none">
+                            <span class="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs mb-1">Langkah 03</span>
+                            <h3 class="font-headline-sm font-bold text-on-surface text-lg">Onboarding & Mentorship</h3>
+                            <p class="font-body-sm text-on-surface-variant mt-1 text-sm">Pengenalan tim, alur kerja proyek, serta penetapan mentor profesional pendamping.</p>
+                        </div>
+
+                        <!-- Icon (Desktop Only) -->
+                        <div class="hidden md:flex w-12 h-12 rounded-full bg-primary text-on-primary items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background">
+                            <span class="material-symbols-outlined text-[24px]">rocket_launch</span>
+                        </div>
+
+                        <div class="hidden md:block md:w-1/2 pl-8"></div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="timeline-step flex flex-row items-start md:items-center gap-4 md:gap-6 opacity-0">
+                        <!-- Icon (Mobile Only) -->
+                        <div class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background md:hidden">
+                            <span class="material-symbols-outlined text-[24px]">workspace_premium</span>
+                        </div>
+
+                        <div class="hidden md:block md:w-1/2 pr-8"></div>
+
+                        <!-- Icon (Desktop Only) -->
+                        <div class="hidden md:flex w-12 h-12 rounded-full bg-primary text-on-primary items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background">
+                            <span class="material-symbols-outlined text-[24px]">workspace_premium</span>
+                        </div>
+
+                        <!-- Content Card -->
+                        <div class="flex-1 md:w-1/2 pl-0 md:pl-8 bg-surface-container-lowest md:bg-transparent p-4 md:p-0 rounded-2xl border border-outline-variant md:border-none shadow-xs md:shadow-none">
+                            <span class="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs mb-1">Langkah 04</span>
+                            <h3 class="font-headline-sm font-bold text-on-surface text-lg">Sertifikat & Karir</h3>
+                            <p class="font-body-sm text-on-surface-variant mt-1 text-sm">Penerbitan sertifikat resmi magang dan kesempatan direkrut menjadi tim profesional.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -315,123 +426,163 @@ if (!is_array($positions) || empty($positions)) {
                 </div>
                 <!-- Right Side: Form -->
                 <div class="w-full md:w-2/3 p-xl">
-                    <form id="application-form-el" class="flex flex-col gap-lg" onsubmit="return false;">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
-                            <div class="flex flex-col gap-xs">
-                                <label class="font-label-md text-label-md text-on-surface"
-                                    data-i18n="recruit_fname">Nama Depan</label>
-                                <input id="firstName"
-                                    class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/20 transition-all"
-                                    placeholder="Alex" type="text" />
+                    <form id="application-form-el" class="flex flex-col gap-lg relative overflow-hidden" onsubmit="return false;">
+                        <!-- Step Pane 1: Data Diri -->
+                        <div id="step-pane-1" class="flex flex-col gap-lg transition-all duration-300">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+                                <div class="flex flex-col gap-xs">
+                                    <label class="font-label-md text-label-md text-on-surface"
+                                        data-i18n="recruit_fname">Nama Depan</label>
+                                    <input id="firstName"
+                                        class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/20 transition-all"
+                                        placeholder="Alex" type="text" />
+                                </div>
+                                <div class="flex flex-col gap-xs">
+                                    <label class="font-label-md text-label-md text-on-surface"
+                                        data-i18n="recruit_lname">Nama Belakang</label>
+                                    <input id="lastName"
+                                        class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/20 transition-all"
+                                        placeholder="Chen" type="text" />
+                                </div>
                             </div>
                             <div class="flex flex-col gap-xs">
-                                <label class="font-label-md text-label-md text-on-surface"
-                                    data-i18n="recruit_lname">Nama Belakang</label>
-                                <input id="lastName"
+                                <label class="font-label-md text-label-md text-on-surface" data-i18n="recruit_email">Alamat Email</label>
+                                <input id="email"
                                     class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/20 transition-all"
-                                    placeholder="Chen" type="text" />
+                                    placeholder="alex.chen@kampus.ac.id" type="email" />
                             </div>
-                        </div>
-                        <div class="flex flex-col gap-xs">
-                            <label class="font-label-md text-label-md text-on-surface" data-i18n="recruit_email">Alamat
-                                Email</label>
-                            <input id="email"
-                                class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/20 transition-all"
-                                placeholder="alex.chen@kampus.ac.id" type="email" />
-                        </div>
-                        <div class="flex flex-col gap-xs relative" id="customSelectContainer">
-                            <label class="font-label-md text-label-md text-on-surface" data-i18n="recruit_role">Posisi yang Dilamar</label>
-
-                            <!-- Hidden standard select element for 100% JS/Form compatibility -->
-                            <select id="role" class="hidden">
-                                <option value="" data-i18n="recruit_select">Pilih posisi magang...</option>
-                                <?php foreach ($positions as $pos): ?>
-                                    <option value="<?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?></option>
-                                <?php endforeach; ?>
-                                <option value="Lainnya" data-i18n="recruit_role_other">Posisi Lainnya (Ketik Sendiri)...</option>
-                            </select>
-
-                            <!-- Custom Styled Trigger Button (Beautiful rounded corners: rounded-2xl) -->
-                            <div id="role-wrapper" class="relative group">
-                                <button type="button" id="customSelectBtn"
-                                    class="w-full bg-surface border border-outline-variant rounded-2xl px-md py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/30 transition-all duration-300 shadow-sm hover:border-primary/60 flex items-center justify-between cursor-pointer">
-                                    <span id="customSelectLabel" class="text-on-surface-variant font-medium select-none">Pilih posisi magang...</span>
-                                    <span id="roleArrow" class="material-symbols-outlined text-[22px] text-on-surface-variant transition-transform duration-300">expand_more</span>
+                            <div class="flex justify-end pt-md mt-sm border-t border-outline-variant">
+                                <button onclick="goToStep(2)" type="button"
+                                    class="bg-primary text-on-primary rounded-xl px-xl py-sm font-label-md hover:bg-primary-container transition-colors active:scale-95 shadow-md font-bold flex items-center gap-2">
+                                    <span>Lanjut</span>
+                                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
                                 </button>
+                            </div>
+                        </div>
 
-                                <!-- Custom Floating Dropdown Menu Overlay (Rounded-2xl, soft shadow, backdrop blur, animated with anime.js) -->
-                                <div id="customSelectMenu"
-                                    class="absolute left-0 right-0 top-full mt-2 bg-surface/95 backdrop-blur-md border border-outline-variant/80 rounded-2xl p-2 shadow-2xl z-50 hidden opacity-0 origin-top overflow-hidden space-y-1">
-                                    <div class="custom-option rounded-xl px-4 py-2.5 text-body-md text-on-surface-variant hover:bg-primary-fixed/40 hover:text-primary transition-all cursor-pointer flex items-center justify-between font-medium group"
-                                        data-value="" data-label="Pilih posisi magang...">
-                                        <span>Pilih posisi magang...</span>
-                                    </div>
+                        <!-- Step Pane 2: Pendidikan & Posisi -->
+                        <div id="step-pane-2" class="hidden flex flex-col gap-lg transition-all duration-300">
+                            <div class="flex flex-col gap-xs">
+                                <label class="font-label-md text-label-md text-on-surface">Asal Kampus / Sekolah</label>
+                                <input id="institution"
+                                    class="w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/20 transition-all"
+                                    placeholder="Contoh: Politeknik Negeri / SMKN 1 Banyuwangi" type="text" />
+                            </div>
+                            <div class="flex flex-col gap-xs relative" id="customSelectContainer">
+                                <label class="font-label-md text-label-md text-on-surface" data-i18n="recruit_role">Posisi yang Dilamar</label>
+
+                                <!-- Hidden standard select element for 100% JS/Form compatibility -->
+                                <select id="role" class="hidden">
+                                    <option value="" data-i18n="recruit_select">Pilih posisi magang...</option>
                                     <?php foreach ($positions as $pos): ?>
-                                        <div class="custom-option rounded-xl px-4 py-2.5 text-body-md text-on-surface hover:bg-primary-fixed/40 hover:text-primary transition-all cursor-pointer flex items-center justify-between font-medium group"
-                                            data-value="<?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?>"
-                                            data-label="<?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?>">
-                                            <span><?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?></span>
-                                            <span class="material-symbols-outlined text-[18px] opacity-0 group-hover:opacity-100 transition-opacity text-primary">check</span>
-                                        </div>
+                                        <option value="<?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?></option>
                                     <?php endforeach; ?>
-                                    <div class="border-t border-outline-variant/40 my-1"></div>
-                                    <div class="custom-option rounded-xl px-4 py-2.5 text-body-md text-primary bg-primary/5 hover:bg-primary/10 transition-all cursor-pointer flex items-center justify-between font-semibold group"
-                                        data-value="Lainnya" data-label="Posisi Lainnya (Ketik Sendiri)...">
-                                        <span class="flex items-center gap-2">
-                                            <span class="material-symbols-outlined text-[18px]">edit_note</span>
-                                            Posisi Lainnya (Ketik Sendiri)...
-                                        </span>
-                                        <span class="material-symbols-outlined text-[18px] opacity-0 group-hover:opacity-100 transition-opacity">add</span>
+                                    <option value="Lainnya" data-i18n="recruit_role_other">Posisi Lainnya (Ketik Sendiri)...</option>
+                                </select>
+
+                                <!-- Custom Styled Trigger Button (Beautiful rounded corners: rounded-2xl) -->
+                                <div id="role-wrapper" class="relative group">
+                                    <button type="button" id="customSelectBtn"
+                                        class="w-full bg-surface border border-outline-variant rounded-2xl px-md py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/30 transition-all duration-300 shadow-sm hover:border-primary/60 flex items-center justify-between cursor-pointer">
+                                        <span id="customSelectLabel" class="text-on-surface-variant font-medium select-none">Pilih posisi magang...</span>
+                                        <span id="roleArrow" class="material-symbols-outlined text-[22px] text-on-surface-variant transition-transform duration-300">expand_more</span>
+                                    </button>
+
+                                    <!-- Custom Floating Dropdown Menu Overlay (Rounded-2xl, soft shadow, backdrop blur, animated with anime.js) -->
+                                    <div id="customSelectMenu"
+                                        class="absolute left-0 right-0 top-full mt-2 bg-surface/95 backdrop-blur-md border border-outline-variant/80 rounded-2xl p-2 shadow-2xl z-50 hidden opacity-0 origin-top overflow-hidden space-y-1">
+                                        <div class="custom-option rounded-xl px-4 py-2.5 text-body-md text-on-surface-variant hover:bg-primary-fixed/40 hover:text-primary transition-all cursor-pointer flex items-center justify-between font-medium group"
+                                            data-value="" data-label="Pilih posisi magang...">
+                                            <span>Pilih posisi magang...</span>
+                                        </div>
+                                        <?php foreach ($positions as $pos): ?>
+                                            <div class="custom-option rounded-xl px-4 py-2.5 text-body-md text-on-surface hover:bg-primary-fixed/40 hover:text-primary transition-all cursor-pointer flex items-center justify-between font-medium group"
+                                                data-value="<?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                data-label="<?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                <span><?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                                <span class="material-symbols-outlined text-[18px] opacity-0 group-hover:opacity-100 transition-opacity text-primary">check</span>
+                                            </div>
+                                        <?php endforeach; ?>
+                                        <div class="border-t border-outline-variant/40 my-1"></div>
+                                        <div class="custom-option rounded-xl px-4 py-2.5 text-body-md text-primary bg-primary/5 hover:bg-primary/10 transition-all cursor-pointer flex items-center justify-between font-semibold group"
+                                            data-value="Lainnya" data-label="Posisi Lainnya (Ketik Sendiri)...">
+                                            <span class="flex items-center gap-2">
+                                                <span class="material-symbols-outlined text-[18px]">edit_note</span>
+                                                Posisi Lainnya (Ketik Sendiri)...
+                                            </span>
+                                            <span class="material-symbols-outlined text-[18px] opacity-0 group-hover:opacity-100 transition-opacity">add</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Container Input Posisi Custom (Hidden by default, animated via anime.js) -->
-                            <div id="customRoleContainer" class="hidden opacity-0 origin-top mt-xs">
-                                <div class="relative flex items-center">
-                                    <span class="absolute left-md text-primary material-symbols-outlined text-[20px]">edit_note</span>
-                                    <input id="customRole"
-                                        class="w-full bg-surface border border-primary/60 rounded-2xl pl-10 pr-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/30 transition-all duration-300 shadow-sm"
-                                        placeholder="Ketikkan posisi yang ingin Anda lamar..." type="text" />
+                                <!-- Container Input Posisi Custom (Hidden by default, animated via anime.js) -->
+                                <div id="customRoleContainer" class="hidden opacity-0 origin-top mt-xs">
+                                    <div class="relative flex items-center">
+                                        <span class="absolute left-md text-primary material-symbols-outlined text-[20px]">edit_note</span>
+                                        <input id="customRole"
+                                            class="w-full bg-surface border border-primary/60 rounded-2xl pl-10 pr-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/30 transition-all duration-300 shadow-sm"
+                                            placeholder="Ketikkan posisi yang ingin Anda lamar..." type="text" />
+                                    </div>
+                                    <span class="text-body-sm text-outline text-[12px] pl-xs mt-1 block">Silakan ketikkan nama posisi magang yang ingin Anda tuju.</span>
                                 </div>
-                                <span class="text-body-sm text-outline text-[12px] pl-xs mt-1 block">Silakan ketikkan nama posisi magang yang ingin Anda tuju.</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-md mt-sm border-t border-outline-variant">
+                                <button onclick="goToStep(1)" type="button"
+                                    class="bg-surface-container-high text-on-surface rounded-xl px-lg py-sm font-label-md hover:bg-surface-container-highest transition-colors active:scale-95 font-semibold flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                                    <span>Kembali</span>
+                                </button>
+                                <button onclick="goToStep(3)" type="button"
+                                    class="bg-primary text-on-primary rounded-xl px-xl py-sm font-label-md hover:bg-primary-container transition-colors active:scale-95 shadow-md font-bold flex items-center gap-2">
+                                    <span>Lanjut</span>
+                                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                                </button>
                             </div>
                         </div>
-                        <!-- Upload area -->
-                        <div class="flex flex-col gap-xs mt-md">
-                            <label class="font-label-md text-label-md text-on-surface" data-i18n="recruit_cv">Resume /
-                                CV</label>
-                            <div id="upload-area" onclick="document.getElementById('fileInput').click()"
-                                class="w-full border-2 border-dashed border-outline-variant rounded-xl p-lg flex flex-col items-center justify-center bg-surface hover:bg-surface-container-low transition-colors cursor-pointer group">
-                                <input type="file" id="fileInput" accept=".pdf,.docx" class="hidden"
-                                    onchange="handleFileUpload(this)" />
-                                <div
-                                    class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant mb-sm group-hover:bg-primary-fixed group-hover:text-primary transition-colors">
-                                    <span class="material-symbols-outlined">upload_file</span>
+
+                        <!-- Step Pane 3: Berkas -->
+                        <div id="step-pane-3" class="hidden flex flex-col gap-lg transition-all duration-300">
+                            <!-- Upload area -->
+                            <div class="flex flex-col gap-xs">
+                                <label class="font-label-md text-label-md text-on-surface" data-i18n="recruit_cv">Resume / CV</label>
+                                <div id="upload-area" onclick="document.getElementById('fileInput').click()"
+                                    class="w-full border-2 border-dashed border-outline-variant rounded-xl p-lg flex flex-col items-center justify-center bg-surface hover:bg-surface-container-low transition-colors cursor-pointer group">
+                                    <input type="file" id="fileInput" accept=".pdf,.docx" class="hidden"
+                                        onchange="handleFileUpload(this)" />
+                                    <div
+                                        class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant mb-sm group-hover:bg-primary-fixed group-hover:text-primary transition-colors">
+                                        <span class="material-symbols-outlined">upload_file</span>
+                                    </div>
+                                    <span id="upload-text" class="font-label-md text-label-md text-on-surface text-center"
+                                        data-i18n="recruit_upload">Klik untuk mengunggah atau seret file ke sini</span>
+                                    <span class="font-body-sm text-body-sm text-on-surface-variant text-center"
+                                        data-i18n="recruit_upload_f">PDF, DOCX maksimal 10MB</span>
                                 </div>
-                                <span id="upload-text" class="font-label-md text-label-md text-on-surface text-center"
-                                    data-i18n="recruit_upload">Klik untuk mengunggah atau seret file ke sini</span>
-                                <span class="font-body-sm text-body-sm text-on-surface-variant text-center"
-                                    data-i18n="recruit_upload_f">PDF, DOCX maksimal 10MB</span>
                             </div>
-                        </div>
-                        <div class="flex flex-col gap-xs">
-                            <label class="font-label-md text-label-md text-on-surface"
-                                data-i18n="recruit_portfolio">Tautan Portofolio (Opsional)</label>
-                            <div class="relative">
-                                <span
-                                    class="absolute left-md top-1/2 -translate-y-1/2 text-outline material-symbols-outlined text-[20px]">link</span>
-                                <input id="portfolio"
-                                    class="w-full bg-surface border border-outline-variant rounded-lg pl-10 pr-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/20 transition-all"
-                                    placeholder="https://github.com/username" type="url" />
+                            <div class="flex flex-col gap-xs">
+                                <label class="font-label-md text-label-md text-on-surface"
+                                    data-i18n="recruit_portfolio">Tautan Portofolio (Opsional)</label>
+                                <div class="relative">
+                                    <span
+                                        class="absolute left-md top-1/2 -translate-y-1/2 text-outline material-symbols-outlined text-[20px]">link</span>
+                                    <input id="portfolio"
+                                        class="w-full bg-surface border border-outline-variant rounded-lg pl-10 pr-md py-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/20 transition-all"
+                                        placeholder="https://github.com/username" type="url" />
+                                </div>
                             </div>
-                        </div>
-                        <div class="flex justify-end pt-md mt-sm border-t border-outline-variant">
-                            <button onclick="submitApplication()"
-                                class="bg-primary text-on-primary rounded-lg px-xl py-sm font-label-md text-label-md hover:bg-primary-container transition-colors active:scale-95 shadow-md font-bold"
-                                type="button" data-i18n="recruit_submit_btn">
-                                Kirim Pendaftaran
-                            </button>
+                            <div class="flex justify-between items-center pt-md mt-sm border-t border-outline-variant">
+                                <button onclick="goToStep(2)" type="button"
+                                    class="bg-surface-container-high text-on-surface rounded-xl px-lg py-sm font-label-md hover:bg-surface-container-highest transition-colors active:scale-95 font-semibold flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                                    <span>Kembali</span>
+                                </button>
+                                <button onclick="submitApplication()"
+                                    class="bg-primary text-on-primary rounded-xl px-xl py-sm font-label-md hover:bg-primary-container transition-colors active:scale-95 shadow-md font-bold flex items-center gap-2"
+                                    type="button" data-i18n="recruit_submit_btn">
+                                    <span>Kirim Pendaftaran</span>
+                                    <span class="material-symbols-outlined text-[18px]">send</span>
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -862,12 +1013,132 @@ if (!is_array($positions) || empty($positions)) {
         /* ─── Close Modal ─── */
         function closeModal() {
             const modal = document.getElementById('successModal');
-            modal.classList.remove('flex');
-            modal.classList.add('hidden');
+            if (modal) {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
         }
 
+        /* ─── Smooth Form Step Navigation ─── */
+        let currentFormStep = 1;
+        function goToStep(targetStep) {
+            if (targetStep === currentFormStep) return;
+            const currentPane = document.getElementById('step-pane-' + currentFormStep);
+            const targetPane = document.getElementById('step-pane-' + targetStep);
+            if (!currentPane || !targetPane) return;
+
+            const isNext = targetStep > currentFormStep;
+            currentFormStep = targetStep;
+
+            if (window.anime) {
+                anime({
+                    targets: currentPane,
+                    opacity: [1, 0],
+                    translateX: isNext ? [0, -40] : [0, 40],
+                    duration: 250,
+                    easing: 'easeInCubic',
+                    complete: function() {
+                        currentPane.classList.add('hidden');
+                        targetPane.classList.remove('hidden');
+                        anime({
+                            targets: targetPane,
+                            opacity: [0, 1],
+                            translateX: isNext ? [40, 0] : [-40, 0],
+                            duration: 350,
+                            easing: 'easeOutCubic'
+                        });
+                    }
+                });
+            } else {
+                currentPane.classList.add('hidden');
+                targetPane.classList.remove('hidden');
+            }
+            activateStep(targetStep);
+        }
+
+        /* ─── Hero Entrance Animation on Page Load ─── */
+        (function() {
+            if (window.anime) {
+                anime.timeline({ easing: 'easeOutCubic' })
+                    .add({
+                        targets: '#hero-badge',
+                        translateY: [-20, 0],
+                        opacity: [0, 1],
+                        duration: 600
+                    })
+                    .add({
+                        targets: '#hero-title',
+                        translateY: [30, 0],
+                        opacity: [0, 1],
+                        duration: 700
+                    }, '-=400')
+                    .add({
+                        targets: '#hero-subtitle',
+                        translateY: [30, 0],
+                        opacity: [0, 1],
+                        duration: 700
+                    }, '-=500')
+                    .add({
+                        targets: '#hero-img-box',
+                        scale: [0.96, 1],
+                        translateY: [40, 0],
+                        opacity: [0, 1],
+                        duration: 900
+                    }, '-=500');
+            } else {
+                ['hero-badge', 'hero-title', 'hero-subtitle', 'hero-img-box'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.remove('opacity-0');
+                });
+            }
+        })();
+
+        /* ─── Interactive Card Hover Icon Bounce ─── */
+        (function() {
+            document.querySelectorAll('.glass-card, .position-card').forEach(card => {
+                const icon = card.querySelector('.material-symbols-outlined');
+                if (!icon) return;
+                card.addEventListener('mouseenter', () => {
+                    if (window.anime) {
+                        anime({
+                            targets: icon,
+                            translateY: [-7, 0],
+                            scale: [1.15, 1],
+                            duration: 500,
+                            easing: 'easeOutElastic(1, .6)'
+                        });
+                    }
+                });
+            });
+        })();
+
+        /* ─── Anime.js Scroll Animation for Timeline Steps ─── */
+        (function() {
+            const timelineContainer = document.getElementById('timeline-container');
+            if (!timelineContainer || !window.anime) return;
+
+            let timelineAnimated = false;
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !timelineAnimated) {
+                        timelineAnimated = true;
+                        anime({
+                            targets: '.timeline-step',
+                            translateY: [60, 0],
+                            opacity: [0, 1],
+                            duration: 1100,
+                            delay: anime.stagger(350, { start: 200 }),
+                            easing: 'easeOutCubic'
+                        });
+                    }
+                });
+            }, { threshold: 0.25, rootMargin: '0px 0px -120px 0px' });
+
+            observer.observe(timelineContainer);
+        })();
+
         /* ─── Anime.js Scroll Animation for Partner Logos ─── */
-        document.addEventListener('DOMContentLoaded', () => {
+        (function() {
             const partnerSection = document.getElementById('partners');
             if (partnerSection) {
                 let hasAnimated = false;
@@ -894,65 +1165,141 @@ if (!is_array($positions) || empty($positions)) {
                 }, { threshold: 0.2 });
                 observer.observe(partnerSection);
             }
-        });
+        })();
 
         /* ─── Anime.js Scroll Animation for Benefit Cards ─── */
-        document.addEventListener('DOMContentLoaded', () => {
+        (function() {
             const benefitsGrid = document.getElementById('benefits-grid');
             if (!benefitsGrid || !window.anime) return;
 
-            let benefitsAnimated = false;
+            const isMobile = window.innerWidth < 768;
 
-            const benefitObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting && !benefitsAnimated) {
-                        benefitsAnimated = true;
-
-                        // Kolom Kiri (card 1 & 4) — spawn dari kiri
-                        anime({
-                            targets: '.benefit-card-left',
-                            translateX: [-80, 0],
-                            opacity: [0, 1],
-                            duration: 800,
-                            delay: anime.stagger(160, { start: 0 }),
-                            easing: 'easeOutCubic'
+            if (isMobile) {
+                // Mode Mobile: Observe setiap card secara individual saat persis masuk layar pandang
+                const cards = benefitsGrid.querySelectorAll('[id^="benefit-card-"]');
+                cards.forEach((card) => {
+                    let animated = false;
+                    const cardObserver = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting && !animated) {
+                                animated = true;
+                                anime({
+                                    targets: card,
+                                    translateY: [45, 0],
+                                    opacity: [0, 1],
+                                    duration: 950,
+                                    easing: 'easeOutCubic'
+                                });
+                            }
                         });
-
-                        // Kolom Tengah Atas (card 2) — spawn dari atas
-                        anime({
-                            targets: '#benefit-card-2',
-                            translateY: [-70, 0],
-                            opacity: [0, 1],
-                            duration: 800,
-                            delay: 120,
-                            easing: 'easeOutCubic'
-                        });
-
-                        // Kolom Tengah Bawah (card 5) — spawn dari bawah
-                        anime({
-                            targets: '#benefit-card-5',
-                            translateY: [70, 0],
-                            opacity: [0, 1],
-                            duration: 800,
-                            delay: 280,
-                            easing: 'easeOutCubic'
-                        });
-
-                        // Kolom Kanan (card 3 & 6) — spawn dari kanan
-                        anime({
-                            targets: '.benefit-card-right',
-                            translateX: [80, 0],
-                            opacity: [0, 1],
-                            duration: 800,
-                            delay: anime.stagger(160, { start: 60 }),
-                            easing: 'easeOutCubic'
-                        });
-                    }
+                    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+                    cardObserver.observe(card);
                 });
-            }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+            } else {
+                // Mode Desktop (3 Kolom Grid): Spawn dari arah kiri/atas/bawah/kanan
+                let benefitsAnimated = false;
+                const benefitObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting && !benefitsAnimated) {
+                            benefitsAnimated = true;
 
-            benefitObserver.observe(benefitsGrid);
-        });
+                            // Kolom Kiri (card 1 & 4) — spawn dari kiri
+                            anime({
+                                targets: '.benefit-card-left',
+                                translateX: [-80, 0],
+                                opacity: [0, 1],
+                                duration: 850,
+                                delay: anime.stagger(180, { start: 0 }),
+                                easing: 'easeOutCubic'
+                            });
+
+                            // Kolom Tengah Atas (card 2) — spawn dari atas
+                            anime({
+                                targets: '#benefit-card-2',
+                                translateY: [-70, 0],
+                                opacity: [0, 1],
+                                duration: 850,
+                                delay: 140,
+                                easing: 'easeOutCubic'
+                            });
+
+                            // Kolom Tengah Bawah (card 5) — spawn dari bawah
+                            anime({
+                                targets: '#benefit-card-5',
+                                translateY: [70, 0],
+                                opacity: [0, 1],
+                                duration: 850,
+                                delay: 300,
+                                easing: 'easeOutCubic'
+                            });
+
+                            // Kolom Kanan (card 3 & 6) — spawn dari kanan
+                            anime({
+                                targets: '.benefit-card-right',
+                                translateX: [80, 0],
+                                opacity: [0, 1],
+                                duration: 850,
+                                delay: anime.stagger(180, { start: 80 }),
+                                easing: 'easeOutCubic'
+                            });
+                        }
+                    });
+                }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+                benefitObserver.observe(benefitsGrid);
+            }
+        })();
+
+        /* ─── Anime.js Scroll Animation for Position Cards ─── */
+        (function() {
+            const positionsGrid = document.getElementById('positions-grid');
+            if (!positionsGrid || !window.anime) return;
+
+            const isMobile = window.innerWidth < 768;
+
+            if (isMobile) {
+                const cards = positionsGrid.querySelectorAll('.position-card');
+                cards.forEach((card) => {
+                    let animated = false;
+                    const cardObserver = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting && !animated) {
+                                animated = true;
+                                anime({
+                                    targets: card,
+                                    translateY: [45, 0],
+                                    opacity: [0, 1],
+                                    duration: 900,
+                                    easing: 'easeOutCubic'
+                                });
+                            }
+                        });
+                    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+                    cardObserver.observe(card);
+                });
+            } else {
+                let positionsAnimated = false;
+                const positionObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting && !positionsAnimated) {
+                            positionsAnimated = true;
+
+                            anime({
+                                targets: '.position-card',
+                                translateY: [60, 0],
+                                opacity: [0, 1],
+                                scale: [0.97, 1],
+                                duration: 800,
+                                delay: anime.stagger(150, { start: 80 }),
+                                easing: 'easeOutCubic'
+                            });
+                        }
+                    });
+                }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+                positionObserver.observe(positionsGrid);
+            }
+        })();
     </script>
 </body>
 
