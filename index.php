@@ -349,7 +349,7 @@ if (!is_array($positions) || empty($positions)) {
                                     <?php foreach ($positions as $pos): ?>
                                         <option value="<?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($pos['title'], ENT_QUOTES, 'UTF-8'); ?></option>
                                     <?php endforeach; ?>
-                                    <option value="Lainnya" data-i18n="recruit_role_other">✏️ Posisi Lainnya (Ketik Sendiri)...</option>
+                                    <option value="Lainnya" data-i18n="recruit_role_other">Posisi Lainnya (Ketik Sendiri)...</option>
                                 </select>
                                 <div id="roleArrow" class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-md text-on-surface-variant transition-transform duration-300">
                                     <span class="material-symbols-outlined text-[22px]">expand_more</span>
