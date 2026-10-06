@@ -118,8 +118,8 @@ if (!is_array($positions) || empty($positions)) {
         .batik-float {
             position: absolute;
             will-change: transform;
-            /* PNG with transparent bg from Figma */
-            background-image: url('uploads/icon/batik-gajah-oling.png');
+            /* PNG with transparent */
+            background-image: url('uploads/Icon/batik-gajah-oling.png');
             background-size: contain;
             background-repeat: no-repeat;
         }
