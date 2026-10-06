@@ -96,9 +96,9 @@ if (!is_array($positions) || empty($positions)) {
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
-                <!-- Benefit 1 -->
-                <div class="glass-card bg-surface-container-lowest border border-outline-variant rounded-2xl p-lg flex flex-col items-start hover:-translate-y-1 transition-all duration-300">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg" id="benefits-grid">
+                <!-- Benefit 1 — Left column, row 1 — slide from left -->
+                <div id="benefit-card-1" class="benefit-card-left glass-card bg-surface-container-lowest border border-outline-variant rounded-2xl p-lg flex flex-col items-start hover:-translate-y-1 transition-all duration-300 opacity-0">
                     <div class="w-12 h-12 rounded-xl bg-primary-container text-on-primary flex items-center justify-center mb-md">
                         <span class="material-symbols-outlined text-[26px]">work_history</span>
                     </div>
@@ -108,8 +108,8 @@ if (!is_array($positions) || empty($positions)) {
                     </p>
                 </div>
 
-                <!-- Benefit 2 -->
-                <div class="glass-card bg-surface-container-lowest border border-outline-variant rounded-2xl p-lg flex flex-col items-start hover:-translate-y-1 transition-all duration-300">
+                <!-- Benefit 2 — Middle column, row 1 — slide from top -->
+                <div id="benefit-card-2" class="benefit-card-top glass-card bg-surface-container-lowest border border-outline-variant rounded-2xl p-lg flex flex-col items-start hover:-translate-y-1 transition-all duration-300 opacity-0">
                     <div class="w-12 h-12 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center mb-md">
                         <span class="material-symbols-outlined text-[26px]">supervisor_account</span>
                     </div>
@@ -119,8 +119,8 @@ if (!is_array($positions) || empty($positions)) {
                     </p>
                 </div>
 
-                <!-- Benefit 3 -->
-                <div class="glass-card bg-surface-container-lowest border border-outline-variant rounded-2xl p-lg flex flex-col items-start hover:-translate-y-1 transition-all duration-300">
+                <!-- Benefit 3 — Right column, row 1 — slide from right -->
+                <div id="benefit-card-3" class="benefit-card-right glass-card bg-surface-container-lowest border border-outline-variant rounded-2xl p-lg flex flex-col items-start hover:-translate-y-1 transition-all duration-300 opacity-0">
                     <div class="w-12 h-12 rounded-xl bg-surface-container-high text-primary flex items-center justify-center mb-md">
                         <span class="material-symbols-outlined text-[26px]">workspace_premium</span>
                     </div>
@@ -130,8 +130,8 @@ if (!is_array($positions) || empty($positions)) {
                     </p>
                 </div>
 
-                <!-- Benefit 4 -->
-                <div class="glass-card bg-surface-container-lowest border border-outline-variant rounded-2xl p-lg flex flex-col items-start hover:-translate-y-1 transition-all duration-300">
+                <!-- Benefit 4 — Left column, row 2 — slide from left -->
+                <div id="benefit-card-4" class="benefit-card-left glass-card bg-surface-container-lowest border border-outline-variant rounded-2xl p-lg flex flex-col items-start hover:-translate-y-1 transition-all duration-300 opacity-0">
                     <div class="w-12 h-12 rounded-xl bg-surface-container-high text-primary flex items-center justify-center mb-md">
                         <span class="material-symbols-outlined text-[26px]">hub</span>
                     </div>
@@ -141,8 +141,8 @@ if (!is_array($positions) || empty($positions)) {
                     </p>
                 </div>
 
-                <!-- Benefit 5 -->
-                <div class="glass-card bg-surface-container-lowest border border-outline-variant rounded-2xl p-lg flex flex-col items-start hover:-translate-y-1 transition-all duration-300">
+                <!-- Benefit 5 — Middle column, row 2 — slide from bottom -->
+                <div id="benefit-card-5" class="benefit-card-bottom glass-card bg-surface-container-lowest border border-outline-variant rounded-2xl p-lg flex flex-col items-start hover:-translate-y-1 transition-all duration-300 opacity-0">
                     <div class="w-12 h-12 rounded-xl bg-primary-container text-on-primary flex items-center justify-center mb-md">
                         <span class="material-symbols-outlined text-[26px]">rocket_launch</span>
                     </div>
@@ -152,8 +152,8 @@ if (!is_array($positions) || empty($positions)) {
                     </p>
                 </div>
 
-                <!-- Benefit 6 -->
-                <div class="glass-card bg-surface-container-lowest border border-outline-variant rounded-2xl p-lg flex flex-col items-start hover:-translate-y-1 transition-all duration-300">
+                <!-- Benefit 6 — Right column, row 2 — slide from right -->
+                <div id="benefit-card-6" class="benefit-card-right glass-card bg-surface-container-lowest border border-outline-variant rounded-2xl p-lg flex flex-col items-start hover:-translate-y-1 transition-all duration-300 opacity-0">
                     <div class="w-12 h-12 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center mb-md">
                         <span class="material-symbols-outlined text-[26px]">schedule</span>
                     </div>
@@ -894,6 +894,64 @@ if (!is_array($positions) || empty($positions)) {
                 }, { threshold: 0.2 });
                 observer.observe(partnerSection);
             }
+        });
+
+        /* ─── Anime.js Scroll Animation for Benefit Cards ─── */
+        document.addEventListener('DOMContentLoaded', () => {
+            const benefitsGrid = document.getElementById('benefits-grid');
+            if (!benefitsGrid || !window.anime) return;
+
+            let benefitsAnimated = false;
+
+            const benefitObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !benefitsAnimated) {
+                        benefitsAnimated = true;
+
+                        // Kolom Kiri (card 1 & 4) — spawn dari kiri
+                        anime({
+                            targets: '.benefit-card-left',
+                            translateX: [-80, 0],
+                            opacity: [0, 1],
+                            duration: 800,
+                            delay: anime.stagger(160, { start: 0 }),
+                            easing: 'easeOutCubic'
+                        });
+
+                        // Kolom Tengah Atas (card 2) — spawn dari atas
+                        anime({
+                            targets: '#benefit-card-2',
+                            translateY: [-70, 0],
+                            opacity: [0, 1],
+                            duration: 800,
+                            delay: 120,
+                            easing: 'easeOutCubic'
+                        });
+
+                        // Kolom Tengah Bawah (card 5) — spawn dari bawah
+                        anime({
+                            targets: '#benefit-card-5',
+                            translateY: [70, 0],
+                            opacity: [0, 1],
+                            duration: 800,
+                            delay: 280,
+                            easing: 'easeOutCubic'
+                        });
+
+                        // Kolom Kanan (card 3 & 6) — spawn dari kanan
+                        anime({
+                            targets: '.benefit-card-right',
+                            translateX: [80, 0],
+                            opacity: [0, 1],
+                            duration: 800,
+                            delay: anime.stagger(160, { start: 60 }),
+                            easing: 'easeOutCubic'
+                        });
+                    }
+                });
+            }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+            benefitObserver.observe(benefitsGrid);
         });
     </script>
 </body>
