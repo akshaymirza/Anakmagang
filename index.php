@@ -106,10 +106,45 @@ if (!is_array($positions) || empty($positions)) {
             transform: translateX(100%);
             transition: transform 0.55s cubic-bezier(0.4,0,0.2,1);
         }
+
+        /* ── Floating Batik Background Layer ── */
+        #batik-layer {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .batik-float {
+            position: absolute;
+            will-change: transform;
+            /* PNG with transparent bg from Figma */
+            background-image: url('uploads/icon/batik-gajah-oling.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
     </style>
 </head>
 
 <body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col antialiased">
+
+    <!-- ═══ Floating Batik Gajah Oling Background Layer ═══
+         Ganti 'batik-gajah-oling.png' dengan nama file yang kamu export dari Figma.
+         Letakkan file PNG (transparan) di: uploads/icon/batik-gajah-oling.png
+    ═════════════════════════════════════════════════════ -->
+    <div id="batik-layer" aria-hidden="true">
+        <!-- Tiap .batik-float adalah 1 kopi motif mengambang -->
+        <!-- opacity & ukuran sengaja berbeda untuk efek depth -->
+        <div class="batik-float" style="width:260px;height:260px;top:4%;left:-4%;opacity:0.07;transform:rotate(-15deg)"></div>
+        <div class="batik-float" style="width:180px;height:180px;top:12%;right:2%;opacity:0.05;transform:rotate(22deg)"></div>
+        <div class="batik-float" style="width:320px;height:320px;top:38%;left:55%;opacity:0.06;transform:rotate(8deg)"></div>
+        <div class="batik-float" style="width:200px;height:200px;top:52%;left:-2%;opacity:0.07;transform:rotate(-30deg)"></div>
+        <div class="batik-float" style="width:240px;height:240px;top:70%;right:-3%;opacity:0.05;transform:rotate(40deg)"></div>
+        <div class="batik-float" style="width:150px;height:150px;top:80%;left:30%;opacity:0.08;transform:rotate(-5deg)"></div>
+        <div class="batik-float" style="width:280px;height:280px;top:25%;left:20%;opacity:0.04;transform:rotate(55deg)"></div>
+        <div class="batik-float" style="width:170px;height:170px;top:60%;right:25%;opacity:0.06;transform:rotate(-18deg)"></div>
+    </div>
+
     <?php include 'partials/topnav-public.php'; ?>
 
     <main class="flex-grow">
@@ -1183,6 +1218,74 @@ if (!is_array($positions) || empty($positions)) {
                         duration: 1100, delay: anime.stagger(65, { start: 20 }),
                         easing: 'easeOutElastic(1, .58)' });
             }, { threshold: 0.05, rootMargin: '0px 0px 60px 0px' });
+        })();
+
+        /* ═══════════════════════════════════════════════════
+           FLOATING BATIK GAJAH OLING BACKGROUND ANIMATION
+           ─ Infinite organic drift, tiap elemen jalur unik
+           ─ Scroll parallax: elemen kecil (jauh) bergerak
+             lebih lambat dari elemen besar (dekat)
+           ═══════════════════════════════════════════════════ */
+        (function() {
+            if (!window.anime) return;
+
+            const floats = document.querySelectorAll('.batik-float');
+            if (!floats.length) return;
+
+            // Konfigurasi unik per elemen: drift range & durasi berbeda
+            // Supaya tidak terlihat seragam/robot
+            const configs = [
+                { x: 28, y: 22, r: 8,  dur: 9000  },
+                { x: -18, y: 30, r: -6, dur: 11500 },
+                { x: 22, y: -18, r: 5,  dur: 8500  },
+                { x: -30, y: 20, r: -9, dur: 13000 },
+                { x: 25, y: 25, r: 7,   dur: 10000 },
+                { x: -20, y: -22, r: -5,dur: 7800  },
+                { x: 18, y: 28, r: 10,  dur: 12500 },
+                { x: -24, y: -16, r: -7,dur: 9800  }
+            ];
+
+            floats.forEach((el, i) => {
+                const cfg = configs[i % configs.length];
+                const baseRotate = parseFloat(el.style.transform.match(/rotate\(([^)]+)deg\)/)?.[1] || 0);
+
+                // Infinite organic float — direction alternates via loop: true + direction: 'alternate'
+                anime({
+                    targets: el,
+                    translateX: [
+                        { value:  cfg.x,      duration: cfg.dur * 0.5, easing: 'easeInOutSine' },
+                        { value: -cfg.x * 0.6,duration: cfg.dur * 0.5, easing: 'easeInOutSine' }
+                    ],
+                    translateY: [
+                        { value:  cfg.y,      duration: cfg.dur * 0.6, easing: 'easeInOutSine' },
+                        { value: -cfg.y * 0.7,duration: cfg.dur * 0.4, easing: 'easeInOutSine' }
+                    ],
+                    rotate: [
+                        { value: baseRotate + cfg.r,       duration: cfg.dur * 0.55, easing: 'easeInOutSine' },
+                        { value: baseRotate - cfg.r * 0.5, duration: cfg.dur * 0.45, easing: 'easeInOutSine' }
+                    ],
+                    loop: true,
+                    direction: 'alternate'
+                });
+            });
+
+            /* ─ Scroll parallax: elemen dg opacity lebih tinggi = lebih dekat = bergerak lebih banyak ─ */
+            let scrollTick = false;
+            window.addEventListener('scroll', () => {
+                if (!scrollTick) {
+                    requestAnimationFrame(() => {
+                        const scrollY = window.scrollY;
+                        floats.forEach(el => {
+                            // opacity sebagai proxy untuk "kedalaman": lebih opak = lebih dekat
+                            const depth = parseFloat(el.style.opacity) || 0.06;
+                            const speed = depth * 120; // elemen dekat bergerak lebih jauh
+                            el.style.setProperty('--parallax-y', `${scrollY * speed * -0.01}px`);
+                        });
+                        scrollTick = false;
+                    });
+                    scrollTick = true;
+                }
+            }, { passive: true });
         })();
     </script>
 </body>
