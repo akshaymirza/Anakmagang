@@ -348,8 +348,30 @@ $current_active_role = current_user_role();
                 </div>
             <?php endif; ?>
 
+            <!-- Navigation Bar Menu: Set Account vs Set Location -->
+            <div class="bg-surface-container-lowest border border-outline-variant rounded-2xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button type="button" id="nav-btn-account" onclick="switchSuperadminTab('account')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs bg-primary text-on-primary">
+                        <span class="material-symbols-outlined text-lg">manage_accounts</span>
+                        <span>Set Account</span>
+                    </button>
+                    <button type="button" id="nav-btn-location" onclick="switchSuperadminTab('location')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high">
+                        <span class="material-symbols-outlined text-lg">location_on</span>
+                        <span>Set Location</span>
+                    </button>
+                    <button type="button" id="nav-btn-all" onclick="switchSuperadminTab('all')" class="hidden sm:flex px-4 py-2.5 rounded-xl font-bold text-sm transition-all items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high">
+                        <span class="material-symbols-outlined text-lg">grid_view</span>
+                        <span>Tampilkan Semua</span>
+                    </button>
+                </div>
+                <div class="hidden md:flex items-center gap-2 text-xs font-semibold text-on-surface-variant px-3 py-1.5 bg-surface-container-low rounded-xl border border-outline-variant">
+                    <span class="material-symbols-outlined text-sm text-primary">tune</span>
+                    <span id="tab-active-label">Mode: Set Account</span>
+                </div>
+            </div>
+
             <!-- Section 1: Pengaturan Titik Zona Koordinat Absensi (Geofencing) -->
-            <div class="glass-card rounded-2xl border border-outline-variant p-6 shadow-sm">
+            <div class="glass-card rounded-2xl border border-outline-variant p-6 shadow-sm hidden" id="section-location">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-outline-variant mb-6">
                     <div>
                         <div class="flex items-center gap-2">
@@ -477,7 +499,7 @@ $current_active_role = current_user_role();
             </div>
 
             <!-- Section 2: Manage Positions on index.php -->
-            <div class="glass-card rounded-2xl border border-outline-variant p-6 shadow-sm">
+            <div class="glass-card rounded-2xl border border-outline-variant p-6 shadow-sm" id="section-positions">
                 <div class="flex justify-between items-center mb-4">
                     <div>
                         <h3 class="font-headline-md font-bold text-on-surface">Kontrol Posisi Magang di index.php</h3>
@@ -518,7 +540,7 @@ $current_active_role = current_user_role();
             </div>
 
             <!-- Section 3: Manage Database User Roles -->
-            <div class="glass-card rounded-2xl border border-outline-variant p-6 shadow-sm">
+            <div class="glass-card rounded-2xl border border-outline-variant p-6 shadow-sm" id="section-account">
                 <div class="flex justify-between items-center mb-4">
                     <div>
                         <h3 class="font-headline-md font-bold text-on-surface">Manajemen User & Role Database</h3>
@@ -992,8 +1014,85 @@ $current_active_role = current_user_role();
             );
         }
 
+        function switchSuperadminTab(tab) {
+            const sectionLocation = document.getElementById('section-location');
+            const sectionAccount = document.getElementById('section-account');
+            const sectionPositions = document.getElementById('section-positions');
+            const btnLocation = document.getElementById('nav-btn-location');
+            const btnAccount = document.getElementById('nav-btn-account');
+            const btnAll = document.getElementById('nav-btn-all');
+            const activeLabel = document.getElementById('tab-active-label');
+
+            const allBtns = [btnLocation, btnAccount, btnAll];
+            allBtns.forEach(btn => {
+                if (!btn) return;
+                btn.classList.remove('bg-primary', 'text-on-primary', 'shadow-xs');
+                btn.classList.add('text-on-surface-variant', 'hover:bg-surface-container-high');
+            });
+
+            if (tab === 'location') {
+                if (sectionLocation) sectionLocation.classList.remove('hidden');
+                if (sectionAccount) sectionAccount.classList.add('hidden');
+                if (sectionPositions) sectionPositions.classList.add('hidden');
+
+                if (btnLocation) {
+                    btnLocation.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
+                    btnLocation.classList.remove('text-on-surface-variant', 'hover:bg-surface-container-high');
+                }
+                if (activeLabel) activeLabel.textContent = 'Mode: Set Location';
+
+                if (typeof geofenceMap !== 'undefined' && geofenceMap) {
+                    setTimeout(() => {
+                        geofenceMap.invalidateSize();
+                    }, 150);
+                }
+                history.replaceState(null, null, '#location');
+            } else if (tab === 'all') {
+                if (sectionLocation) sectionLocation.classList.remove('hidden');
+                if (sectionAccount) sectionAccount.classList.remove('hidden');
+                if (sectionPositions) sectionPositions.classList.remove('hidden');
+
+                if (btnAll) {
+                    btnAll.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
+                    btnAll.classList.remove('text-on-surface-variant', 'hover:bg-surface-container-high');
+                }
+                if (activeLabel) activeLabel.textContent = 'Mode: Tampilkan Semua';
+
+                if (typeof geofenceMap !== 'undefined' && geofenceMap) {
+                    setTimeout(() => {
+                        geofenceMap.invalidateSize();
+                    }, 150);
+                }
+                history.replaceState(null, null, '#all');
+            } else { // default 'account'
+                if (sectionLocation) sectionLocation.classList.add('hidden');
+                if (sectionAccount) sectionAccount.classList.remove('hidden');
+                if (sectionPositions) sectionPositions.classList.remove('hidden');
+
+                if (btnAccount) {
+                    btnAccount.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
+                    btnAccount.classList.remove('text-on-surface-variant', 'hover:bg-surface-container-high');
+                }
+                if (activeLabel) activeLabel.textContent = 'Mode: Set Account';
+                history.replaceState(null, null, '#account');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             initGeofenceMap();
+
+            let defaultTab = 'account';
+            const actionSubmitted = '<?php echo htmlspecialchars($action ?? '', ENT_QUOTES, 'UTF-8'); ?>';
+            if (actionSubmitted === 'save_attendance_zone') {
+                defaultTab = 'location';
+            } else if (window.location.hash === '#location') {
+                defaultTab = 'location';
+            } else if (window.location.hash === '#all') {
+                defaultTab = 'all';
+            } else if (window.location.hash === '#account') {
+                defaultTab = 'account';
+            }
+            switchSuperadminTab(defaultTab);
         });
     </script>
 </body>
