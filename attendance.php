@@ -488,25 +488,6 @@ require_login(); ?>
                 </div>
             </div>
         </div>
-                                class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant">
-                                Status</th>
-                            <th
-                                class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant">
-                                Alasan / Keterangan</th>
-                        </tr>
-                    </thead>
-                    <tbody id="att-table-body" class="divide-y divide-outline-variant">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
-                <div id="att-empty" class="hidden text-center py-16">
-                    <span class="material-symbols-outlined text-5xl text-on-surface-variant mb-3">event_busy</span>
-                    <p class="font-semibold text-on-surface">Belum ada catatan kehadiran</p>
-                    <p class="text-xs text-on-surface-variant mt-1">Data kehadiran diperbarui oleh Admin</p>
-                </div>
-            </div>
-        </div>
-        </div>
         <div class="mt-auto shrink-0 w-full">
             <?php include 'partials/footer.php'; ?>
         </div>
