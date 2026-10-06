@@ -606,10 +606,14 @@ require_login(); ?>
     <!-- ============================================================
      CLOCK IN CONFIRMATION MODAL (Live Camera Stream)
      ============================================================ -->
-    <div id="att-modal" class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4">
-        <div class="bg-surface-container-lowest rounded-2xl p-5 max-w-sm w-full shadow-2xl">
-            <h4 class="font-geist font-bold text-on-surface text-lg mb-3 text-center" id="att-modal-title">Clock In -
-                Ambil Foto</h4>
+    <div id="att-modal" class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="bg-surface-container-lowest rounded-2xl p-4 sm:p-5 max-w-md w-full shadow-2xl my-auto transition-all">
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="font-geist font-bold text-on-surface text-base sm:text-lg" id="att-modal-title">Clock In - Ambil Foto</h4>
+                <button onclick="attCloseModal()" class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-lg">
+                    <span class="material-symbols-outlined text-xl">close</span>
+                </button>
+            </div>
 
             <!-- Geofence Status Badge -->
             <div id="att-geofence-badge" class="mb-3 px-3 py-2 rounded-xl text-xs flex items-center gap-2 border hidden">
@@ -617,29 +621,36 @@ require_login(); ?>
                 <span id="att-geofence-text" class="font-medium">Memeriksa zona lokasi kantor...</span>
             </div>
 
+            <!-- Responsive Video/Canvas Container -->
             <div id="att-video-wrap"
-                class="relative rounded-xl overflow-hidden border border-outline-variant mb-4 bg-black aspect-[3/4] flex items-center justify-center">
-                <video id="att-video" autoplay playsinline class="w-full h-full object-cover"></video>
-                <canvas id="att-canvas" class="hidden w-full h-full object-cover"></canvas>
+                class="relative rounded-xl overflow-hidden border border-outline-variant mb-3 bg-black flex items-center justify-center min-h-[260px] sm:min-h-[300px] max-h-[55vh] aspect-[3/4] sm:aspect-[4/3] mx-auto transition-all">
+                <video id="att-video" autoplay playsinline class="w-full h-full object-cover transition-transform duration-300"></video>
+                <canvas id="att-canvas" class="hidden w-full h-full object-contain max-h-[55vh]"></canvas>
+
+                <!-- Floating Switch Camera Button (Depan/Belakang) -->
+                <button id="att-switch-cam-btn" onclick="attSwitchCamera()" type="button"
+                    title="Ganti Kamera (Depan/Belakang)"
+                    class="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white p-2.5 rounded-full backdrop-blur-md transition-all flex items-center justify-center shadow-lg border border-white/20 active:scale-95">
+                    <span class="material-symbols-outlined text-lg">flip_camera_ios</span>
+                </button>
             </div>
 
-            <p class="font-body-sm text-body-sm text-on-surface-variant text-center mb-4" id="att-modal-status">Membuka
-                kamera...</p>
+            <p class="font-body-sm text-xs sm:text-sm text-on-surface-variant text-center mb-4" id="att-modal-status">Membuka kamera...</p>
 
-            <div id="att-cam-actions" class="grid grid-cols-2 gap-3">
+            <div id="att-cam-actions" class="grid grid-cols-2 gap-2 sm:gap-3">
                 <button onclick="attCloseModal()"
-                    class="w-full bg-surface-container-high text-on-surface rounded-xl py-2.5 font-label-md text-label-md hover:bg-surface-container-highest">Batal</button>
+                    class="w-full bg-surface-container-high text-on-surface rounded-xl py-2.5 font-label-md text-xs sm:text-sm font-semibold hover:bg-surface-container-highest transition-colors">Batal</button>
                 <button id="att-capture-btn" onclick="attCapture()"
-                    class="w-full bg-primary text-on-primary rounded-xl py-2.5 font-label-md text-label-md flex items-center justify-center gap-2 hover:opacity-90">
+                    class="w-full bg-primary text-on-primary rounded-xl py-2.5 font-label-md text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity shadow-sm">
                     <span class="material-symbols-outlined text-[18px]">photo_camera</span>
                     Ambil Foto
                 </button>
             </div>
-            <div id="att-confirm-actions" class="grid grid-cols-2 gap-3 hidden">
+            <div id="att-confirm-actions" class="grid grid-cols-2 gap-2 sm:gap-3 hidden">
                 <button onclick="attRetake()"
-                    class="w-full bg-surface-container-high text-on-surface rounded-xl py-2.5 font-label-md text-label-md hover:bg-surface-container-highest">Ulangi</button>
+                    class="w-full bg-surface-container-high text-on-surface rounded-xl py-2.5 font-label-md text-xs sm:text-sm font-semibold hover:bg-surface-container-highest transition-colors">Ulangi</button>
                 <button id="att-confirm-btn" onclick="attConfirm()"
-                    class="w-full bg-primary text-on-primary rounded-xl py-2.5 font-label-md text-label-md disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90"
+                    class="w-full bg-primary text-on-primary rounded-xl py-2.5 font-label-md text-xs sm:text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity shadow-sm"
                     disabled>Simpan</button>
             </div>
         </div>
@@ -1311,6 +1322,7 @@ require_login(); ?>
         let attPendingLat = null;
         let attPendingLng = null;
         let officeGeofenceConfig = null;
+        let currentFacingMode = 'user'; // 'user' (kamera depan) atau 'environment' (kamera belakang)
 
         function attCalculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371000; // Radius bumi dalam meter
@@ -1339,7 +1351,7 @@ require_login(); ?>
 
         function attPad(n) { return String(n).padStart(2, '0'); }
 
-        async function attStartCapture() {
+        async function attStartCapture(facing) {
             if (isAdminPreview) {
                 showToast('Admin tidak bisa Clock In.', 'warning');
                 return;
@@ -1349,6 +1361,10 @@ require_login(); ?>
             if (now.getHours() >= 14) {
                 showToast('Batas waktu Clock In (14:00) telah lewat. Anda dianggap Tidak Masuk.', 'warning');
                 return;
+            }
+
+            if (facing) {
+                currentFacingMode = facing;
             }
 
             const modal = document.getElementById('att-modal');
@@ -1361,8 +1377,8 @@ require_login(); ?>
             const geofenceBadge = document.getElementById('att-geofence-badge');
             const geofenceText = document.getElementById('att-geofence-text');
             const geofenceIcon = document.getElementById('att-geofence-icon');
+            const switchBtn = document.getElementById('att-switch-cam-btn');
 
-            // Check navigator.mediaDevices support
             if (!modal || !video) return;
 
             if (geofenceBadge) {
@@ -1378,22 +1394,54 @@ require_login(); ?>
             canvas.classList.add('hidden');
             camActions.classList.remove('hidden');
             confirmActions.classList.add('hidden');
+            if (switchBtn) switchBtn.classList.remove('hidden');
             modal.classList.remove('hidden');
 
+            attStopCamera();
+
+            // Efek cermin (mirror) khusus kamera depan agar lebih natural bagi pengguna
+            if (currentFacingMode === 'user') {
+                video.style.transform = 'scaleX(-1)';
+            } else {
+                video.style.transform = 'scaleX(1)';
+            }
+
             try {
-                attStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { ideal: 'user' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+                // Konfigurasi dinamis untuk HP (Portrait/Landscape), Tablet, maupun Laptop Webcam
+                const constraints = {
+                    video: {
+                        facingMode: { ideal: currentFacingMode },
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    },
                     audio: false
-                });
+                };
+
+                attStream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = attStream;
-                statusEl.textContent = 'Posisikan wajah Anda lalu tekan Ambil Foto.';
+                statusEl.textContent = currentFacingMode === 'user' 
+                    ? 'Posisikan wajah Anda lalu tekan Ambil Foto.' 
+                    : 'Arahkan kamera ke objek/sekitar lalu tekan Ambil Foto.';
             } catch (err) {
-                console.warn('Camera live feed failed:', err);
-                statusEl.textContent = 'Tidak bisa mengakses kamera. Pastikan izin kamera telah diberikan dan kamera tidak sedang digunakan aplikasi lain.';
-                if (window.showToast) {
-                    showToast('Gagal membuka kamera. Periksa izin kamera browser Anda.', 'warning');
+                console.warn('Camera live feed failed, trying fallback:', err);
+                try {
+                    // Fallback jika perangkat tidak mendukung ideal resolution
+                    attStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    video.srcObject = attStream;
+                    statusEl.textContent = 'Posisikan wajah Anda lalu tekan Ambil Foto.';
+                } catch (fallbackErr) {
+                    console.error('Camera access error:', fallbackErr);
+                    statusEl.textContent = 'Tidak bisa mengakses kamera. Pastikan izin kamera telah diberikan.';
+                    if (window.showToast) {
+                        showToast('Gagal membuka kamera. Periksa izin kamera browser Anda.', 'warning');
+                    }
                 }
             }
+        }
+
+        async function attSwitchCamera() {
+            currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+            await attStartCapture(currentFacingMode);
         }
 
         function attStopCamera() {
@@ -1411,6 +1459,7 @@ require_login(); ?>
         function attCapture() {
             const video = document.getElementById('att-video');
             const canvas = document.getElementById('att-canvas');
+            const switchBtn = document.getElementById('att-switch-cam-btn');
             if (!video || !canvas || !video.videoWidth) return;
 
             const vW = video.videoWidth;
@@ -1421,12 +1470,19 @@ require_login(); ?>
             tempCanvas.width = vW;
             tempCanvas.height = vH;
             const tempCtx = tempCanvas.getContext('2d');
+
+            // Balikkan kembali jika kamera depan agar stempel/tulisan tidak terbalik (mirror)
+            if (currentFacingMode === 'user') {
+                tempCtx.translate(vW, 0);
+                tempCtx.scale(-1, 1);
+            }
             tempCtx.drawImage(video, 0, 0, vW, vH);
 
             // Stop stream & switch to canvas view
             attStopCamera();
             video.classList.add('hidden');
             canvas.classList.remove('hidden');
+            if (switchBtn) switchBtn.classList.add('hidden');
 
             const camActions = document.getElementById('att-cam-actions');
             const confirmActions = document.getElementById('att-confirm-actions');
