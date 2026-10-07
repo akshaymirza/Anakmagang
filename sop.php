@@ -14,7 +14,15 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-background text-on-surface font-body-md flex h-screen overflow-hidden">
-<?php $active = 'sop'; include 'partials/sidebar-intern.php'; ?>
+<?php 
+$active = 'sop';
+$user_role = current_user_role();
+if ($user_role === 'admin' || $user_role === 'superadmin') {
+    include 'partials/sidebar-admin.php';
+} else {
+    include 'partials/sidebar-intern.php';
+}
+?>
 
 <main class="flex-1 flex flex-col md:ml-[16.5rem] h-screen overflow-y-auto relative">
     <!-- TopNavBar -->
