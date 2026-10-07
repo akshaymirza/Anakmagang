@@ -440,32 +440,25 @@ if (!$featured_article && count($articles) > 0) {
         </section>
 
         <!-- Main Body Content -->
-        <div class="max-w-7xl mx-auto p-6 md:p-8 flex flex-col gap-8 w-full">
+        <div class="w-full max-w-container-max mx-auto p-md md:p-gutter flex flex-col gap-xl">
 
-            <!-- Filter & Search Bar (Consistent with galeryanakmagang.php & event_history.php) -->
-            <div class="mb-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
-                <div class="flex flex-wrap items-center gap-2">
-                    <button onclick="filterCategory('all', this)" class="category-chip active flex items-center gap-1.5 px-4 py-2 rounded-xl font-geist text-xs font-bold bg-blue-600 text-white shadow-sm transition-all cursor-pointer">
-                        <span>Semua Artikel (<?php echo count($articles); ?>)</span>
-                    </button>
-                    <button onclick="filterCategory('Aktivitas Harian', this)" class="category-chip flex items-center gap-1.5 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 shadow-xs transition-all cursor-pointer">
-                        <span>Aktivitas Harian</span>
-                    </button>
-                    <button onclick="filterCategory('Project & Coding', this)" class="category-chip flex items-center gap-1.5 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 shadow-xs transition-all cursor-pointer">
-                        <span>Project & Coding</span>
-                    </button>
-                    <button onclick="filterCategory('Workshop & Mentoring', this)" class="category-chip flex items-center gap-1.5 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 shadow-xs transition-all cursor-pointer">
-                        <span>Workshop</span>
-                    </button>
-                    <button onclick="filterCategory('Prestasi', this)" class="category-chip flex items-center gap-1.5 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 shadow-xs transition-all cursor-pointer">
-                        <span>Prestasi</span>
-                    </button>
-                </div>
-
-                <div class="w-full md:w-72 relative shrink-0">
-                    <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-sm">search</span>
-                    <input id="article-search" oninput="filterArticles()" class="w-full pl-9 pr-4 py-2 rounded-xl bg-white border border-slate-200 focus:border-blue-600 focus:outline-none text-xs transition-colors" placeholder="Cari aktivitas atau artikel..." type="text"/>
-                </div>
+            <!-- Category Filter Chips (Below Hero Section) -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+                <button onclick="filterCategory('all', this)" class="category-chip active flex items-center gap-1.5 px-4 py-2 rounded-xl font-geist text-xs font-bold bg-blue-600 text-white shadow-sm transition-all cursor-pointer">
+                    <span>Semua Artikel</span>
+                </button>
+                <button onclick="filterCategory('Aktivitas Harian', this)" class="category-chip flex items-center gap-1.5 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 shadow-xs transition-all cursor-pointer">
+                    <span>Aktivitas Harian</span>
+                </button>
+                <button onclick="filterCategory('Project & Coding', this)" class="category-chip flex items-center gap-1.5 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 shadow-xs transition-all cursor-pointer">
+                    <span>Project & Coding</span>
+                </button>
+                <button onclick="filterCategory('Workshop & Mentoring', this)" class="category-chip flex items-center gap-1.5 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 shadow-xs transition-all cursor-pointer">
+                    <span>Workshop</span>
+                </button>
+                <button onclick="filterCategory('Prestasi', this)" class="category-chip flex items-center gap-1.5 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 shadow-xs transition-all cursor-pointer">
+                    <span>Prestasi</span>
+                </button>
             </div>
 
             <!-- Featured Hero Article (if available) -->
@@ -529,19 +522,27 @@ if (!$featured_article && count($articles) > 0) {
 
             <!-- Articles Grid Section -->
             <div>
-                <div class="flex items-center justify-between gap-4 mb-6 border-b border-slate-200 pb-4">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 border-b border-slate-200 pb-4">
                     <div>
                         <h3 class="font-geist font-bold text-xl text-slate-900">Semua Aktivitas & Artikel</h3>
                         <span id="article-count" class="text-xs font-semibold text-slate-500"><?php echo count($articles); ?> Aktivitas Ditemukan</span>
                     </div>
 
-                    <?php if ($is_admin): ?>
-                        <!-- Admin Add Article Button -->
-                        <button onclick="openFormModal()" class="shrink-0 flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95">
-                            <span class="material-symbols-outlined text-sm">add_circle</span>
-                            <span>Tambah Artikel</span>
-                        </button>
-                    <?php endif; ?>
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <!-- Global Search Bar -->
+                        <div class="relative w-full sm:w-64">
+                            <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-sm">search</span>
+                            <input id="article-search" oninput="filterArticles()" class="w-full pl-9 pr-4 py-2 rounded-xl bg-white border border-slate-200 focus:border-blue-600 focus:outline-none text-xs transition-colors" placeholder="Cari aktivitas atau artikel..." type="text"/>
+                        </div>
+
+                        <?php if ($is_admin): ?>
+                            <!-- Admin Add Article Button -->
+                            <button onclick="openFormModal()" class="shrink-0 flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95">
+                                <span class="material-symbols-outlined text-sm">add_circle</span>
+                                <span>Tambah Artikel</span>
+                            </button>
+                        <?php endif; ?>
+                    </div>
                 </div>
 
                 <div id="articles-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
