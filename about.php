@@ -196,7 +196,7 @@ $about = get_about_content($conn, $about_file);
         }
     </style>
 </head>
-<body class="<?php echo $is_logged_in ? 'bg-background text-on-surface font-body-md flex h-screen overflow-hidden' : 'bg-slate-50 text-slate-900 min-h-screen flex flex-col overflow-x-hidden relative'; ?>">
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col overflow-x-hidden relative">
     <?php if (!$is_logged_in): ?>
     <!-- ═══ Floating Batik Gajah Oling Background Layer ═══ -->
     <div id="batik-layer" aria-hidden="true">
