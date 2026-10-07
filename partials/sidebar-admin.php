@@ -31,6 +31,8 @@ $admin_nav_items = [
     'events'       => ['label' => 'Histori Event',       'icon' => 'event',           'href' => $root_prefix . 'event_history.php'],
     'article'      => ['label' => 'Kelola Artikel',       'icon' => 'newspaper',        'href' => $admin_prefix . 'admin-articles.php'],
     'certificates' => ['label' => 'Sertifikat',           'icon' => 'workspace_premium', 'href' => $admin_prefix . 'admin-certificates.php'],
+    'sop'          => ['label' => 'SOP',                  'icon' => 'description',      'href' => $root_prefix . 'sop.php'],
+    'about'        => ['label' => 'Tentang',              'icon' => 'info',             'href' => $root_prefix . 'about.php'],
     // 'stats'        => ['label' => 'Statistics',           'icon' => 'insights',         'href' => $admin_prefix . 'admin-stats.php'],
 ];
 

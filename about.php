@@ -213,7 +213,12 @@ $about = get_about_content($conn, $about_file);
     <?php 
     if ($is_logged_in) {
         $active = 'about';
-        include 'partials/sidebar-intern.php';
+        $user_role = current_user_role();
+        if ($user_role === 'admin' || $user_role === 'superadmin') {
+            include 'partials/sidebar-admin.php';
+        } else {
+            include 'partials/sidebar-intern.php';
+        }
     } else {
         $nav_icon = 'info';
         $nav_cta_label = 'Masuk Portal';

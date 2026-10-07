@@ -203,9 +203,6 @@ if (is_admin()) {
 
             </div>
         </div>
-        <div class="shrink-0 mt-auto w-full min-w-0 overflow-hidden">
-            <?php include 'partials/footer.php'; ?>
-        </div>
     </main>
 
     <!-- Task Creation & Edit Modal -->

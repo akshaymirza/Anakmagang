@@ -129,117 +129,6 @@ include '../partials/sidebar-admin.php';
                 </div>
             </div>
 
-            <!-- Project & Task Management Card (Admin Feature) -->
-            <div class="glass-card p-5 rounded-xl border border-outline-variant lg:col-span-2 xl:col-span-3">
-                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4 pb-3 border-b border-outline-variant">
-                    <div>
-                        <h3 class="font-headline-md font-bold text-on-surface flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary">folder_managed</span>
-                            <span>Manajemen Project &amp; Tugas (Admin)</span>
-                        </h3>
-                        <p class="text-sm text-on-surface-variant">Admin dapat menambah project, menambahkan tugas intern, dan menghapus project.</p>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <button onclick="openAdminNewProjectModal()" class="px-3.5 py-2 bg-primary text-on-primary rounded-lg text-xs font-bold hover:bg-primary-container flex items-center gap-1 shadow-sm">
-                            <span class="material-symbols-outlined text-[16px]">create_new_folder</span>
-                            <span>Tambah Project</span>
-                        </button>
-                        <button onclick="openAdminNewTaskModal()" class="px-3.5 py-2 bg-surface-container-high text-primary rounded-lg text-xs font-bold hover:bg-primary hover:text-white transition-colors flex items-center gap-1 border border-outline-variant">
-                            <span class="material-symbols-outlined text-[16px]">add_task</span>
-                            <span>Tambah Tugas</span>
-                        </button>
-                        <a href="../tasks.php" class="px-3 py-2 bg-surface-container-low text-on-surface rounded-lg text-xs font-semibold hover:bg-surface-container-high transition-colors flex items-center gap-1 border border-outline-variant">
-                            <span class="material-symbols-outlined text-[16px]">view_kanban</span>
-                            <span>Buka Kanban Board</span>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Metrics Grid -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-                    <div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/60">
-                        <span class="text-xs font-bold uppercase tracking-wider text-primary">Total Projects</span>
-                        <div class="text-2xl font-bold mt-1" id="admin-active-projects">0</div>
-                    </div>
-                    <div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/60">
-                        <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Pending Tasks</span>
-                        <div class="text-2xl font-bold mt-1 text-amber-700" id="admin-pending-tasks">0</div>
-                    </div>
-                    <div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/60">
-                        <span class="text-xs font-bold uppercase tracking-wider text-green-700">Completed Tasks</span>
-                        <div class="text-2xl font-bold mt-1 text-green-700" id="admin-completed-tasks">0</div>
-                    </div>
-                    <div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/60">
-                        <span class="text-xs font-bold uppercase tracking-wider text-primary">Total Tasks</span>
-                        <div class="text-2xl font-bold mt-1" id="admin-overdue-tasks">0</div>
-                    </div>
-                </div>
-
-                <!-- Projects & Tasks Table -->
-                <div class="overflow-x-auto rounded-lg border border-outline-variant">
-                    <table class="min-w-full text-sm divide-y divide-outline-variant">
-                        <thead class="bg-surface-container-low">
-                            <tr>
-                                <th class="px-3 py-2 text-left font-semibold text-on-surface">Nama Project</th>
-                                <th class="px-3 py-2 text-left font-semibold text-on-surface">Deskripsi</th>
-                                <th class="px-3 py-2 text-center font-semibold text-on-surface">Jumlah Tugas</th>
-                                <th class="px-3 py-2 text-left font-semibold text-on-surface">Dibuat Oleh</th>
-                                <th class="px-3 py-2 text-center font-semibold text-on-surface">Aksi Admin</th>
-                            </tr>
-                        </thead>
-                        <tbody id="admin-project-list" class="divide-y divide-outline-variant bg-white">
-                            <!-- Dynamic rows -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Attendance Overview Card -->
-            <div class="glass-card p-4 rounded-xl border border-outline-variant">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="font-headline-md">Kehadiran Intern</h3>
-                    <a href="admin-attendance.php" class="text-xs text-primary hover:underline flex items-center gap-1">
-                        <span>Kalender Lengkap</span><span class="material-symbols-outlined text-[14px]">arrow_forward</span>
-                    </a>
-                </div>
-                <p class="text-sm text-on-surface-variant mb-3">Total kehadiran hari ini (semua intern).</p>
-                <div class="flex items-center gap-2">
-                    <span class="font-label-md text-label-md text-primary">Hadir/Telat Hari Ini</span>
-                    <div class="text-2xl font-bold" id="admin-attendance-today">0</div>
-                </div>
-                <div class="flex items-center gap-2 mt-2">
-                    <span class="font-label-md text-label-md text-primary">Tidak Masuk Hari Ini</span>
-                    <div class="text-2xl font-bold text-error" id="admin-attendance-absent-today">0</div>
-                </div>
-            </div>
-            <!-- Completed Tasks Overview Card -->
-            <div class="glass-card p-4 rounded-xl border border-outline-variant">
-                <h3 class="font-headline-md mb-2">Tugas Selesai</h3>
-                <p class="text-sm text-on-surface-variant mb-3">Jumlah tugas yang telah diselesaikan oleh semua intern.</p>
-                <div class="text-2xl font-bold" id="admin-total-completed-tasks">0</div>
-            </div>
-            <!-- Attendance per Intern Card -->
-            <div class="glass-card p-4 rounded-xl border border-outline-variant">
-                <h3 class="font-headline-md mb-2">Kehadiran per Intern</h3>
-                <p class="text-sm text-on-surface-variant mb-3">Pilih intern untuk melihat total kehadiran bulan ini.</p>
-                <select id="admin-attendance-intern-select" class="w-full mb-2 p-2 border border-outline-variant rounded">
-                    <option value="" disabled selected>Pilih intern...</option>
-                </select>
-                <div class="grid grid-cols-3 gap-2 text-center">
-                    <div class="bg-green-50 rounded-lg p-2">
-                        <div class="text-xs text-green-700 font-bold">Hadir</div>
-                        <div class="text-xl font-bold text-green-800" id="admin-attendance-intern-present">0</div>
-                    </div>
-                    <div class="bg-amber-50 rounded-lg p-2">
-                        <div class="text-xs text-amber-700 font-bold">Telat</div>
-                        <div class="text-xl font-bold text-amber-800" id="admin-attendance-intern-late">0</div>
-                    </div>
-                    <div class="bg-red-50 rounded-lg p-2">
-                        <div class="text-xs text-red-700 font-bold">Absen</div>
-                        <div class="text-xl font-bold text-red-800" id="admin-attendance-intern-absent">0</div>
-                    </div>
-                </div>
-            </div>
             <!-- News & Lessons Card -->
         </section>
         <div class="mt-auto shrink-0 w-full">
@@ -333,10 +222,10 @@ include '../partials/sidebar-admin.php';
                 });
             }
 
-            document.getElementById('admin-active-projects').textContent = projects.length;
-            document.getElementById('admin-pending-tasks').textContent = pendingTasks;
-            document.getElementById('admin-completed-tasks').textContent = completedTasks;
-            document.getElementById('admin-overdue-tasks').textContent = totalTasks;
+            if (document.getElementById('admin-active-projects')) document.getElementById('admin-active-projects').textContent = projects.length;
+            if (document.getElementById('admin-pending-tasks')) document.getElementById('admin-pending-tasks').textContent = pendingTasks;
+            if (document.getElementById('admin-completed-tasks')) document.getElementById('admin-completed-tasks').textContent = completedTasks;
+            if (document.getElementById('admin-overdue-tasks')) document.getElementById('admin-overdue-tasks').textContent = totalTasks;
         }
 
         function escapeHtml(str) {
@@ -716,9 +605,9 @@ include '../partials/sidebar-admin.php';
                 absent = records.filter(r => r.status === 'absent').length;
             }
 
-            document.getElementById('admin-attendance-intern-present').textContent = present;
-            document.getElementById('admin-attendance-intern-late').textContent = late;
-            document.getElementById('admin-attendance-intern-absent').textContent = absent;
+            if (document.getElementById('admin-attendance-intern-present')) document.getElementById('admin-attendance-intern-present').textContent = present;
+            if (document.getElementById('admin-attendance-intern-late')) document.getElementById('admin-attendance-intern-late').textContent = late;
+            if (document.getElementById('admin-attendance-intern-absent')) document.getElementById('admin-attendance-intern-absent').textContent = absent;
         }
 
         /* ================= INIT ================= */
