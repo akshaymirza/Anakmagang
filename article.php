@@ -414,81 +414,51 @@ if (!$featured_article && count($articles) > 0) {
     <?php endif; ?>
 
     <!-- Main Canvas -->
-    <main class="<?php echo $is_logged_in ? 'md:ml-[16.5rem] h-screen overflow-y-auto' : 'min-h-screen'; ?> flex-1 flex flex-col">
-
-        <?php if ($is_logged_in): ?>
-        <!-- Sticky TopBar for Logged-in Users -->
-        <header class="w-full h-20 bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-10 flex items-center justify-between px-gutter shrink-0">
-            <div class="flex items-center gap-3">
-                <button onclick="toggleMobileSidebar()" class="md:hidden text-on-surface hover:text-primary focus:outline-none flex items-center p-1 rounded-lg hover:bg-surface-container-high" aria-label="Toggle Sidebar">
-                    <span class="material-symbols-outlined text-2xl">menu</span>
-                </button>
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">newspaper</span>
-                    <h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">Aktivitas & Artikel</h2>
-                </div>
-            </div>
-            <div class="flex items-center gap-sm">
-                <div class="flex items-center gap-sm p-1.5 px-3 rounded-full border border-outline-variant bg-surface-bright shadow-2xs">
-                    <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container overflow-hidden shrink-0">
-                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+    <main class="<?php echo $is_logged_in ? 'md:ml-[16.5rem]' : ''; ?> flex-1 flex flex-col">
+        <!-- Hero Header (Full Width Left to Right) -->
+        <section class="w-full bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 text-white py-12 px-6 shadow-md relative overflow-hidden">
+            <div class="max-w-7xl mx-auto flex flex-col justify-between gap-6 relative z-10">
+                <?php if ($is_logged_in): ?>
+                    <div class="md:hidden mb-2">
+                        <button onclick="toggleMobileSidebar()" class="px-3 py-2 rounded-lg bg-white/20 text-white flex items-center gap-2 text-sm font-semibold border border-white/30 hover:bg-white/30 transition-all">
+                            <span class="material-symbols-outlined">menu</span>
+                            <span>Menu Sidebar</span>
+                        </button>
                     </div>
-                    <span class="font-label-md text-label-md hidden sm:inline-block"><?php echo htmlspecialchars(current_user_name(), ENT_QUOTES, 'UTF-8'); ?></span>
-                    <a href="logout.php" class="text-error hover:text-red-700 hover:bg-red-50 p-1.5 rounded-full transition-colors flex items-center justify-center" title="Keluar" aria-label="Keluar">
-                        <span class="material-symbols-outlined text-[20px]">logout</span>
-                    </a>
+                <?php endif; ?>
+                <div class="space-y-3 max-w-3xl">
+                    <span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold border border-blue-400/30 backdrop-blur-md">
+                        <span class="material-symbols-outlined text-sm">newspaper</span>
+                        <span>Portal Jurnal & Portal Artikel Magang</span>
+                    </span>
+                    <h1 class="font-geist text-2xl md:text-4xl font-extrabold tracking-tight text-white">Jurnal & Activity Log Anak Magang</h1>
+                    <p class="mt-2 text-slate-300 text-sm leading-relaxed max-w-2xl">
+                        Dokumentasi lengkap mengenai rilis fitur, jurnal harian, artikel teknis coding, serta pencapaian prestasi peserta magang Kedayweb.
+                    </p>
                 </div>
             </div>
-        </header>
-        <?php endif; ?>
+        </section>
 
         <!-- Main Body Content -->
         <div class="w-full max-w-container-max mx-auto p-md md:p-gutter flex flex-col gap-xl">
 
-            <!-- Alert Notification -->
-            <?php if (!empty($msg)): ?>
-                <div class="flex items-center justify-between p-md rounded-xl <?php echo $msg_type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'; ?> shadow-sm">
-                    <div class="flex items-center gap-sm">
-                        <span class="material-symbols-outlined"><?php echo $msg_type === 'success' ? 'check_circle' : 'info'; ?></span>
-                        <span class="font-label-md"><?php echo htmlspecialchars($msg, ENT_QUOTES, 'UTF-8'); ?></span>
-                    </div>
-                    <button onclick="this.parentElement.remove()" class="text-on-surface-variant hover:text-on-surface">
-                        <span class="material-symbols-outlined text-sm">close</span>
-                    </button>
-                </div>
-            <?php endif; ?>
-
-            <!-- Hero Banner Premium Style -->
-            <div class="relative w-full rounded-2xl overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 text-white p-6 md:p-10 shadow-xl border border-indigo-900/50">
-                <div class="relative z-10 max-w-3xl space-y-3">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold border border-blue-400/30 backdrop-blur-md">
-                        <span class="material-symbols-outlined text-sm">newspaper</span>
-                        <span>Portal Jurnal & Portal Artikel Magang</span>
-                    </span>
-                    <h2 class="font-geist text-3xl md:text-4xl font-extrabold tracking-tight text-white">Jurnal & Activity Log Anak Magang</h2>
-                    <p class="text-slate-300 text-sm leading-relaxed max-w-2xl">
-                        Dokumentasi lengkap mengenai rilis fitur, jurnal harian, artikel teknis coding, serta pencapaian prestasi peserta magang Kedayweb.
-                    </p>
-
-                    <!-- Category Filter Chips -->
-                    <div class="flex items-center gap-2 overflow-x-auto pt-4 border-t border-white/10">
-                        <button onclick="filterCategory('all', this)" class="category-chip active flex items-center gap-1 px-4 py-2 rounded-xl font-geist text-xs font-bold bg-blue-600 text-white shadow-md transition-all cursor-pointer">
-                            <span>Semua Artikel</span>
-                        </button>
-                        <button onclick="filterCategory('Aktivitas Harian', this)" class="category-chip flex items-center gap-1 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white/10 text-slate-200 hover:bg-white/20 border border-white/10 transition-all cursor-pointer">
-                            <span>Aktivitas Harian</span>
-                        </button>
-                        <button onclick="filterCategory('Project & Coding', this)" class="category-chip flex items-center gap-1 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white/10 text-slate-200 hover:bg-white/20 border border-white/10 transition-all cursor-pointer">
-                            <span>Project & Coding</span>
-                        </button>
-                        <button onclick="filterCategory('Workshop & Mentoring', this)" class="category-chip flex items-center gap-1 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white/10 text-slate-200 hover:bg-white/20 border border-white/10 transition-all cursor-pointer">
-                            <span>Workshop</span>
-                        </button>
-                        <button onclick="filterCategory('Prestasi', this)" class="category-chip flex items-center gap-1 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white/10 text-slate-200 hover:bg-white/20 border border-white/10 transition-all cursor-pointer">
-                            <span>Prestasi</span>
-                        </button>
-                    </div>
-                </div>
+            <!-- Category Filter Chips (Below Hero Section) -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+                <button onclick="filterCategory('all', this)" class="category-chip active flex items-center gap-1.5 px-4 py-2 rounded-xl font-geist text-xs font-bold bg-blue-600 text-white shadow-sm transition-all cursor-pointer">
+                    <span>Semua Artikel</span>
+                </button>
+                <button onclick="filterCategory('Aktivitas Harian', this)" class="category-chip flex items-center gap-1.5 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 shadow-xs transition-all cursor-pointer">
+                    <span>Aktivitas Harian</span>
+                </button>
+                <button onclick="filterCategory('Project & Coding', this)" class="category-chip flex items-center gap-1.5 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 shadow-xs transition-all cursor-pointer">
+                    <span>Project & Coding</span>
+                </button>
+                <button onclick="filterCategory('Workshop & Mentoring', this)" class="category-chip flex items-center gap-1.5 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 shadow-xs transition-all cursor-pointer">
+                    <span>Workshop</span>
+                </button>
+                <button onclick="filterCategory('Prestasi', this)" class="category-chip flex items-center gap-1.5 px-4 py-2 rounded-xl font-geist text-xs font-semibold bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 shadow-xs transition-all cursor-pointer">
+                    <span>Prestasi</span>
+                </button>
             </div>
 
             <!-- Featured Hero Article (if available) -->
@@ -802,12 +772,12 @@ if (!$featured_article && count($articles) > 0) {
         function filterCategory(category, element) {
             activeCategory = category;
             document.querySelectorAll('.category-chip').forEach(chip => {
-                chip.classList.remove('active', 'bg-blue-600', 'text-white', 'shadow-md', 'font-bold', 'border-transparent');
-                chip.classList.add('bg-white/10', 'text-slate-200', 'hover:bg-white/20', 'border', 'border-white/10', 'font-semibold');
+                chip.classList.remove('active', 'bg-blue-600', 'text-white', 'shadow-sm', 'shadow-md', 'font-bold', 'border-transparent');
+                chip.classList.add('bg-white', 'text-slate-700', 'hover:bg-slate-100', 'hover:text-slate-900', 'border', 'border-slate-200/80', 'font-semibold', 'shadow-xs');
             });
             if (element) {
-                element.classList.remove('bg-white/10', 'text-slate-200', 'hover:bg-white/20', 'border-white/10', 'font-semibold');
-                element.classList.add('active', 'bg-blue-600', 'text-white', 'shadow-md', 'font-bold', 'border-transparent');
+                element.classList.remove('bg-white', 'text-slate-700', 'hover:bg-slate-100', 'hover:text-slate-900', 'border-slate-200/80', 'font-semibold', 'shadow-xs');
+                element.classList.add('active', 'bg-blue-600', 'text-white', 'shadow-sm', 'font-bold', 'border-transparent');
             }
             applyFilters();
         }

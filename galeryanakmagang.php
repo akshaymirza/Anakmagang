@@ -343,7 +343,7 @@ $gallery_list = get_all_gallery_items($conn, $json_file);
                         <span class="material-symbols-outlined text-sm">photo_camera</span>
                         <span>Galeri Terbuka Publik & Anak Magang</span>
                     </span>
-                    <h1 class="font-geist text-3xl md:text-4xl font-extrabold tracking-tight">Galeri Kegiatan Anak Magang</h1>
+                    <h1 class="font-geist text-2xl md:text-4xl font-extrabold tracking-tight">Galeri Kegiatan Anak Magang</h1>
                     <p class="mt-2 text-slate-300 max-w-2xl text-sm leading-relaxed">
                         Dokumentasi seluruh aktivitas harian, keseruan coding, workshop, dan pencapaian project anak magang Kedayweb.
                     </p>
@@ -354,11 +354,6 @@ $gallery_list = get_all_gallery_items($conn, $json_file);
                         <span class="material-symbols-outlined">add_photo_alternate</span>
                         <span>Tambah Kegiatan Baru</span>
                     </button>
-                <?php elseif (!$is_logged_in): ?>
-                    <a href="Login/login.php" class="shrink-0 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-bold text-xs transition-all backdrop-blur-md flex items-center gap-2">
-                        <span class="material-symbols-outlined text-sm">lock</span>
-                        <span>Login untuk Menambah & Edit</span>
-                    </a>
                 <?php endif; ?>
             </div>
         </section>

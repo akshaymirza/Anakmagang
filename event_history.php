@@ -347,10 +347,7 @@ $events_list = get_all_events_history($conn, $events_json);
     <!-- Main Container -->
     <main class="<?php echo $is_logged_in ? 'md:ml-[16.5rem]' : ''; ?> flex-1 flex flex-col">
         <!-- Hero Header -->
-        <section class="bg-gradient-to-r from-amber-600 via-indigo-900 to-slate-900 text-white py-14 px-6 shadow-lg relative overflow-hidden">
-            <div class="absolute -right-10 -bottom-10 opacity-10 text-white pointer-events-none">
-                <span class="material-symbols-outlined text-[280px]">workspace_premium</span>
-            </div>
+        <section class="bg-gradient-to-r from-amber-600 via-indigo-900 to-slate-900 text-white py-12 px-6 shadow-md relative overflow-hidden">
             <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
                 <?php if ($is_logged_in): ?>
                     <div class="md:hidden">
@@ -365,7 +362,7 @@ $events_list = get_all_events_history($conn, $events_json);
                         <span class="material-symbols-outlined text-sm">history_edu</span>
                         <span>Official Event History & Photo Archives</span>
                     </span>
-                    <h1 class="font-geist text-3xl md:text-5xl font-extrabold tracking-tight">Histori & Galeri Event Magang</h1>
+                    <h1 class="font-geist text-2xl md:text-4xl font-extrabold tracking-tight">Histori & Galeri Event Magang</h1>
                     <p class="mt-3 text-slate-200 max-w-2xl text-sm leading-relaxed">
                         Arsip lengkap seluruh event besar, hackathon, workshop, dan momen berharga yang pernah diselenggarakan oleh Kedayweb untuk anak magang.
                     </p>
@@ -376,11 +373,6 @@ $events_list = get_all_events_history($conn, $events_json);
                         <span class="material-symbols-outlined text-lg">add_circle</span>
                         <span>Tambah Event Baru</span>
                     </button>
-                <?php elseif (!$is_logged_in): ?>
-                    <a href="Login/login.php" class="shrink-0 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-bold text-xs transition-all backdrop-blur-md flex items-center gap-2">
-                        <span class="material-symbols-outlined text-sm">lock</span>
-                        <span>Login untuk Menambah & Edit</span>
-                    </a>
                 <?php endif; ?>
             </div>
         </section>

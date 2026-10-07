@@ -68,9 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
        <img src="../uploads/Icon/Anak_Magang_Icon.jpg.jpeg" alt="Logo AnakMagang" class="w-8 h-8 rounded-lg object-cover shadow-xs border border-outline-variant/30 shrink-0"/>
                 <span class="font-headline-md text-headline-md font-bold text-primary" data-i18n="brand_name">AnakMagang</span>
     </div>
-    <a href="#" class="text-sm font-medium hover:underline text-slate-600 flex items-center gap-1.5">
+    <!-- <a href="#" class="text-sm font-medium hover:underline text-slate-600 flex items-center gap-1.5">
       <i class="fa-regular fa-circle-question"></i> Support
-    </a>
+    </a> -->
   </header>
 
   <!-- Main Container -->
