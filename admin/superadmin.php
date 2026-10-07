@@ -46,6 +46,26 @@ function save_index_positions($positions_file, $positions) {
     file_put_contents($positions_file, json_encode($positions, JSON_PRETTY_PRINT));
 }
 
+$footer_settings_file = __DIR__ . '/../uploads/footer_settings.json';
+
+function get_superadmin_footer_settings($file) {
+    $defaults = [
+        'location'          => 'Kedayweb Software House & Digital Academy',
+        'work_hours'        => 'Senin - Sabtu (08:00 - 16:00 WIB)',
+        'whatsapp'          => '628123456789',
+        'whatsapp_label'    => '+62 812-3456-789',
+        'instagram'         => 'https://www.instagram.com/anak_magang.id?utm_source=ig_web_button_share_sheet&stkn=ZDNlZDc0MzIxNw==',
+        'threads'           => 'https://www.threads.net/@anak_magang.id',
+        'tiktok'            => 'https://www.tiktok.com/@anak_magang.id?is_from_webapp=1&sender_device=pc',
+        'workspace_version' => 'Internship Workspace v2.0'
+    ];
+    if (file_exists($file)) {
+        $c = json_decode(file_get_contents($file), true);
+        if (is_array($c)) return array_merge($defaults, $c);
+    }
+    return $defaults;
+}
+
 // Handle POST actions
 $msg = '';
 $msg_type = '';
@@ -53,7 +73,21 @@ $msg_type = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    if ($action === 'add_user') {
+    if ($action === 'save_footer_settings') {
+        $footer_data = [
+            'location'          => trim($_POST['footer_location'] ?? ''),
+            'work_hours'        => trim($_POST['footer_work_hours'] ?? ''),
+            'whatsapp'          => trim($_POST['footer_whatsapp'] ?? ''),
+            'whatsapp_label'    => trim($_POST['footer_whatsapp_label'] ?? ''),
+            'instagram'         => trim($_POST['footer_instagram'] ?? ''),
+            'threads'           => trim($_POST['footer_threads'] ?? ''),
+            'tiktok'            => trim($_POST['footer_tiktok'] ?? ''),
+            'workspace_version' => trim($_POST['footer_workspace_version'] ?? 'Internship Workspace v2.0')
+        ];
+        file_put_contents($footer_settings_file, json_encode($footer_data, JSON_PRETTY_PRINT));
+        $msg = "Pengaturan Footer berhasil disimpan dan diperbarui!";
+        $msg_type = "success";
+    } elseif ($action === 'add_user') {
         $username        = trim($_POST['username'] ?? '');
         $password        = trim($_POST['password'] ?? '');
         $role            = trim($_POST['role'] ?? 'intern');
@@ -275,6 +309,7 @@ if ($conn) {
 }
 
 $positions = get_index_positions($positions_file);
+$footer_settings = get_superadmin_footer_settings($footer_settings_file);
 $current_active_role = current_user_role();
 ?>
 <!DOCTYPE html>
@@ -348,9 +383,9 @@ $current_active_role = current_user_role();
                 </div>
             <?php endif; ?>
 
-            <!-- Navigation Bar Menu: Set Account vs Set Location -->
+            <!-- Navigation Bar Menu: Set Account vs Set Location vs Set Footer -->
             <div class="bg-surface-container-lowest border border-outline-variant rounded-2xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-3">
-                <div class="flex items-center gap-2 w-full sm:w-auto">
+                <div class="flex items-center gap-2 w-full sm:w-auto flex-wrap">
                     <button type="button" id="nav-btn-account" onclick="switchSuperadminTab('account')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs bg-primary text-on-primary">
                         <span class="material-symbols-outlined text-lg">manage_accounts</span>
                         <span>Set Account</span>
@@ -358,6 +393,10 @@ $current_active_role = current_user_role();
                     <button type="button" id="nav-btn-location" onclick="switchSuperadminTab('location')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high">
                         <span class="material-symbols-outlined text-lg">location_on</span>
                         <span>Set Location</span>
+                    </button>
+                    <button type="button" id="nav-btn-footer" onclick="switchSuperadminTab('footer')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high">
+                        <span class="material-symbols-outlined text-lg">table_rows</span>
+                        <span>Set Footer</span>
                     </button>
                     <button type="button" id="nav-btn-all" onclick="switchSuperadminTab('all')" class="hidden sm:flex px-4 py-2.5 rounded-xl font-bold text-sm transition-all items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high">
                         <span class="material-symbols-outlined text-lg">grid_view</span>
@@ -494,6 +533,78 @@ $current_active_role = current_user_role();
                             <span class="material-symbols-outlined text-sm text-primary flex-shrink-0 mt-0.5">info</span>
                             <span>Lingkaran biru menunjukkan area zona toleransi absensi (<strong id="map-radius-label"><?php echo (int) $att_settings['radius_meters']; ?> meter</strong>). Anda dapat menggeser marker pin untuk menyesuaikan titik pusat lokasi kantor.</span>
                         </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Section Footer: Pengaturan Content Footer -->
+            <div class="glass-card rounded-2xl border border-outline-variant p-6 shadow-sm hidden" id="section-footer">
+                <div class="flex items-center gap-2 pb-4 border-b border-outline-variant mb-6">
+                    <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">table_rows</span>
+                    <div>
+                        <h3 class="font-headline-md font-bold text-on-surface">Kelola Konten Footer Website</h3>
+                        <p class="text-sm text-on-surface-variant mt-0.5">Atur informasi lokasi, jam operasional, nomor WhatsApp, media sosial, dan versi workspace yang tampil di footer.</p>
+                    </div>
+                </div>
+
+                <form action="superadmin.php" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <input type="hidden" name="action" value="save_footer_settings"/>
+
+                    <div class="md:col-span-2">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-primary mb-3 flex items-center gap-1.5 font-geist">
+                            <span class="material-symbols-outlined text-base">business</span> Informasi Hub & Operasional
+                        </h4>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Nama Lokasi / Kantor</label>
+                        <input type="text" name="footer_location" required value="<?php echo htmlspecialchars($footer_settings['location'], ENT_QUOTES, 'UTF-8'); ?>" class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary focus:outline-none"/>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Jam Operasional / Kerja</label>
+                        <input type="text" name="footer_work_hours" required value="<?php echo htmlspecialchars($footer_settings['work_hours'], ENT_QUOTES, 'UTF-8'); ?>" class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary focus:outline-none"/>
+                    </div>
+
+                    <div class="md:col-span-2 pt-3 border-t border-outline-variant mt-2">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-primary mb-3 flex items-center gap-1.5 font-geist">
+                            <span class="material-symbols-outlined text-base">share</span> Link Media Sosial Resmi
+                        </h4>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Link Instagram</label>
+                        <input type="url" name="footer_instagram" value="<?php echo htmlspecialchars($footer_settings['instagram'], ENT_QUOTES, 'UTF-8'); ?>" class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary focus:outline-none"/>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Link Threads</label>
+                        <input type="url" name="footer_threads" value="<?php echo htmlspecialchars($footer_settings['threads'], ENT_QUOTES, 'UTF-8'); ?>" class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary focus:outline-none"/>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Link TikTok</label>
+                        <input type="url" name="footer_tiktok" value="<?php echo htmlspecialchars($footer_settings['tiktok'], ENT_QUOTES, 'UTF-8'); ?>" class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary focus:outline-none"/>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                            <span class="inline-flex items-center gap-1"><svg class="w-3.5 h-3.5 text-emerald-600 fill-current inline" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg> Nomor WhatsApp</span> <span class="text-slate-400 font-normal normal-case">(angka saja, ex: 628123456789)</span>
+                        </label>
+                        <input type="text" name="footer_whatsapp" placeholder="Contoh: 628123456789" value="<?php echo htmlspecialchars($footer_settings['whatsapp'], ENT_QUOTES, 'UTF-8'); ?>" class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary focus:outline-none"/>
+                    </div>
+
+
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Versi Workspace / Footer Tagline</label>
+                        <input type="text" name="footer_workspace_version" value="<?php echo htmlspecialchars($footer_settings['workspace_version'], ENT_QUOTES, 'UTF-8'); ?>" class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary focus:outline-none"/>
+                    </div>
+
+                    <div class="md:col-span-2 pt-4 flex justify-end">
+                        <button type="submit" class="px-6 py-2.5 bg-primary text-on-primary font-bold rounded-xl text-sm hover:bg-primary-container transition-colors shadow-md flex items-center gap-2 cursor-pointer">
+                            <span class="material-symbols-outlined text-lg">save</span>
+                            <span>Simpan Pengaturan Footer</span>
+                        </button>
                     </div>
                 </form>
             </div>
@@ -1016,14 +1127,16 @@ $current_active_role = current_user_role();
 
         function switchSuperadminTab(tab) {
             const sectionLocation = document.getElementById('section-location');
+            const sectionFooter = document.getElementById('section-footer');
             const sectionAccount = document.getElementById('section-account');
             const sectionPositions = document.getElementById('section-positions');
             const btnLocation = document.getElementById('nav-btn-location');
+            const btnFooter = document.getElementById('nav-btn-footer');
             const btnAccount = document.getElementById('nav-btn-account');
             const btnAll = document.getElementById('nav-btn-all');
             const activeLabel = document.getElementById('tab-active-label');
 
-            const allBtns = [btnLocation, btnAccount, btnAll];
+            const allBtns = [btnLocation, btnFooter, btnAccount, btnAll];
             allBtns.forEach(btn => {
                 if (!btn) return;
                 btn.classList.remove('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -1032,6 +1145,7 @@ $current_active_role = current_user_role();
 
             if (tab === 'location') {
                 if (sectionLocation) sectionLocation.classList.remove('hidden');
+                if (sectionFooter) sectionFooter.classList.add('hidden');
                 if (sectionAccount) sectionAccount.classList.add('hidden');
                 if (sectionPositions) sectionPositions.classList.add('hidden');
 
@@ -1047,8 +1161,21 @@ $current_active_role = current_user_role();
                     }, 150);
                 }
                 history.replaceState(null, null, '#location');
+            } else if (tab === 'footer') {
+                if (sectionLocation) sectionLocation.classList.add('hidden');
+                if (sectionFooter) sectionFooter.classList.remove('hidden');
+                if (sectionAccount) sectionAccount.classList.add('hidden');
+                if (sectionPositions) sectionPositions.classList.add('hidden');
+
+                if (btnFooter) {
+                    btnFooter.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
+                    btnFooter.classList.remove('text-on-surface-variant', 'hover:bg-surface-container-high');
+                }
+                if (activeLabel) activeLabel.textContent = 'Mode: Set Footer';
+                history.replaceState(null, null, '#footer');
             } else if (tab === 'all') {
                 if (sectionLocation) sectionLocation.classList.remove('hidden');
+                if (sectionFooter) sectionFooter.classList.remove('hidden');
                 if (sectionAccount) sectionAccount.classList.remove('hidden');
                 if (sectionPositions) sectionPositions.classList.remove('hidden');
 
@@ -1066,6 +1193,7 @@ $current_active_role = current_user_role();
                 history.replaceState(null, null, '#all');
             } else { // default 'account'
                 if (sectionLocation) sectionLocation.classList.add('hidden');
+                if (sectionFooter) sectionFooter.classList.add('hidden');
                 if (sectionAccount) sectionAccount.classList.remove('hidden');
                 if (sectionPositions) sectionPositions.classList.remove('hidden');
 
@@ -1085,8 +1213,12 @@ $current_active_role = current_user_role();
             const actionSubmitted = '<?php echo htmlspecialchars($action ?? '', ENT_QUOTES, 'UTF-8'); ?>';
             if (actionSubmitted === 'save_attendance_zone') {
                 defaultTab = 'location';
+            } else if (actionSubmitted === 'save_footer_settings') {
+                defaultTab = 'footer';
             } else if (window.location.hash === '#location') {
                 defaultTab = 'location';
+            } else if (window.location.hash === '#footer') {
+                defaultTab = 'footer';
             } else if (window.location.hash === '#all') {
                 defaultTab = 'all';
             } else if (window.location.hash === '#account') {
