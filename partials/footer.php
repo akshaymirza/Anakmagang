@@ -7,7 +7,7 @@
 $footer_root = file_exists('verification.php') ? '' : '../';
 ?>
 <!-- Footer -->
-<footer class="bg-surface-container-high border-t border-outline-variant w-full py-xl mt-auto shrink-0 z-10">
+<footer class="relative z-10 bg-surface-container-high border-t border-outline-variant w-full py-xl mt-auto shrink-0">
     <div class="flex flex-col md:flex-row justify-between items-center px-gutter w-full max-w-container-max mx-auto gap-md">
         <div class="font-label-md font-black text-on-surface flex items-center gap-2">
             <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;">school</span>

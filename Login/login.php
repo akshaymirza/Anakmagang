@@ -91,15 +91,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Panel Kiri: Selamat Datang Anak Magang -->
         <div class="md:w-5/12 bg-blue-900 bg-grid text-white p-4 md:p-8 flex flex-col justify-between relative">
           <div>
-            <span class="inline-block bg-blue-800/80 text-blue-200 text-[10px] md:text-xs px-2.5 py-0.5 rounded-full font-semibold mb-2 md:mb-6 border border-blue-700">
+            <span class="hidden md:inline-block bg-blue-800/80 text-blue-200 text-[10px] md:text-xs px-2.5 py-0.5 rounded-full font-semibold mb-2 md:mb-6 border border-blue-700">
               <i class="fa-solid fa-shield-halved mr-1"></i> Sistem Karir Terintegrasi v3.4
             </span>
-            <h1 class="text-lg md:text-2xl font-bold leading-tight mb-1 md:mb-3">Selamat Datang Anak Magang</h1>
-            <p class="text-[11px] md:text-xs text-blue-200 leading-tight mb-3 md:mb-8">
+            <h1 class="text-base md:text-2xl font-bold leading-tight mb-0 md:mb-3 text-center md:text-left">Selamat Datang Anak Magang</h1>
+            <p class="hidden md:block text-[11px] md:text-xs text-blue-200 leading-tight mb-3 md:mb-8">
               Platform Terpadu Manajemen Magang, Presensi & Gamifikasi Portofolio Talenta Digital Indonesia.
             </p>
 
-            <div class="grid grid-cols-1 gap-2 md:flex md:flex-col md:gap-0 md:space-y-3">
+            <div class="hidden md:flex md:flex-col md:gap-0 md:space-y-3">
               <div class="bg-blue-800/40 border border-blue-700/50 rounded-lg md:rounded-xl p-2 md:p-3 flex items-start gap-2 md:gap-3 backdrop-blur-sm">
                 <i class="fa-solid fa-location-dot mt-0.5 text-xs md:text-sm text-blue-300 flex-shrink-0"></i>
                 <div>

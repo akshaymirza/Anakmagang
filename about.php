@@ -164,15 +164,52 @@ $about = get_about_content($conn, $about_file);
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <!-- Anime.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="shared-config.js"></script>
     <style>
         body { font-family: Inter, sans-serif; }
         .font-geist { font-family: Geist, sans-serif; }
+        /* ── Floating Batik Background Layer ── */
+        #batik-layer {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .batik-float {
+            position: absolute;
+            will-change: transform;
+            background-image: url('uploads/Icon/batik-gajah-oling.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+        @media (max-width: 768px) {
+            .batik-float {
+                max-width: 140px !important;
+                max-height: 140px !important;
+                opacity: 0.08 !important;
+            }
+        }
     </style>
 </head>
-<body class="<?php echo $is_logged_in ? 'bg-background text-on-surface font-body-md flex h-screen overflow-hidden' : 'bg-slate-50 text-slate-900 min-h-screen flex flex-col'; ?>">
+<body class="<?php echo $is_logged_in ? 'bg-background text-on-surface font-body-md flex h-screen overflow-hidden' : 'bg-slate-50 text-slate-900 min-h-screen flex flex-col overflow-x-hidden relative'; ?>">
+    <?php if (!$is_logged_in): ?>
+    <!-- ═══ Floating Batik Gajah Oling Background Layer ═══ -->
+    <div id="batik-layer" aria-hidden="true">
+        <div class="batik-float" style="width:260px;height:260px;top:4%;left:-4%;opacity:0.07;transform:rotate(-15deg)"></div>
+        <div class="batik-float" style="width:180px;height:180px;top:12%;right:-2%;opacity:0.05;transform:rotate(22deg)"></div>
+        <div class="batik-float" style="width:200px;height:200px;top:52%;left:-3%;opacity:0.07;transform:rotate(-30deg)"></div>
+        <div class="batik-float" style="width:240px;height:240px;top:70%;right:-4%;opacity:0.05;transform:rotate(40deg)"></div>
+        <div class="batik-float" style="width:150px;height:150px;top:85%;left:25%;opacity:0.06;transform:rotate(-5deg)"></div>
+        <div class="batik-float" style="width:320px;height:320px;top:38%;left:55%;opacity:0.06;transform:rotate(8deg)"></div>
+        <div class="batik-float" style="width:280px;height:280px;top:25%;left:20%;opacity:0.04;transform:rotate(55deg)"></div>
+        <div class="batik-float" style="width:170px;height:170px;top:60%;right:25%;opacity:0.05;transform:rotate(-18deg)"></div>
+    </div>
+    <?php endif; ?>
     <?php 
     if ($is_logged_in) {
         $active = 'about';
@@ -448,6 +485,46 @@ $about = get_about_content($conn, $about_file);
                 document.getElementById('editAboutModal').classList.add('hidden');
             }
         </script>
+    <?php endif; ?>
+    <?php if (!$is_logged_in): ?>
+    <script>
+        (function() {
+            if (!window.anime) return;
+            const floats = document.querySelectorAll('.batik-float');
+            if (!floats.length) return;
+            const configs = [
+                { x: 28, y: 22, r: 8,  dur: 9000  },
+                { x: -18, y: 30, r: -6, dur: 11500 },
+                { x: 22, y: -18, r: 5,  dur: 8500  },
+                { x: -30, y: 20, r: -9, dur: 13000 },
+                { x: 25, y: 25, r: 7,   dur: 10000 },
+                { x: -20, y: -22, r: -5,dur: 7800  },
+                { x: 18, y: 28, r: 10,  dur: 12500 },
+                { x: -24, y: -16, r: -7,dur: 9800  }
+            ];
+            floats.forEach((el, i) => {
+                const cfg = configs[i % configs.length];
+                const baseRotate = parseFloat(el.style.transform.match(/rotate\(([^)]+)deg\)/)?.[1] || 0);
+                anime({
+                    targets: el,
+                    translateX: [
+                        { value:  cfg.x,      duration: cfg.dur * 0.5, easing: 'easeInOutSine' },
+                        { value: -cfg.x * 0.6,duration: cfg.dur * 0.5, easing: 'easeInOutSine' }
+                    ],
+                    translateY: [
+                        { value:  cfg.y,      duration: cfg.dur * 0.6, easing: 'easeInOutSine' },
+                        { value: -cfg.y * 0.7,duration: cfg.dur * 0.4, easing: 'easeInOutSine' }
+                    ],
+                    rotate: [
+                        { value: baseRotate + cfg.r,       duration: cfg.dur * 0.55, easing: 'easeInOutSine' },
+                        { value: baseRotate - cfg.r * 0.5, duration: cfg.dur * 0.45, easing: 'easeInOutSine' }
+                    ],
+                    loop: true,
+                    direction: 'alternate'
+                });
+            });
+        })();
+    </script>
     <?php endif; ?>
 </body>
 </html>

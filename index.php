@@ -127,18 +127,15 @@ if (!is_array($positions) || empty($positions)) {
         /* ── Responsive Mobile Adjustment for Floating Batik ── */
         @media (max-width: 768px) {
             .batik-float {
-                max-width: 110px !important;
-                max-height: 110px !important;
-                opacity: 0.04 !important;
-            }
-            .batik-desktop-only {
-                display: none !important;
+                max-width: 140px !important;
+                max-height: 140px !important;
+                opacity: 0.08 !important;
             }
         }
     </style>
 </head>
 
-<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col antialiased">
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col antialiased overflow-x-hidden">
 
     <!-- ═══ Floating Batik Gajah Oling Background Layer ═══
          Export Motif dari Figma ke uploads/icon/batik-gajah-oling.png
@@ -146,12 +143,12 @@ if (!is_array($positions) || empty($positions)) {
     <div id="batik-layer" aria-hidden="true">
         <div class="batik-float" style="width:260px;height:260px;top:4%;left:-4%;opacity:0.07;transform:rotate(-15deg)"></div>
         <div class="batik-float" style="width:180px;height:180px;top:12%;right:-2%;opacity:0.05;transform:rotate(22deg)"></div>
-        <div class="batik-float batik-desktop-only" style="width:320px;height:320px;top:38%;left:55%;opacity:0.06;transform:rotate(8deg)"></div>
+        <div class="batik-float" style="width:320px;height:320px;top:38%;left:55%;opacity:0.06;transform:rotate(8deg)"></div>
         <div class="batik-float" style="width:200px;height:200px;top:52%;left:-3%;opacity:0.07;transform:rotate(-30deg)"></div>
         <div class="batik-float" style="width:240px;height:240px;top:70%;right:-4%;opacity:0.05;transform:rotate(40deg)"></div>
         <div class="batik-float" style="width:150px;height:150px;top:85%;left:25%;opacity:0.06;transform:rotate(-5deg)"></div>
-        <div class="batik-float batik-desktop-only" style="width:280px;height:280px;top:25%;left:20%;opacity:0.04;transform:rotate(55deg)"></div>
-        <div class="batik-float batik-desktop-only" style="width:170px;height:170px;top:60%;right:25%;opacity:0.05;transform:rotate(-18deg)"></div>
+        <div class="batik-float" style="width:280px;height:280px;top:25%;left:20%;opacity:0.04;transform:rotate(55deg)"></div>
+        <div class="batik-float" style="width:170px;height:170px;top:60%;right:25%;opacity:0.05;transform:rotate(-18deg)"></div>
     </div>
 
     <?php include 'partials/topnav-public.php'; ?>
@@ -314,71 +311,107 @@ if (!is_array($positions) || empty($positions)) {
             </div>
 
             <div class="relative max-w-4xl mx-auto px-4" id="timeline-container">
-                <!-- Vertical line: Left-aligned on mobile, center-aligned on desktop -->
-                <div class="absolute left-6 md:left-1/2 top-4 bottom-4 w-0.5 bg-gradient-to-b from-primary via-primary/40 to-transparent -translate-x-1/2"></div>
+                <!-- Vertical line: Center-aligned on desktop -->
+                <div class="hidden md:block absolute left-1/2 top-4 bottom-4 w-0.5 bg-gradient-to-b from-primary via-primary/40 to-transparent -translate-x-1/2"></div>
 
-                <div class="space-y-6 md:space-y-12">
+                <div class="space-y-4 md:space-y-12">
                     <!-- Step 1 -->
-                    <div class="timeline-step anim-target flex flex-row items-start md:items-center gap-4 md:gap-6">
-                        <div class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background md:hidden">
+                    <div class="timeline-step anim-target relative flex flex-col md:flex-row items-stretch md:items-center">
+                        <!-- Desktop Center Icon -->
+                        <div class="hidden md:flex absolute left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-primary text-on-primary items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background">
                             <span class="material-symbols-outlined text-[24px]">app_registration</span>
                         </div>
-                        <div class="flex-1 md:w-1/2 md:text-right pr-0 md:pr-8 bg-surface-container-lowest md:bg-transparent p-4 md:p-0 rounded-2xl border border-outline-variant md:border-none shadow-xs md:shadow-none">
-                            <span class="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs mb-1">Langkah 01</span>
-                            <h3 class="font-headline-sm font-bold text-on-surface text-lg">Pendaftaran Online</h3>
-                            <p class="font-body-sm text-on-surface-variant mt-1 text-sm">Isi formulir data diri dan unggah berkas CV serta portofolio terbaru melalui halaman ini.</p>
+
+                        <!-- Card (Left on Desktop, Full-width on Mobile) -->
+                        <div class="w-full md:w-1/2 md:pr-10">
+                            <div class="bg-surface-container-lowest border border-outline-variant/70 rounded-2xl p-5 md:p-6 shadow-xs hover:shadow-md transition-all text-left">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0 md:hidden shadow-xs">
+                                        <span class="material-symbols-outlined text-[20px]">app_registration</span>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs">Langkah 01</span>
+                                </div>
+                                <h3 class="font-headline-sm font-bold text-on-surface text-lg">Pendaftaran Online</h3>
+                                <p class="font-body-sm text-on-surface-variant mt-1 text-sm">Isi formulir data diri dan unggah berkas CV serta portofolio terbaru melalui halaman ini.</p>
+                            </div>
                         </div>
-                        <div class="hidden md:flex w-12 h-12 rounded-full bg-primary text-on-primary items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background">
-                            <span class="material-symbols-outlined text-[24px]">app_registration</span>
-                        </div>
-                        <div class="hidden md:block md:w-1/2 pl-8"></div>
+
+                        <!-- Empty Spacer Right (Desktop) -->
+                        <div class="hidden md:block md:w-1/2 pl-10"></div>
                     </div>
 
                     <!-- Step 2 -->
-                    <div class="timeline-step anim-target flex flex-row items-start md:items-center gap-4 md:gap-6">
-                        <div class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background md:hidden">
+                    <div class="timeline-step anim-target relative flex flex-col md:flex-row items-stretch md:items-center">
+                        <!-- Desktop Center Icon -->
+                        <div class="hidden md:flex absolute left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-primary text-on-primary items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background">
                             <span class="material-symbols-outlined text-[24px]">quick_reference_all</span>
                         </div>
-                        <div class="hidden md:block md:w-1/2 pr-8"></div>
-                        <div class="hidden md:flex w-12 h-12 rounded-full bg-primary text-on-primary items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background">
-                            <span class="material-symbols-outlined text-[24px]">quick_reference_all</span>
-                        </div>
-                        <div class="flex-1 md:w-1/2 pl-0 md:pl-8 bg-surface-container-lowest md:bg-transparent p-4 md:p-0 rounded-2xl border border-outline-variant md:border-none shadow-xs md:shadow-none">
-                            <span class="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs mb-1">Langkah 02</span>
-                            <h3 class="font-headline-sm font-bold text-on-surface text-lg">Seleksi Berkas & Wawancara</h3>
-                            <p class="font-body-sm text-on-surface-variant mt-1 text-sm">Tim Kedayweb meninjau aplikasi Anda dan mengundang ke sesi diskusi & wawancara online.</p>
+
+                        <!-- Empty Spacer Left (Desktop) -->
+                        <div class="hidden md:block md:w-1/2 pr-10"></div>
+
+                        <!-- Card (Right on Desktop, Full-width on Mobile) -->
+                        <div class="w-full md:w-1/2 md:pl-10">
+                            <div class="bg-surface-container-lowest border border-outline-variant/70 rounded-2xl p-5 md:p-6 shadow-xs hover:shadow-md transition-all text-left">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0 md:hidden shadow-xs">
+                                        <span class="material-symbols-outlined text-[20px]">quick_reference_all</span>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs">Langkah 02</span>
+                                </div>
+                                <h3 class="font-headline-sm font-bold text-on-surface text-lg">Seleksi Berkas & Wawancara</h3>
+                                <p class="font-body-sm text-on-surface-variant mt-1 text-sm">Tim Kedayweb meninjau aplikasi Anda dan mengundang ke sesi diskusi & wawancara online.</p>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Step 3 -->
-                    <div class="timeline-step anim-target flex flex-row items-start md:items-center gap-4 md:gap-6">
-                        <div class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background md:hidden">
+                    <div class="timeline-step anim-target relative flex flex-col md:flex-row items-stretch md:items-center">
+                        <!-- Desktop Center Icon -->
+                        <div class="hidden md:flex absolute left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-primary text-on-primary items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background">
                             <span class="material-symbols-outlined text-[24px]">rocket_launch</span>
                         </div>
-                        <div class="flex-1 md:w-1/2 md:text-right pr-0 md:pr-8 bg-surface-container-lowest md:bg-transparent p-4 md:p-0 rounded-2xl border border-outline-variant md:border-none shadow-xs md:shadow-none">
-                            <span class="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs mb-1">Langkah 03</span>
-                            <h3 class="font-headline-sm font-bold text-on-surface text-lg">Onboarding & Mentorship</h3>
-                            <p class="font-body-sm text-on-surface-variant mt-1 text-sm">Pengenalan tim, alur kerja proyek, serta penetapan mentor profesional pendamping.</p>
+
+                        <!-- Card (Left on Desktop, Full-width on Mobile) -->
+                        <div class="w-full md:w-1/2 md:pr-10">
+                            <div class="bg-surface-container-lowest border border-outline-variant/70 rounded-2xl p-5 md:p-6 shadow-xs hover:shadow-md transition-all text-left">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0 md:hidden shadow-xs">
+                                        <span class="material-symbols-outlined text-[20px]">rocket_launch</span>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs">Langkah 03</span>
+                                </div>
+                                <h3 class="font-headline-sm font-bold text-on-surface text-lg">Onboarding & Mentorship</h3>
+                                <p class="font-body-sm text-on-surface-variant mt-1 text-sm">Pengenalan tim, alur kerja proyek, serta penetapan mentor profesional pendamping.</p>
+                            </div>
                         </div>
-                        <div class="hidden md:flex w-12 h-12 rounded-full bg-primary text-on-primary items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background">
-                            <span class="material-symbols-outlined text-[24px]">rocket_launch</span>
-                        </div>
-                        <div class="hidden md:block md:w-1/2 pl-8"></div>
+
+                        <!-- Empty Spacer Right (Desktop) -->
+                        <div class="hidden md:block md:w-1/2 pl-10"></div>
                     </div>
 
                     <!-- Step 4 -->
-                    <div class="timeline-step anim-target flex flex-row items-start md:items-center gap-4 md:gap-6">
-                        <div class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background md:hidden">
+                    <div class="timeline-step anim-target relative flex flex-col md:flex-row items-stretch md:items-center">
+                        <!-- Desktop Center Icon -->
+                        <div class="hidden md:flex absolute left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-primary text-on-primary items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background">
                             <span class="material-symbols-outlined text-[24px]">workspace_premium</span>
                         </div>
-                        <div class="hidden md:block md:w-1/2 pr-8"></div>
-                        <div class="hidden md:flex w-12 h-12 rounded-full bg-primary text-on-primary items-center justify-center font-bold text-lg shrink-0 shadow-md z-10 ring-4 ring-background">
-                            <span class="material-symbols-outlined text-[24px]">workspace_premium</span>
-                        </div>
-                        <div class="flex-1 md:w-1/2 pl-0 md:pl-8 bg-surface-container-lowest md:bg-transparent p-4 md:p-0 rounded-2xl border border-outline-variant md:border-none shadow-xs md:shadow-none">
-                            <span class="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs mb-1">Langkah 04</span>
-                            <h3 class="font-headline-sm font-bold text-on-surface text-lg">Sertifikat & Karir</h3>
-                            <p class="font-body-sm text-on-surface-variant mt-1 text-sm">Penerbitan sertifikat resmi magang dan kesempatan direkrut menjadi tim profesional.</p>
+
+                        <!-- Empty Spacer Left (Desktop) -->
+                        <div class="hidden md:block md:w-1/2 pr-10"></div>
+
+                        <!-- Card (Right on Desktop, Full-width on Mobile) -->
+                        <div class="w-full md:w-1/2 md:pl-10">
+                            <div class="bg-surface-container-lowest border border-outline-variant/70 rounded-2xl p-5 md:p-6 shadow-xs hover:shadow-md transition-all text-left">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0 md:hidden shadow-xs">
+                                        <span class="material-symbols-outlined text-[20px]">workspace_premium</span>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs">Langkah 04</span>
+                                </div>
+                                <h3 class="font-headline-sm font-bold text-on-surface text-lg">Sertifikat & Karir</h3>
+                                <p class="font-body-sm text-on-surface-variant mt-1 text-sm">Penerbitan sertifikat resmi magang dan kesempatan direkrut menjadi tim profesional.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1153,10 +1186,22 @@ if (!is_array($positions) || empty($positions)) {
             const grid = document.getElementById('benefits-grid');
             if (!grid || !window.anime) return;
 
+            const isMobile = window.innerWidth < 768;
             const leftCards  = grid.querySelectorAll('.benefit-card-left');
             const rightCards = grid.querySelectorAll('.benefit-card-right');
             const topCard    = document.getElementById('benefit-card-2');
             const bottomCard = document.getElementById('benefit-card-5');
+
+            if (isMobile) {
+                const allCards = grid.querySelectorAll('.benefit-card-left, .benefit-card-right, #benefit-card-2, #benefit-card-5');
+                anime.set(allCards, { translateY: 40, scale: 0.92, opacity: 0, filter: 'blur(8px)' });
+                onEnterOnce(grid, () => {
+                    anime({ targets: allCards, translateY: [null,0], scale: [null,1],
+                            opacity: [null,1], filter: [null,'blur(0px)'], duration: 850,
+                            delay: anime.stagger(140, { start: 50 }), easing: 'easeOutExpo' });
+                }, { threshold: 0.05, rootMargin: '0px 0px -60px 0px' });
+                return;
+            }
 
             anime.set(leftCards,  { translateX: -92, rotate: -2.8, scale: 0.87, opacity: 0, filter: 'blur(10px)' });
             anime.set(rightCards, { translateX:  92, rotate:  2.8, scale: 0.87, opacity: 0, filter: 'blur(10px)' });
@@ -1192,18 +1237,21 @@ if (!is_array($positions) || empty($positions)) {
             });
         })();
 
-        /* ─── Timeline Steps: alternate left / right with blur ─── */
+        /* ─── Timeline Steps: alternate left / right on desktop, uniform fade-up on mobile ─── */
         (function() {
             const container = document.getElementById('timeline-container');
             if (!container || !window.anime) return;
             const steps = container.querySelectorAll('.timeline-step');
+            const isMobile = window.innerWidth < 768;
             steps.forEach((step, i) => {
-                anime.set(step, { translateX: (i % 2 === 0 ? -82 : 82), opacity: 0, scale: 0.91, filter: 'blur(9px)' });
+                const initialX = isMobile ? 0 : (i % 2 === 0 ? -82 : 82);
+                const initialY = isMobile ? 35 : 0;
+                anime.set(step, { translateX: initialX, translateY: initialY, opacity: 0, scale: 0.94, filter: 'blur(8px)' });
             });
             onEnterOnce(container, () => {
-                anime({ targets: steps, translateX: [null,0], opacity: [null,1], scale: [null,1],
+                anime({ targets: steps, translateX: [null,0], translateY: [null,0], opacity: [null,1], scale: [null,1],
                         filter: [null,'blur(0px)'], duration: 920,
-                        delay: anime.stagger(250, { start: 100 }), easing: 'easeOutExpo' });
+                        delay: anime.stagger(180, { start: 100 }), easing: 'easeOutExpo' });
             }, { threshold: 0.1, rootMargin: '0px 0px -80px 0px' });
         })();
 
