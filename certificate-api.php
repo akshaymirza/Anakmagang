@@ -163,16 +163,48 @@ if ($action === 'verify') {
 if ($action === 'list') {
     check_admin_api();
 
-    $search = '%' . trim($_GET['search'] ?? '') . '%';
-    $stmt = $conn->prepare(
-        "SELECT id, certificate_id, intern_name, intern_position, university,
-                final_grade, status,
-                DATE_FORMAT(issue_date, '%d %b %Y') AS issue_fmt
-         FROM certificates
-         WHERE certificate_id LIKE ? OR intern_name LIKE ? OR intern_position LIKE ?
-         ORDER BY created_at DESC"
-    );
-    $stmt->bind_param('sss', $search, $search, $search);
+    $search   = '%' . trim($_GET['search'] ?? '') . '%';
+    $year     = trim($_GET['year'] ?? '');
+    $sort_by  = trim($_GET['sort_by'] ?? 'year'); // 'year', 'id', 'name', 'created_at'
+    $sort_dir = strtolower(trim($_GET['sort_dir'] ?? 'desc')) === 'asc' ? 'ASC' : 'DESC';
+
+    // Ekstrak tahun: prioritaskan format dari certificate_id (misal IS-2024-001 -> 2024), fallback ke start_date/issue_date/created_at
+    $year_expr = "COALESCE(
+        NULLIF(REGEXP_SUBSTR(certificate_id, '[0-9]{4}'), ''),
+        YEAR(start_date),
+        YEAR(issue_date),
+        YEAR(created_at)
+    )";
+
+    $sql = "SELECT id, certificate_id, intern_name, intern_position, university,
+                   final_grade, status,
+                   DATE_FORMAT(issue_date, '%d %b %Y') AS issue_fmt,
+                   CAST($year_expr AS UNSIGNED) AS entry_year
+            FROM certificates
+            WHERE (certificate_id LIKE ? OR intern_name LIKE ? OR intern_position LIKE ?)";
+    
+    $params = [$search, $search, $search];
+    $types  = 'sss';
+
+    if (!empty($year) && $year !== 'all') {
+        $sql .= " AND CAST($year_expr AS UNSIGNED) = ?";
+        $params[] = (int)$year;
+        $types   .= 'i';
+    }
+
+    // Tentukan Order By
+    if ($sort_by === 'year') {
+        $sql .= " ORDER BY entry_year $sort_dir, id $sort_dir";
+    } elseif ($sort_by === 'id') {
+        $sql .= " ORDER BY certificate_id $sort_dir";
+    } elseif ($sort_by === 'name') {
+        $sql .= " ORDER BY intern_name $sort_dir";
+    } else {
+        $sql .= " ORDER BY created_at $sort_dir";
+    }
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param($types, ...$params);
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     echo json_encode(['success' => true, 'data' => $rows]);
@@ -233,6 +265,21 @@ if ($action === 'update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    $intern_name     = trim($_POST['intern_name'] ?? '');
+    $intern_position = trim($_POST['intern_position'] ?? '');
+    $university      = trim($_POST['university'] ?? '');
+    $major           = trim($_POST['major'] ?? '');
+    $start_date      = trim($_POST['start_date'] ?? '');
+    $end_date        = trim($_POST['end_date'] ?? '');
+    $issue_date      = trim($_POST['issue_date'] ?? '');
+    $score_technical = intval($_POST['score_technical'] ?? 0);
+    $score_discipline= intval($_POST['score_discipline'] ?? 0);
+    $score_attitude  = intval($_POST['score_attitude'] ?? 0);
+    $final_grade     = trim($_POST['final_grade'] ?? '');
+    $supervisor_name = trim($_POST['supervisor_name'] ?? '');
+    $status          = trim($_POST['status'] ?? 'active');
+    $notes           = trim($_POST['notes'] ?? '');
+
     $stmt = $conn->prepare(
         "UPDATE certificates SET
             intern_name=?, intern_position=?, university=?, major=?,
@@ -242,11 +289,11 @@ if ($action === 'update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
          WHERE id=?"
     );
     $stmt->bind_param(
-        'sssssssiiisssi',
-        $_POST['intern_name'], $_POST['intern_position'], $_POST['university'], $_POST['major'],
-        $_POST['start_date'], $_POST['end_date'], $_POST['issue_date'],
-        $_POST['score_technical'], $_POST['score_discipline'], $_POST['score_attitude'],
-        $_POST['final_grade'], $_POST['supervisor_name'], $_POST['status'], $_POST['notes'],
+        'sssssssiiissssi',
+        $intern_name, $intern_position, $university, $major,
+        $start_date, $end_date, $issue_date,
+        $score_technical, $score_discipline, $score_attitude,
+        $final_grade, $supervisor_name, $status, $notes,
         $id
     );
 
@@ -275,6 +322,38 @@ if ($action === 'delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         echo json_encode(['success' => false, 'message' => 'Gagal hapus: ' . $conn->error]);
     }
+    exit;
+}
+
+// ── NEXT ID (admin only) ─────────────────────────────────────────────────────
+if ($action === 'next_id') {
+    check_admin_api();
+
+    $year   = intval($_GET['year'] ?? date('Y'));
+    $prefix = 'IS-' . $year . '-';
+
+    // Ambil semua certificate_id yang punya prefix tahun ini, lalu cari nomor urut max
+    $stmt = $conn->prepare(
+        "SELECT certificate_id FROM certificates WHERE certificate_id LIKE ? ORDER BY certificate_id DESC"
+    );
+    $like = $prefix . '%';
+    $stmt->bind_param('s', $like);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    $maxSeq = 0;
+    foreach ($rows as $row) {
+        // Ambil angka setelah prefix, misal IS-2026-007 → 7
+        $suffix = substr($row['certificate_id'], strlen($prefix));
+        if (is_numeric($suffix)) {
+            $maxSeq = max($maxSeq, (int)$suffix);
+        }
+    }
+
+    $nextSeq  = $maxSeq + 1;
+    $nextId   = $prefix . str_pad($nextSeq, 3, '0', STR_PAD_LEFT);
+
+    echo json_encode(['success' => true, 'next_id' => $nextId, 'year' => $year, 'seq' => $nextSeq]);
     exit;
 }
 

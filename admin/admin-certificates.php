@@ -12,6 +12,20 @@ if ($conn) {
 $users = [];
 $q = mysqli_query($conn, "SELECT id, username FROM users WHERE role='intern' ORDER BY username ASC");
 while ($row = mysqli_fetch_assoc($q)) $users[] = $row;
+
+// Ambil daftar tahun angkatan yang ada di certificates (bisa dari format ID seperti IS-2024-001 atau tanggal)
+$cohort_years = [];
+$qy = mysqli_query($conn, "SELECT DISTINCT CAST(COALESCE(NULLIF(REGEXP_SUBSTR(certificate_id, '[0-9]{4}'), ''), YEAR(start_date), YEAR(issue_date), YEAR(created_at)) AS UNSIGNED) as yr FROM certificates ORDER BY yr DESC");
+if ($qy) {
+    while ($ry = mysqli_fetch_assoc($qy)) {
+        if (!empty($ry['yr'])) $cohort_years[] = (int)$ry['yr'];
+    }
+}
+$current_yr = (int)date('Y');
+if (!in_array($current_yr, $cohort_years)) {
+    array_unshift($cohort_years, $current_yr);
+}
+rsort($cohort_years);
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -70,49 +84,91 @@ include '../partials/sidebar-admin.php';
     </header>
 
     <div class="p-4 sm:p-6 space-y-6 flex-1">
-        <!-- Stats Row -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-            <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4">
-                <p class="font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Total</p>
-                <p id="stat-total" class="font-headline-lg text-primary font-bold">—</p>
-            </div>
-            <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4">
-                <p class="font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Aktif</p>
-                <p id="stat-active" class="font-headline-lg text-[#166534] font-bold">—</p>
-            </div>
-            <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4">
-                <p class="font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Dicabut</p>
-                <p id="stat-revoked" class="font-headline-lg text-error font-bold">—</p>
-            </div>
-            <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4">
-                <p class="font-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Link Verifikasi</p>
-                <a href="../verification.php" target="_blank"
-                   class="text-primary font-semibold text-sm flex items-center gap-1 hover:underline">
-                    <span class="material-symbols-outlined text-[16px]">open_in_new</span> Buka Halaman
-                </a>
-            </div>
-        </div>
 
-        <!-- Search + Table -->
-        <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant overflow-hidden">
-            <div class="p-4 border-b border-outline-variant flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-                <h3 class="font-label-md text-on-surface uppercase tracking-wider font-bold flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary">list_alt</span>
-                    Daftar Sertifikat
-                </h3>
-                <div class="relative w-full sm:w-64">
-                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
-                    <input id="search-input" type="text" placeholder="Cari nama / ID / posisi…"
-                           class="w-full pl-9 pr-4 py-2 rounded-xl border border-outline-variant bg-surface focus:ring-2 focus:ring-primary text-sm"
-                           oninput="loadCertificates()"/>
+        <!-- Search, Angkatan Filter + Table -->
+        <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-xs overflow-hidden">
+            <!-- Header & Toolbar -->
+            <div class="p-5 border-b border-outline-variant flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between bg-surface-container-low/40">
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+                        <h3 class="font-headline-md font-bold text-on-surface">Daftar Sertifikat Intern</h3>
+                    </div>
+                    <p class="text-xs text-on-surface-variant mt-0.5">Kelola verifikasi, status terbit, dan arsip sertifikat berdasarkan angkatan tahun masuk.</p>
+                </div>
+
+                <!-- Action Controls: Year Tabs, Sort Control & Search -->
+                <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+                    <!-- Filter Angkatan -->
+                    <div class="flex items-center gap-1.5 bg-surface-bright border border-outline-variant rounded-xl px-2.5 py-1 shadow-2xs">
+                        <span class="material-symbols-outlined text-primary text-[18px]">calendar_today</span>
+                        <label for="year-select" class="text-xs font-semibold text-on-surface-variant whitespace-nowrap">Angkatan:</label>
+                        <select id="year-select" onchange="filterCohortYear(this.value)"
+                                class="bg-transparent border-none text-xs font-bold text-primary focus:outline-none focus:ring-0 py-1 pl-1 pr-6 cursor-pointer">
+                            <option value="all">Semua Tahun</option>
+                            <?php foreach ($cohort_years as $yr): ?>
+                                <option value="<?php echo $yr; ?>" <?php echo ($yr == date('Y')) ? 'selected' : ''; ?>>Angkatan <?php echo $yr; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- Sort Control -->
+                    <div class="flex items-center gap-1 bg-surface-bright border border-outline-variant rounded-xl px-2 py-1 shadow-2xs">
+                        <span class="material-symbols-outlined text-primary text-[18px]">sort</span>
+                        <label for="sort-by-select" class="text-xs font-semibold text-on-surface-variant whitespace-nowrap">Urut:</label>
+                        <select id="sort-by-select" onchange="changeSortBy(this.value)"
+                                class="bg-transparent border-none text-xs font-bold text-primary focus:outline-none focus:ring-0 py-1 pl-1 pr-5 cursor-pointer">
+                            <option value="year">Tahun Angkatan (ID)</option>
+                            <option value="id">ID Sertifikat</option>
+                            <option value="name">Nama Intern</option>
+                            <option value="created_at">Waktu Dibuat</option>
+                        </select>
+                        <button type="button" id="sort-dir-btn" onclick="toggleSortDir()" class="p-1 rounded-lg hover:bg-surface-container-high text-primary flex items-center justify-center transition-colors" title="Ubah Arah Urutan">
+                            <span id="sort-dir-icon" class="material-symbols-outlined text-[16px]">arrow_downward</span>
+                        </button>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="relative flex-1 sm:w-60 min-w-[180px]">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+                        <input id="search-input" type="text" placeholder="Cari nama, ID, posisi..."
+                               class="w-full pl-9 pr-4 py-1.5 rounded-xl border border-outline-variant bg-surface-bright focus:outline-none focus:ring-2 focus:ring-primary text-xs font-medium transition-colors shadow-2xs"
+                               oninput="loadCertificates()"/>
+                    </div>
                 </div>
             </div>
+
+            <!-- Cohort Pills Bar (Quick Navigation) — rebuilt dynamically via JS -->
+            <div id="cohort-pills-bar" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-low/20 border-b border-outline-variant overflow-x-auto text-xs">
+                <span class="text-on-surface-variant font-medium shrink-0 mr-1">Filter Cepat:</span>
+                <!-- Pills diisi otomatis oleh rebuildCohortPills() -->
+                <button type="button" onclick="setCohortPill('all')" data-cohort="all" class="cohort-pill px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary text-on-primary shadow-xs">
+                    Semua Angkatan
+                </button>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
-                    <thead class="bg-surface-container-low text-on-surface-variant font-label-sm uppercase tracking-wider">
+                    <thead class="bg-surface-container-low text-on-surface-variant font-label-sm uppercase tracking-wider text-xs select-none">
                         <tr>
-                            <th class="px-4 py-3 text-left">ID Sertifikat</th>
-                            <th class="px-4 py-3 text-left">Nama Intern</th>
+                            <th onclick="applyHeaderSort('id')" class="px-4 py-3 text-left cursor-pointer hover:text-primary transition-colors">
+                                <div class="flex items-center gap-1">
+                                    <span>ID Sertifikat</span>
+                                    <span id="th-sort-id" class="material-symbols-outlined text-[14px] opacity-40">unfold_more</span>
+                                </div>
+                            </th>
+                            <th onclick="applyHeaderSort('name')" class="px-4 py-3 text-left cursor-pointer hover:text-primary transition-colors">
+                                <div class="flex items-center gap-1">
+                                    <span>Nama Intern</span>
+                                    <span id="th-sort-name" class="material-symbols-outlined text-[14px] opacity-40">unfold_more</span>
+                                </div>
+                            </th>
+                            <th onclick="applyHeaderSort('year')" class="px-4 py-3 text-center cursor-pointer hover:text-primary transition-colors">
+                                <div class="flex items-center justify-center gap-1">
+                                    <span>Angkatan (Tahun)</span>
+                                    <span id="th-sort-year" class="material-symbols-outlined text-[14px] text-primary">arrow_downward</span>
+                                </div>
+                            </th>
                             <th class="px-4 py-3 text-left">Posisi</th>
                             <th class="px-4 py-3 text-left">Universitas</th>
                             <th class="px-4 py-3 text-center">TOGGLE</th>
@@ -122,7 +178,7 @@ include '../partials/sidebar-admin.php';
                         </tr>
                     </thead>
                     <tbody id="cert-table-body" class="divide-y divide-outline-variant">
-                        <tr><td colspan="8" class="px-4 py-8 text-center text-on-surface-variant">Memuat data…</td></tr>
+                        <tr><td colspan="9" class="px-4 py-8 text-center text-on-surface-variant">Memuat data…</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -148,8 +204,15 @@ include '../partials/sidebar-admin.php';
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="block font-label-sm text-on-surface-variant mb-1">ID Sertifikat <span class="text-error">*</span></label>
-                <input id="f-cert-id" name="certificate_id" type="text" required placeholder="IS-2024-001"
-                       class="input-field w-full rounded-xl border border-outline-variant px-3 py-2 bg-surface-container-lowest focus:ring-2 focus:ring-primary text-sm"/>
+                <div class="flex gap-2 items-center">
+                    <input id="f-cert-id" name="certificate_id" type="text" required placeholder="IS-2026-001"
+                           class="input-field flex-1 rounded-xl border border-outline-variant px-3 py-2 bg-surface-container-lowest focus:ring-2 focus:ring-primary text-sm font-mono"/>
+                    <button type="button" id="btn-regen-id" onclick="fetchNextCertId()" title="Generate ID otomatis"
+                            class="shrink-0 p-2 rounded-xl border border-outline-variant bg-surface-container-low hover:bg-primary hover:text-on-primary hover:border-primary transition-all text-on-surface-variant flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+                    </button>
+                </div>
+                <p id="cert-id-hint" class="text-[10px] text-on-surface-variant mt-0.5 ml-0.5">Auto-generate dari tahun aktif. Bisa diedit manual.</p>
             </div>
             <div>
                 <label class="block font-label-sm text-on-surface-variant mb-1">User Intern (opsional)</label>
@@ -184,6 +247,7 @@ include '../partials/sidebar-admin.php';
             <div>
                 <label class="block font-label-sm text-on-surface-variant mb-1">Tanggal Mulai <span class="text-error">*</span></label>
                 <input id="f-start" name="start_date" type="date" required
+                       oninput="if(!document.getElementById('f-cert-id').readOnly) fetchNextCertId(new Date(this.value).getFullYear())"
                        class="w-full rounded-xl border border-outline-variant px-3 py-2 bg-surface-container-lowest focus:ring-2 focus:ring-primary text-sm"/>
             </div>
             <div>
@@ -275,27 +339,186 @@ include '../partials/sidebar-admin.php';
 <script>
 let editingId = null;
 
+// ── Cohort Year Filters & Sort State ─────────────────────────────────────────
+let currentCohortYear = 'all';
+let currentSortBy     = 'year';
+let currentSortDir    = 'desc';
+
+function filterCohortYear(year) {
+    currentCohortYear = year;
+    // Sync dropdown
+    const select = document.getElementById('year-select');
+    if (select && select.value !== year) select.value = year;
+
+    highlightActivePill(year);
+    loadCertificates();
+}
+
+function highlightActivePill(year) {
+    document.querySelectorAll('.cohort-pill').forEach(pill => {
+        const pYear = pill.getAttribute('data-cohort');
+        if (pYear === year) {
+            pill.className = 'cohort-pill px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary text-on-primary shadow-xs';
+        } else {
+            pill.className = 'cohort-pill px-3 py-1 rounded-full text-xs font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high border border-outline-variant/60 transition-all';
+        }
+    });
+}
+
+function setCohortPill(year) {
+    filterCohortYear(year);
+}
+
+function changeSortBy(sortBy) {
+    currentSortBy = sortBy;
+    updateSortIcons();
+    loadCertificates();
+}
+
+function toggleSortDir() {
+    currentSortDir = (currentSortDir === 'desc') ? 'asc' : 'desc';
+    updateSortIcons();
+    loadCertificates();
+}
+
+function applyHeaderSort(sortBy) {
+    if (currentSortBy === sortBy) {
+        currentSortDir = (currentSortDir === 'desc') ? 'asc' : 'desc';
+    } else {
+        currentSortBy = sortBy;
+        currentSortDir = (sortBy === 'name') ? 'asc' : 'desc';
+    }
+    const select = document.getElementById('sort-by-select');
+    if (select) select.value = currentSortBy;
+    updateSortIcons();
+    loadCertificates();
+}
+
+function updateSortIcons() {
+    const dirIcon = document.getElementById('sort-dir-icon');
+    if (dirIcon) {
+        dirIcon.textContent = currentSortDir === 'desc' ? 'arrow_downward' : 'arrow_upward';
+    }
+
+    ['id', 'name', 'year'].forEach(key => {
+        const icon = document.getElementById(`th-sort-${key}`);
+        if (!icon) return;
+        if (currentSortBy === key) {
+            icon.textContent = currentSortDir === 'desc' ? 'arrow_downward' : 'arrow_upward';
+            icon.className = 'material-symbols-outlined text-[14px] text-primary font-bold';
+        } else {
+            icon.textContent = 'unfold_more';
+            icon.className = 'material-symbols-outlined text-[14px] opacity-40';
+        }
+    });
+}
+
+// ── Rebuild cohort pills dynamically based on all data (fetch without year filter) ─
+let _allKnownYears = new Set();
+
+async function rebuildCohortPills() {
+    // Ambil semua data (tanpa filter tahun) untuk mengetahui angkatan yang ada
+    const search = document.getElementById('search-input').value;
+    const url = `../certificate-api.php?action=list&search=${encodeURIComponent(search)}&year=all&sort_by=year&sort_dir=desc`;
+    try {
+        const res  = await fetch(url);
+        const json = await res.json();
+        if (!json.success) return;
+
+        // Kumpulkan semua tahun unik dari data
+        const years = [...new Set(
+            json.data
+                .map(c => c.entry_year)
+                .filter(y => y && !isNaN(parseInt(y)))
+                .map(y => parseInt(y))
+        )].sort((a, b) => b - a); // descending
+
+        // Cek apakah perlu rebuild (jika set tahun berubah)
+        const newSet = years.join(',');
+        const oldSet = [..._allKnownYears].sort((a, b) => b - a).join(',');
+        if (newSet === oldSet) return; // tidak ada perubahan, skip rebuild
+
+        _allKnownYears = new Set(years);
+
+        // Rebuild pills
+        const bar = document.getElementById('cohort-pills-bar');
+        if (!bar) return;
+
+        // Hapus semua pill lama kecuali label teks
+        bar.querySelectorAll('.cohort-pill').forEach(p => p.remove());
+
+        // Tambahkan pill "Semua Angkatan"
+        bar.appendChild(makePill('all', 'Semua Angkatan'));
+
+        // Tambahkan pill per tahun angkatan
+        years.forEach(yr => {
+            bar.appendChild(makePill(String(yr), `Angkatan ${yr}`));
+        });
+
+        // Sync dropdown angkatan juga
+        syncYearSelectOptions(years);
+
+        // Terapkan highlight sesuai currentCohortYear
+        highlightActivePill(currentCohortYear);
+    } catch (e) {
+        console.warn('rebuildCohortPills error:', e);
+    }
+}
+
+function makePill(cohortValue, label) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.setAttribute('data-cohort', cohortValue);
+    btn.className = 'cohort-pill px-3 py-1 rounded-full text-xs font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high border border-outline-variant/60 transition-all';
+    btn.textContent = label;
+    btn.onclick = () => setCohortPill(cohortValue);
+    return btn;
+}
+
+function syncYearSelectOptions(years) {
+    const select = document.getElementById('year-select');
+    if (!select) return;
+    const currentVal = select.value;
+    // Simpan option pertama (Semua Tahun)
+    select.innerHTML = '<option value="all">Semua Tahun</option>';
+    years.forEach(yr => {
+        const opt = document.createElement('option');
+        opt.value = yr;
+        opt.textContent = `Angkatan ${yr}`;
+        select.appendChild(opt);
+    });
+    // Kembalikan nilai yang dipilih jika masih ada
+    if ([...select.options].some(o => o.value === currentVal)) {
+        select.value = currentVal;
+    } else {
+        select.value = 'all';
+        if (currentCohortYear !== 'all') {
+            currentCohortYear = 'all';
+        }
+    }
+}
+
 // ── Load certificates ──────────────────────────────────────────────────────
 async function loadCertificates() {
     const search = document.getElementById('search-input').value;
-    const res    = await fetch(`../certificate-api.php?action=list&search=${encodeURIComponent(search)}`);
+    const url = `../certificate-api.php?action=list&search=${encodeURIComponent(search)}&year=${encodeURIComponent(currentCohortYear)}&sort_by=${encodeURIComponent(currentSortBy)}&sort_dir=${encodeURIComponent(currentSortDir)}`;
+    const res    = await fetch(url);
     const json   = await res.json();
     const tbody  = document.getElementById('cert-table-body');
 
     if (!json.success) {
-        tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-8 text-center text-error">${json.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="px-4 py-8 text-center text-error">${json.message}</td></tr>`;
         return;
     }
 
     const data = json.data;
 
-    // Stats
-    document.getElementById('stat-total').textContent   = data.length;
-    document.getElementById('stat-active').textContent  = data.filter(d => d.status === 'active').length;
-    document.getElementById('stat-revoked').textContent = data.filter(d => d.status === 'revoked').length;
+    if (document.getElementById('stat-total')) document.getElementById('stat-total').textContent = data.length;
+    if (document.getElementById('stat-active')) document.getElementById('stat-active').textContent = data.filter(d => d.status === 'active').length;
+    if (document.getElementById('stat-revoked')) document.getElementById('stat-revoked').textContent = data.filter(d => d.status === 'revoked').length;
 
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-8 text-center text-on-surface-variant">Tidak ada sertifikat ditemukan.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="px-4 py-8 text-center text-on-surface-variant">Tidak ada sertifikat ditemukan untuk kriteria ini.</td></tr>`;
         return;
     }
 
@@ -303,6 +526,12 @@ async function loadCertificates() {
         <tr class="hover:bg-surface-container-low transition-colors">
             <td class="px-4 py-3 font-mono text-sm font-bold text-primary">${c.certificate_id}</td>
             <td class="px-4 py-3 font-medium">${c.intern_name}</td>
+            <td class="px-4 py-3 text-center">
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                    <span class="material-symbols-outlined text-[13px] text-blue-600">calendar_month</span>
+                    ${c.entry_year || '—'}
+                </span>
+            </td>
             <td class="px-4 py-3 text-on-surface-variant">${c.intern_position}</td>
             <td class="px-4 py-3 text-on-surface-variant text-xs">${c.university || '—'}</td>
             <td class="px-4 py-3 text-center">
@@ -335,6 +564,37 @@ async function loadCertificates() {
             </td>
         </tr>
     `).join('');
+}
+
+// ── Auto-generate Certificate ID ──────────────────────────────────────────
+async function fetchNextCertId(year = null) {
+    const btn = document.getElementById('btn-regen-id');
+    if (btn) { btn.disabled = true; btn.querySelector('span').textContent = 'hourglass_empty'; }
+
+    // Pakai tahun dari start_date jika sudah diisi, fallback ke tahun sekarang
+    if (!year) {
+        const startVal = document.getElementById('f-start')?.value;
+        year = startVal ? new Date(startVal).getFullYear() : new Date().getFullYear();
+    }
+
+    try {
+        const res  = await fetch(`../certificate-api.php?action=next_id&year=${year}`);
+        const json = await res.json();
+        if (json.success) {
+            const field = document.getElementById('f-cert-id');
+            if (field && !field.readOnly) {
+                field.value = json.next_id;
+                field.classList.add('ring-2', 'ring-primary');
+                setTimeout(() => field.classList.remove('ring-2', 'ring-primary'), 1200);
+            }
+            const hint = document.getElementById('cert-id-hint');
+            if (hint) hint.textContent = `Urutan ke-${json.seq} untuk angkatan ${json.year}. Bisa diedit manual.`;
+        }
+    } catch(e) {
+        console.warn('fetchNextCertId error:', e);
+    } finally {
+        if (btn) { btn.disabled = false; btn.querySelector('span').textContent = 'auto_awesome'; }
+    }
 }
 
 // ── Modal helpers ──────────────────────────────────────────────────────────
@@ -370,7 +630,13 @@ function openModal(data = null) {
         if (el) el.value = val ?? '';
     }
     // Disable cert-id field on edit
-    document.getElementById('f-cert-id').readOnly = !!data;
+    const certIdField = document.getElementById('f-cert-id');
+    const regenBtn    = document.getElementById('btn-regen-id');
+    certIdField.readOnly = !!data;
+    if (regenBtn) regenBtn.style.display = data ? 'none' : '';
+
+    // Auto-generate ID jika mode tambah
+    if (!data) fetchNextCertId();
 
     document.getElementById('cert-modal').showModal();
 }
@@ -389,23 +655,46 @@ async function editCertificate(id) {
 async function saveCertificate(e) {
     e.preventDefault();
     const btn = document.getElementById('save-btn');
-    btn.disabled = true;
+    if (btn) btn.disabled = true;
 
-    const action   = editingId ? 'update' : 'create';
-    const formData = new FormData(document.getElementById('cert-form'));
-    formData.set('action', action);
-    if (!editingId) formData.delete('id');
+    try {
+        const action   = editingId ? 'update' : 'create';
+        const formEl   = document.getElementById('cert-form');
+        const formData = new FormData(formEl);
+        formData.set('action', action);
+        
+        // Pastikan ID ada jika update
+        if (editingId) {
+            formData.set('id', editingId);
+        } else {
+            formData.delete('id');
+        }
 
-    const res  = await fetch('../certificate-api.php', { method: 'POST', body: formData });
-    const json = await res.json();
+        const res  = await fetch('../certificate-api.php', { method: 'POST', body: formData });
+        const text = await res.text();
+        let json;
+        try {
+            json = JSON.parse(text);
+        } catch (err) {
+            console.error('API response error:', text);
+            // Tampilkan cuplikan pesan respon server jika bukan JSON
+            const cleanErr = text.replace(/<[^>]*>?/gm, ' ').trim().substring(0, 120);
+            throw new Error(cleanErr || 'Respon server tidak valid');
+        }
 
-    btn.disabled = false;
-    if (json.success) {
-        closeModal();
-        loadCertificates();
-        showToast(json.message, 'success');
-    } else {
-        showToast(json.message, 'error');
+        if (json.success) {
+            closeModal();
+            await rebuildCohortPills(); // refresh pills jika ada angkatan baru
+            loadCertificates();
+            showToast(json.message || 'Sertifikat berhasil disimpan', 'success');
+        } else {
+            showToast(json.message || 'Gagal menyimpan sertifikat', 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showToast(err.message || 'Terjadi kesalahan saat memproses data', 'error');
+    } finally {
+        if (btn) btn.disabled = false;
     }
 }
 
@@ -461,7 +750,8 @@ function showToast(msg, type = 'success') {
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
-loadCertificates();
+// Jalankan rebuild pills dulu (sekaligus load awal), lalu load tabel
+rebuildCohortPills().then(() => loadCertificates());
 </script>
 </body>
 </html>
