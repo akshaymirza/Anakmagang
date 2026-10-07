@@ -128,7 +128,6 @@ $count_offer = count(array_filter($applications, fn($a) => ($a['status'] ?? '') 
             <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_circle</span>
           </div>
           <span class="hidden sm:inline-block font-label-md"><?php echo htmlspecialchars(current_user_name(), ENT_QUOTES, 'UTF-8'); ?></span>
-          <span class="hidden sm:inline-block rounded-full bg-blue-600 px-2 py-0.5 text-[10px] text-white font-bold uppercase tracking-wider"><?php echo htmlspecialchars(current_user_role(), ENT_QUOTES, 'UTF-8'); ?></span>
           <a href="logout.php" class="text-error hover:text-red-700 hover:bg-red-50 p-1.5 rounded-full transition-colors flex items-center justify-center" title="Keluar" aria-label="Keluar"><span class="material-symbols-outlined text-[20px]">logout</span></a>
         </div>
       </div>
@@ -142,37 +141,6 @@ $count_offer = count(array_filter($applications, fn($a) => ($a['status'] ?? '') 
         </div>
       <?php endif; ?>
 
-      <!-- Stats -->
-      <section class="mb-7 grid gap-4 sm:grid-cols-4">
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div class="flex justify-between text-slate-600">
-            <span class="text-xs font-bold uppercase text-slate-500">Total Pelamar</span>
-            <span class="material-symbols-outlined rounded-full bg-slate-100 p-2 text-slate-700">description</span>
-          </div>
-          <p class="mt-4 font-geist text-3xl font-bold"><?php echo $total_apps; ?></p>
-        </div>
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div class="flex justify-between text-slate-600">
-            <span class="text-xs font-bold uppercase text-slate-500">Menunggu Review</span>
-            <span class="material-symbols-outlined rounded-full bg-blue-100 p-2 text-blue-700">pending_actions</span>
-          </div>
-          <p class="mt-4 font-geist text-3xl font-bold text-blue-700"><?php echo $count_review; ?></p>
-        </div>
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div class="flex justify-between text-slate-600">
-            <span class="text-xs font-bold uppercase text-slate-500">Interview</span>
-            <span class="material-symbols-outlined rounded-full bg-amber-100 p-2 text-amber-700">calendar_month</span>
-          </div>
-          <p class="mt-4 font-geist text-3xl font-bold text-amber-700"><?php echo $count_interview; ?></p>
-        </div>
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div class="flex justify-between text-slate-600">
-            <span class="text-xs font-bold uppercase text-slate-500">Diterima / Offer</span>
-            <span class="material-symbols-outlined rounded-full bg-emerald-100 p-2 text-emerald-700">verified</span>
-          </div>
-          <p class="mt-4 font-geist text-3xl font-bold text-emerald-700"><?php echo $count_offer; ?></p>
-        </div>
-      </section>
 
       <!-- Main Applications Pipeline Table -->
       <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

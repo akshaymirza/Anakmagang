@@ -97,11 +97,11 @@ $total_admins = count(array_filter($users, static function (array $user): bool {
 
             <!-- Users Table -->
             <div class="glass-card rounded-xl border border-outline-variant p-4">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-headline-md">Daftar Intern</h3>
-                    <div class="relative">
-                        <span class="material-symbols-outlined absolute left-2 top-2 text-on-surface-variant text-lg">search</span>
-                        <input type="text" id="search-user" placeholder="Cari intern..." class="pl-8 pr-3 py-1.5 text-sm border border-outline-variant rounded-lg focus:outline-none focus:border-primary bg-surface-container-low"/>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 pb-3 border-b border-outline-variant">
+                    <h3 class="font-headline-md font-bold text-on-surface">Daftar Intern</h3>
+                    <div class="relative w-full sm:w-64">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+                        <input type="text" id="search-user" placeholder="Cari intern..." class="w-full pl-9 pr-3 py-1.5 text-sm border border-outline-variant rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-surface-container-low transition-colors"/>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
