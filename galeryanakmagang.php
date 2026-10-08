@@ -251,11 +251,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $gallery_list = get_all_gallery_items($conn, $json_file);
 ?>
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="overflow-y-scroll">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
     <title>Galeri Kegiatan Anak Magang - Kedayweb</title>
+    <style>
+        html {
+            scrollbar-gutter: stable;
+        }
+    </style>
     <!-- Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <!-- Google Fonts -->
@@ -389,9 +394,9 @@ $gallery_list = get_all_gallery_items($conn, $json_file);
             </div>
 
             <!-- Gallery Grid -->
-            <div id="galleryGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div id="galleryGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[350px]">
                 <?php if (empty($gallery_list)): ?>
-                    <div class="col-span-full py-16 text-center text-slate-400">
+                    <div class="col-span-full py-16 text-center text-slate-400 flex flex-col items-center justify-center min-h-[250px]">
                         <span class="material-symbols-outlined text-5xl mb-2 text-slate-300">collections</span>
                         <p class="font-bold text-slate-700">Belum Ada Foto Kegiatan</p>
                         <p class="text-xs text-slate-500 mt-1">Jadilah yang pertama menambahkan kegiatan magang ke galeri!</p>
@@ -446,8 +451,13 @@ $gallery_list = get_all_gallery_items($conn, $json_file);
                         </article>
                     <?php endforeach; ?>
                 <?php endif; ?>
+
+                <div id="noSearchResult" class="hidden col-span-full py-16 text-center text-slate-400 flex flex-col items-center justify-center min-h-[250px]">
+                    <span class="material-symbols-outlined text-5xl mb-2 text-slate-300">search_off</span>
+                    <p class="font-bold text-slate-700">Tidak ada foto kegiatan yang ditemukan</p>
+                    <p class="text-xs text-slate-500 mt-1">Coba pilih filter lain atau kata kunci pencarian yang berbeda.</p>
+                </div>
             </div>
-            <p id="noSearchResult" class="hidden text-center text-slate-500 py-12 text-sm">Tidak ada foto kegiatan yang cocok dengan pencarian.</p>
         </div>
         <div class="shrink-0 mt-auto w-full">
             <?php include 'partials/footer.php'; ?>
