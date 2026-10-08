@@ -48,27 +48,8 @@ if (!empty($conn) && !empty($_SESSION['user_id'])) {
     }
 }
 
-$intern_nav_items = [
-    'dashboard'    => ['label' => 'Dashboard',           'icon' => 'dashboard',       'href' => $root_prefix . 'dashboard.php',    'i18n' => 'nav_dashboard'],
-    'projects'     => ['label' => 'Projects',            'icon' => 'folder_open',     'href' => $root_prefix . 'projects.php',     'i18n' => 'nav_projects'],
-    'attendance'   => ['label' => 'Attendance',          'icon' => 'event_available', 'href' => $root_prefix . 'attendance.php',   'i18n' => 'nav_attendance'],
-    'tasks'        => ['label' => 'Tasks',               'icon' => 'view_kanban',     'href' => $root_prefix . 'tasks.php',        'i18n' => 'nav_tasks'],
-    'internspace'  => ['label' => 'Riwayat Tugas',       'icon' => 'history_edu',     'href' => $root_prefix . 'internspace.php',  'i18n' => 'nav_internspace'],
-];
-
-if ($show_cert_button) {
-    $intern_nav_items['certificate'] = ['label' => 'Sertifikat Saya', 'icon' => 'workspace_premium', 'href' => $cert_href, 'i18n' => 'nav_certificate'];
-}
-
-$intern_nav_items['galeri']  = ['label' => 'Galeri Foto',         'icon' => 'photo_library',   'href' => $root_prefix . 'galeryanakmagang.php', 'i18n' => 'nav_galeri'];
-$intern_nav_items['events']  = ['label' => 'Histori Event',       'icon' => 'event',           'href' => $root_prefix . 'event_history.php', 'i18n' => 'nav_events'];
-$intern_nav_items['article'] = ['label' => 'Aktivitas & Artikel', 'icon' => 'newspaper',       'href' => $root_prefix . 'article.php',      'i18n' => 'nav_article'];
-$intern_nav_items['sop']     = ['label' => 'SOP',                 'icon' => 'description',     'href' => $root_prefix . 'sop.php',          'i18n' => 'nav_sop'];
-$intern_nav_items['about']   = ['label' => 'Tentang',             'icon' => 'info',            'href' => $root_prefix . 'about.php',        'i18n' => 'nav_about'];
-
-if (current_user_role() === 'admin' || current_user_role() === 'superadmin') {
-    $intern_nav_items['applications'] = ['label' => 'Applications', 'icon' => 'description', 'href' => $root_prefix . 'applications.php', 'i18n' => 'nav_applications'];
-}
+$is_tugas_active = in_array($active, ['tasks', 'internspace']);
+$is_media_active = in_array($active, ['galeri', 'events', 'article', 'gallery', 'events_history']);
 ?>
 <!-- Mobile Sidebar Backdrop Overlay -->
 <div id="sidebar-backdrop" onclick="closeMobileSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity md:hidden"></div>
@@ -88,14 +69,90 @@ if (current_user_role() === 'admin' || current_user_role() === 'superadmin') {
         </button>
     </div>
 
-    <nav class="flex-1 space-y-sm overflow-y-auto pr-1">
-        <?php foreach ($intern_nav_items as $key => $item): ?>
-            <?php $is_active = ($active === $key) || ($key === 'galeri' && $active === 'gallery') || ($key === 'events' && $active === 'events_history'); ?>
-            <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo $is_active ? 'bg-primary-container text-on-primary-container active:scale-[0.98] transition-transform' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $item['href']; ?>">
-                <span class="material-symbols-outlined"<?php echo $is_active ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>><?php echo $item['icon']; ?></span>
-                <span data-i18n="<?php echo $item['i18n']; ?>"><?php echo $item['label']; ?></span>
+    <nav class="flex-1 space-y-xs overflow-y-auto pr-1">
+        <!-- Dashboard -->
+        <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'dashboard') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>dashboard.php">
+            <span class="material-symbols-outlined"<?php echo ($active === 'dashboard') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>dashboard</span>
+            <span data-i18n="nav_dashboard">Dashboard</span>
+        </a>
+
+        <!-- Projects -->
+        <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'projects') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>projects.php">
+            <span class="material-symbols-outlined"<?php echo ($active === 'projects') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>folder_open</span>
+            <span data-i18n="nav_projects">Projects</span>
+        </a>
+
+        <!-- Attendance -->
+        <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'attendance') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>attendance.php">
+            <span class="material-symbols-outlined"<?php echo ($active === 'attendance') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>event_available</span>
+            <span data-i18n="nav_attendance">Attendance</span>
+        </a>
+
+        <!-- Dropdown: Tugas & Kanban -->
+        <div>
+            <button type="button" onclick="toggleSidebarDropdown('dropdown-tugas-intern')" class="w-full flex items-center justify-between px-md py-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors cursor-pointer <?php echo $is_tugas_active ? 'font-bold text-primary' : ''; ?>">
+                <div class="flex items-center gap-md">
+                    <span class="material-symbols-outlined">assignment</span>
+                    <span>Tugas & Kanban</span>
+                </div>
+                <span id="arrow-dropdown-tugas-intern" class="material-symbols-outlined text-[18px] transition-transform duration-200 <?php echo $is_tugas_active ? 'rotate-180' : ''; ?>">expand_more</span>
+            </button>
+            <div id="dropdown-tugas-intern" class="<?php echo $is_tugas_active ? '' : 'hidden'; ?> pl-sm space-y-xs pt-xs border-l-2 border-outline-variant/40 ml-md my-xs">
+                <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'tasks') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>tasks.php">
+                    <span class="material-symbols-outlined text-[20px]"<?php echo ($active === 'tasks') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>view_kanban</span>
+                    <span data-i18n="nav_tasks">Kanban Board</span>
+                </a>
+                <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'internspace') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>internspace.php">
+                    <span class="material-symbols-outlined text-[20px]"<?php echo ($active === 'internspace') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>history_edu</span>
+                    <span data-i18n="nav_internspace">Riwayat Tugas</span>
+                </a>
+            </div>
+        </div>
+
+        <?php if ($show_cert_button): ?>
+            <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'certificate') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $cert_href; ?>">
+                <span class="material-symbols-outlined"<?php echo ($active === 'certificate') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>workspace_premium</span>
+                <span data-i18n="nav_certificate">Sertifikat Saya</span>
             </a>
-        <?php endforeach; ?>
+        <?php endif; ?>
+
+        <!-- Dropdown: Media & Artikel -->
+        <div>
+            <button type="button" onclick="toggleSidebarDropdown('dropdown-media-intern')" class="w-full flex items-center justify-between px-md py-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors cursor-pointer <?php echo $is_media_active ? 'font-bold text-primary' : ''; ?>">
+                <div class="flex items-center gap-md">
+                    <span class="material-symbols-outlined">collections</span>
+                    <span>Media & Artikel</span>
+                </div>
+                <span id="arrow-dropdown-media-intern" class="material-symbols-outlined text-[18px] transition-transform duration-200 <?php echo $is_media_active ? 'rotate-180' : ''; ?>">expand_more</span>
+            </button>
+            <div id="dropdown-media-intern" class="<?php echo $is_media_active ? '' : 'hidden'; ?> pl-sm space-y-xs pt-xs border-l-2 border-outline-variant/40 ml-md my-xs">
+                <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'galeri' || $active === 'gallery') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>galeryanakmagang.php">
+                    <span class="material-symbols-outlined text-[20px]"<?php echo ($active === 'galeri' || $active === 'gallery') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>photo_library</span>
+                    <span data-i18n="nav_galeri">Galeri Foto</span>
+                </a>
+                <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'events' || $active === 'events_history') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>event_history.php">
+                    <span class="material-symbols-outlined text-[20px]"<?php echo ($active === 'events' || $active === 'events_history') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>event</span>
+                    <span data-i18n="nav_events">Histori Event</span>
+                </a>
+                <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'article') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>article.php">
+                    <span class="material-symbols-outlined text-[20px]"<?php echo ($active === 'article') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>newspaper</span>
+                    <span data-i18n="nav_article">Aktivitas & Artikel</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- SOP -->
+        <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'sop') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>sop.php">
+            <span class="material-symbols-outlined"<?php echo ($active === 'sop') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>description</span>
+            <span data-i18n="nav_sop">SOP</span>
+        </a>
+
+        <!-- Tentang -->
+        <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'about') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>about.php">
+            <span class="material-symbols-outlined"<?php echo ($active === 'about') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>info</span>
+            <span data-i18n="nav_about">Tentang</span>
+        </a>
+
         <?php if ($show_admin_link || current_user_role() === 'admin' || current_user_role() === 'superadmin'): ?>
             <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-label-md text-label-md active:scale-[0.98] transition-transform" href="<?php echo $admin_prefix; ?>admin-dashboard.php">
                 <span class="material-symbols-outlined">admin_panel_settings</span>
@@ -116,6 +173,19 @@ if (current_user_role() === 'admin' || current_user_role() === 'superadmin') {
 </aside>
 
 <script>
+function toggleSidebarDropdown(id) {
+    const el = document.getElementById(id);
+    const arrow = document.getElementById('arrow-' + id);
+    if (!el) return;
+    const isHidden = el.classList.contains('hidden');
+    if (isHidden) {
+        el.classList.remove('hidden');
+        if (arrow) arrow.classList.add('rotate-180');
+    } else {
+        el.classList.add('hidden');
+        if (arrow) arrow.classList.remove('rotate-180');
+    }
+}
 function toggleMobileSidebar() {
     const sidebar = document.getElementById('app-sidebar');
     const backdrop = document.getElementById('sidebar-backdrop');
