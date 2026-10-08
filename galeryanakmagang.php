@@ -407,7 +407,7 @@ $gallery_list = get_all_gallery_items($conn, $json_file);
                         $date = htmlspecialchars($item['created_at'] ?? '', ENT_QUOTES, 'UTF-8');
                     ?>
                         <article data-category="<?php echo $cat; ?>" class="gallery-card bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col group">
-                            <div class="relative h-52 overflow-hidden bg-slate-100">
+                            <div class="relative w-full h-52 shrink-0 overflow-hidden bg-slate-100">
                                 <img src="<?php echo $img; ?>" alt="<?php echo $title; ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80';"/>
                                 <span class="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                                     <?php echo $cat; ?>
