@@ -364,7 +364,7 @@ $gallery_list = get_all_gallery_items($conn, $json_file);
         </section>
 
         <!-- Container -->
-        <div class="max-w-7xl mx-auto p-6 md:p-8">
+        <div class="w-full max-w-7xl mx-auto p-6 md:p-8">
             <!-- Alert Notification -->
             <?php if (!empty($action_msg)): ?>
                 <div class="mb-6 p-4 rounded-xl <?php echo $action_type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-blue-50 text-blue-800 border border-blue-200'; ?> flex justify-between items-center text-sm font-medium">
@@ -379,7 +379,7 @@ $gallery_list = get_all_gallery_items($conn, $json_file);
             <?php endif; ?>
 
             <!-- Filter Controls -->
-            <div class="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-slate-200 pb-4">
+            <div class="w-full mb-8 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-slate-200 pb-4">
                 <div class="flex flex-wrap gap-2">
                     <button onclick="filterCategory('all', this)" class="cat-btn active px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-sm">Semua Kegiatan (<?php echo count($gallery_list); ?>)</button>
                     <button onclick="filterCategory('Aktivitas Harian', this)" class="cat-btn px-4 py-2 rounded-xl text-xs font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">Aktivitas Harian</button>
@@ -394,7 +394,7 @@ $gallery_list = get_all_gallery_items($conn, $json_file);
             </div>
 
             <!-- Gallery Grid -->
-            <div id="galleryGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[350px]">
+            <div id="galleryGrid" class="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[350px]">
                 <?php if (empty($gallery_list)): ?>
                     <div class="col-span-full py-16 text-center text-slate-400 flex flex-col items-center justify-center min-h-[250px]">
                         <span class="material-symbols-outlined text-5xl mb-2 text-slate-300">collections</span>
