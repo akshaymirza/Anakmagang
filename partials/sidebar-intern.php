@@ -103,12 +103,12 @@ if (current_user_role() === 'admin' || current_user_role() === 'superadmin') {
             </a>
         <?php endif; ?>
     </nav>
-    <div class="mt-auto border-t border-outline-variant pt-md">
-        <div class="flex items-center gap-sm px-sm mb-sm">
+    <div class="mt-auto border-t border-outline-variant pt-md space-y-xs">
+        <div class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-on-surface">
             <span class="material-symbols-outlined text-primary">account_circle</span>
-            <span class="font-label-sm text-on-surface truncate"><?php echo htmlspecialchars(current_user_name(), ENT_QUOTES, 'UTF-8'); ?></span>
+            <span class="truncate font-semibold"><?php echo htmlspecialchars(current_user_name(), ENT_QUOTES, 'UTF-8'); ?></span>
         </div>
-        <a class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md text-error hover:bg-error-container" href="<?php echo $root_prefix; ?>logout.php">
+        <a class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md text-error hover:bg-error-container transition-colors" href="<?php echo $root_prefix; ?>logout.php">
             <span class="material-symbols-outlined">logout</span>
             <span>Keluar</span>
         </a>
