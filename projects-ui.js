@@ -87,19 +87,18 @@ function renderProjects(filterQuery) {
   const kanbanLink = activeProjectId ? `tasks.php?project=${encodeURIComponent(activeProjectId)}` : 'tasks.php';
 
   app.innerHTML = `
-    <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+    <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div>
-        <p class="mb-2 text-sm font-semibold uppercase tracking-wider text-primary">Workspace</p>
         <h2 class="font-geist text-3xl font-bold text-on-surface">Daftar Project</h2>
-        <p class="mt-2 text-slate-600">Kelola project dan pekerjaan tim dalam satu tempat yang terhubung langsung dengan Active Sprint Kanban.</p>
+        <p class="mt-1.5 text-slate-600">Kelola project dan pekerjaan tim dalam satu tempat yang terhubung langsung dengan Active Sprint Kanban.</p>
       </div>
-      <div class="flex items-center gap-3">
-        <a href="${kanbanLink}" class="inline-flex items-center justify-center gap-2 rounded-lg border border-outline-variant bg-white px-4 py-3 font-bold text-primary hover:bg-surface-container-high transition-colors shadow-sm">
-          <span class="material-symbols-outlined">view_kanban</span>
+      <div class="flex items-center gap-3 shrink-0">
+        <a href="${kanbanLink}" class="inline-flex items-center justify-center gap-2 rounded-lg border border-outline-variant bg-white px-4 py-2.5 text-sm font-semibold text-primary hover:bg-surface-container-high transition-colors shadow-xs">
+          <span class="material-symbols-outlined text-[20px]">view_kanban</span>
           Lihat Papan Kanban
         </a>
-        <button onclick="newProject()" class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 font-bold text-white hover:bg-primary-container transition-colors shadow-sm">
-          <span class="material-symbols-outlined">add</span>
+        <button onclick="newProject()" class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-container transition-colors shadow-xs">
+          <span class="material-symbols-outlined text-[20px]">add</span>
           Tambah Project
         </button>
       </div>
@@ -114,8 +113,7 @@ function renderProjects(filterQuery) {
               <div class="flex items-start justify-between">
                 <span class="material-symbols-outlined rounded-xl bg-blue-100 p-3 text-primary">folder</span>
                 <div class="flex items-center gap-2">
-                  <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">${p.tasks ? p.tasks.length : 0} tasks</span>
-                  <span class="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-700">${completedTasks} done</span>
+                  <span class="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">${completedTasks}/${p.tasks ? p.tasks.length : 0} done</span>
                 </div>
               </div>
               <h3 class="mt-4 font-geist text-xl font-bold text-on-surface">${escape(title)}</h3>
@@ -123,17 +121,17 @@ function renderProjects(filterQuery) {
               <p class="mt-3 text-xs text-slate-500">Dibuat tanggal ${new Date(p.created_at || Date.now()).toLocaleDateString('id-ID')}</p>
             </div>
             <div class="mt-5 flex items-center gap-2 border-t border-line pt-4">
-              <a href="tasks.php?project=${encodeURIComponent(p.id)}" onclick="ProjectStore.setActiveProjectId('${p.id}')" class="flex-1 rounded-lg bg-primary px-3 py-2 text-center text-sm font-bold text-white hover:bg-primary-container transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+              <a href="tasks.php?project=${encodeURIComponent(p.id)}" onclick="ProjectStore.setActiveProjectId('${p.id}')" class="flex-1 h-9 rounded-lg bg-primary px-3 text-sm font-bold text-white hover:bg-primary-container transition-colors flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap">
                 <span class="material-symbols-outlined text-[18px]">view_kanban</span>
-                Buka Kanban
+                <span>Buka Kanban</span>
               </a>
-              <a href="projects.php?project=${encodeURIComponent(p.id)}" class="rounded-lg border border-line px-3 py-2 text-primary hover:bg-slate-50 flex items-center justify-center transition-colors" title="Kelola Project">
+              <a href="projects.php?project=${encodeURIComponent(p.id)}" class="h-9 w-9 rounded-lg border border-line text-primary hover:bg-slate-50 flex items-center justify-center transition-colors shrink-0" title="Kelola Project">
                 <span class="material-symbols-outlined text-[18px]">folder_open</span>
               </a>
-              <button onclick="editProject('${p.id}')" aria-label="Edit" class="rounded-lg border border-line px-3 py-2 text-primary hover:bg-slate-50 transition-colors">
+              <button onclick="editProject('${p.id}')" aria-label="Edit" class="h-9 w-9 rounded-lg border border-line text-primary hover:bg-slate-50 flex items-center justify-center transition-colors shrink-0">
                 <span class="material-symbols-outlined text-[18px]">edit</span>
               </button>
-              <button onclick="removeProject('${p.id}')" aria-label="Hapus" class="rounded-lg border border-line px-3 py-2 text-red-600 hover:bg-red-50 transition-colors">
+              <button onclick="removeProject('${p.id}')" aria-label="Hapus" class="h-9 w-9 rounded-lg border border-line text-red-600 hover:bg-red-50 flex items-center justify-center transition-colors shrink-0">
                 <span class="material-symbols-outlined text-[18px]">delete</span>
               </button>
             </div>
@@ -190,9 +188,9 @@ function renderBoard(filterQuery) {
         <h2 class="font-geist text-3xl font-bold text-on-surface">${escape(title)}</h2>
         <p class="mt-1 text-slate-600">${escape(project.description || 'Project terhubung ke MySQL.')}</p>
       </div>
-      <div class="flex items-center gap-3">
-        <a href="tasks.php?project=${encodeURIComponent(project.id)}" onclick="ProjectStore.setActiveProjectId('${project.id}')" class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 font-bold text-white hover:bg-primary-container transition-colors shadow-sm">
-          <span class="material-symbols-outlined">view_kanban</span>
+      <div class="flex items-center gap-3 shrink-0">
+        <a href="tasks.php?project=${encodeURIComponent(project.id)}" onclick="ProjectStore.setActiveProjectId('${project.id}')" class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-xs font-bold text-white hover:bg-primary-container transition-colors shadow-xs">
+          <span class="material-symbols-outlined text-[18px]">view_kanban</span>
           Buka Papan Kanban
         </a>
       </div>
