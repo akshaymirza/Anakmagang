@@ -260,8 +260,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fetch Database Users
+// Fetch Database Users & Cohort Years
 $users = [];
+$cohort_years = [];
 if ($conn) {
     // Auto migration: Ensure intern_position, university, major columns exist in users table
     $cols_to_check = [
@@ -279,13 +280,38 @@ if ($conn) {
     // Auto sync certificates for any intern users
     sync_all_intern_certificates($conn);
 
-    $res = @mysqli_query($conn, "SELECT id, username, password, role, intern_position, university, major FROM users ORDER BY id ASC");
+    // Ambil daftar tahun angkatan yang ada di certificates
+    $qy = mysqli_query($conn, "SELECT DISTINCT CAST(COALESCE(NULLIF(REGEXP_SUBSTR(certificate_id, '[0-9]{4}'), ''), YEAR(start_date), YEAR(issue_date), YEAR(created_at)) AS UNSIGNED) as yr FROM certificates ORDER BY yr DESC");
+    if ($qy) {
+        while ($ry = mysqli_fetch_assoc($qy)) {
+            if (!empty($ry['yr'])) $cohort_years[] = (int)$ry['yr'];
+        }
+    }
+
+    $sql_users = "SELECT u.id, u.username, u.password, u.role, u.intern_position, u.university, u.major,
+                         COALESCE(
+                             (SELECT CAST(COALESCE(
+                                 NULLIF(REGEXP_SUBSTR(c.certificate_id, '[0-9]{4}'), ''),
+                                 YEAR(c.start_date),
+                                 YEAR(c.issue_date),
+                                 YEAR(c.created_at)
+                             ) AS UNSIGNED) FROM certificates c WHERE c.user_id = u.id LIMIT 1),
+                             CAST(YEAR(NOW()) AS UNSIGNED)
+                         ) AS entry_year
+                  FROM users u 
+                  ORDER BY u.id ASC";
+    $res = @mysqli_query($conn, $sql_users);
     if ($res) {
         while ($row = mysqli_fetch_assoc($res)) {
             $users[] = $row;
         }
     }
 }
+$current_yr = (int)date('Y');
+if (!in_array($current_yr, $cohort_years)) {
+    array_unshift($cohort_years, $current_yr);
+}
+rsort($cohort_years);
 
 // Fetch Attendance Zone Settings
 $att_settings = [
@@ -652,15 +678,56 @@ $current_active_role = current_user_role();
 
             <!-- Section 3: Manage Database User Roles -->
             <div class="glass-card rounded-2xl border border-outline-variant p-6 shadow-sm" id="section-account">
-                <div class="flex justify-between items-center mb-4">
+                <!-- Header & Toolbar Controls -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-outline-variant mb-4">
                     <div>
                         <h3 class="font-headline-md font-bold text-on-surface">Manajemen User & Role Database</h3>
                         <p class="text-sm text-on-surface-variant">Kelola dan tambah pengguna baru serta ubah role akun di database.</p>
                     </div>
-                    <button onclick="document.getElementById('add-user-modal').classList.remove('hidden')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl font-label-md hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-sm">
-                        <span class="material-symbols-outlined">person_add</span>
-                        <span>Tambah User Baru</span>
+
+                    <div class="flex items-center gap-2.5 shrink-0 flex-wrap">
+                        <!-- Filter Angkatan Dropdown -->
+                        <div class="flex items-center bg-surface-bright border border-outline-variant rounded-xl px-3 py-2 shadow-2xs">
+                            <label for="user-year-select" class="text-xs font-semibold text-on-surface-variant whitespace-nowrap mr-1">Angkatan:</label>
+                            <select id="user-year-select" onchange="filterUsersByCohort(this.value)"
+                                    class="bg-transparent border-none text-xs font-bold text-primary focus:outline-none focus:ring-0 p-0 pr-5 cursor-pointer">
+                                <option value="all">Semua Tahun</option>
+                                <?php foreach ($cohort_years as $yr): ?>
+                                    <option value="<?php echo $yr; ?>">Angkatan <?php echo $yr; ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <!-- Filter Role Dropdown -->
+                        <div class="flex items-center bg-surface-bright border border-outline-variant rounded-xl px-3 py-2 shadow-2xs">
+                            <label for="user-role-select" class="text-xs font-semibold text-on-surface-variant whitespace-nowrap mr-1">Role:</label>
+                            <select id="user-role-select" onchange="filterUsersByRole(this.value)"
+                                    class="bg-transparent border-none text-xs font-bold text-primary focus:outline-none focus:ring-0 p-0 pr-5 cursor-pointer">
+                                <option value="all">Semua Role</option>
+                                <option value="intern">Intern</option>
+                                <option value="admin">Admin</option>
+                                <option value="superadmin">Superadmin</option>
+                            </select>
+                        </div>
+
+                        <!-- Button Tambah User Baru -->
+                        <button onclick="document.getElementById('add-user-modal').classList.remove('hidden')" class="px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all text-xs cursor-pointer whitespace-nowrap shadow-xs">
+                            Tambah User Baru
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cohort Pills Bar (Quick Navigation) -->
+                <div id="superadmin-cohort-pills-bar" class="flex items-center gap-2 px-4 py-2 bg-surface-container-low/40 rounded-xl border border-outline-variant mb-4 overflow-x-auto text-xs">
+                    <span class="text-on-surface-variant font-medium shrink-0 mr-1">Filter Cepat:</span>
+                    <button type="button" onclick="setSuperadminCohortPill('all')" data-cohort="all" class="superadmin-cohort-pill px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary text-on-primary shadow-xs cursor-pointer">
+                        Semua Angkatan
                     </button>
+                    <?php foreach ($cohort_years as $yr): ?>
+                        <button type="button" onclick="setSuperadminCohortPill('<?php echo $yr; ?>')" data-cohort="<?php echo $yr; ?>" class="superadmin-cohort-pill px-3 py-1 rounded-full text-xs font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high border border-outline-variant/60 transition-all cursor-pointer">
+                            Angkatan <?php echo $yr; ?>
+                        </button>
+                    <?php endforeach; ?>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -671,6 +738,7 @@ $current_active_role = current_user_role();
                                 <th class="py-3 px-4 font-semibold">Username / Email</th>
                                 <th class="py-3 px-4 font-semibold">Password</th>
                                 <th class="py-3 px-4 font-semibold">Role</th>
+                                <th class="py-3 px-4 font-semibold">Angkatan</th>
                                 <th class="py-3 px-4 font-semibold">Posisi Magang</th>
                                 <th class="py-3 px-4 font-semibold">Instansi / Universitas</th>
                                 <th class="py-3 px-4 font-semibold">Jurusan</th>
@@ -679,12 +747,15 @@ $current_active_role = current_user_role();
                         </thead>
                         <tbody class="divide-y divide-outline-variant">
                             <?php if (empty($users)): ?>
-                                <tr>
-                                    <td colspan="8" class="text-center py-6 text-on-surface-variant">Tidak ada data user di database.</td>
+                                <tr id="no-superadmin-users-msg">
+                                    <td colspan="9" class="text-center py-6 text-on-surface-variant">Tidak ada data user di database.</td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($users as $u): ?>
-                                    <tr class="hover:bg-surface-container-low">
+                                    <tr class="superadmin-user-row hover:bg-surface-container-low transition-colors"
+                                        data-year="<?php echo (int)($u['entry_year'] ?? date('Y')); ?>"
+                                        data-role="<?php echo htmlspecialchars($u['role'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        data-search="<?php echo htmlspecialchars(strtolower($u['username'] . ' ' . $u['role'] . ' ' . ($u['intern_position'] ?? '') . ' ' . ($u['university'] ?? '') . ' ' . ($u['major'] ?? '') . ' ' . ($u['entry_year'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>">
                                         <td class="py-3 px-4 font-bold">#<?php echo (int) $u['id']; ?></td>
                                         <td class="py-3 px-4 font-medium text-on-surface"><?php echo htmlspecialchars($u['username'], ENT_QUOTES, 'UTF-8'); ?></td>
                                         <td class="py-3 px-4 font-mono text-sm">
@@ -699,6 +770,12 @@ $current_active_role = current_user_role();
                                         <td class="py-3 px-4">
                                             <span class="px-2.5 py-1 text-xs rounded-full font-bold <?php echo $u['role'] === 'admin' || $u['role'] === 'superadmin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'; ?>">
                                                 <?php echo strtoupper(htmlspecialchars($u['role'], ENT_QUOTES, 'UTF-8')); ?>
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2.5 py-1 text-xs rounded-full font-bold bg-amber-50 text-amber-900 border border-amber-200/80 flex items-center gap-1 w-fit shadow-2xs">
+                                                <span class="material-symbols-outlined text-[14px] text-amber-600">calendar_today</span>
+                                                <span>Angkatan <?php echo (int)($u['entry_year'] ?? date('Y')); ?></span>
                                             </span>
                                         </td>
                                         <td class="py-3 px-4 font-medium text-on-surface">
@@ -729,6 +806,9 @@ $current_active_role = current_user_role();
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
+                                <tr id="no-superadmin-users-msg" class="hidden">
+                                    <td colspan="9" class="text-center py-6 text-on-surface-variant font-medium">Tidak ada data user yang sesuai dengan filter angkatan/search.</td>
+                                </tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
@@ -1123,6 +1203,71 @@ $current_active_role = current_user_role();
                 },
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
+        }
+
+        // ============================================================
+        // SUPERADMIN USER COHORT YEAR & ROLE FILTERING SCRIPT
+        // ============================================================
+        let currentSuperadminYear = 'all';
+        let currentSuperadminRole = 'all';
+
+        function setSuperadminCohortPill(yr) {
+            currentSuperadminYear = String(yr);
+            const select = document.getElementById('user-year-select');
+            if (select) select.value = currentSuperadminYear;
+            highlightSuperadminActivePill(currentSuperadminYear);
+            applyUserFilters();
+        }
+
+        function filterUsersByCohort(yr) {
+            currentSuperadminYear = String(yr);
+            highlightSuperadminActivePill(currentSuperadminYear);
+            applyUserFilters();
+        }
+
+        function filterUsersByRole(role) {
+            currentSuperadminRole = String(role);
+            applyUserFilters();
+        }
+
+        function highlightSuperadminActivePill(activeCohort) {
+            document.querySelectorAll('.superadmin-cohort-pill').forEach(pill => {
+                const cohort = pill.getAttribute('data-cohort');
+                if (cohort === activeCohort) {
+                    pill.className = 'superadmin-cohort-pill px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary text-on-primary shadow-xs cursor-pointer';
+                } else {
+                    pill.className = 'superadmin-cohort-pill px-3 py-1 rounded-full text-xs font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high border border-outline-variant/60 transition-all cursor-pointer';
+                }
+            });
+        }
+
+        function applyUserFilters() {
+            const rows = document.querySelectorAll('.superadmin-user-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const rowYear = row.getAttribute('data-year') || '';
+                const rowRole = (row.getAttribute('data-role') || '').toLowerCase();
+
+                const matchesYear = (currentSuperadminYear === 'all' || rowYear === currentSuperadminYear);
+                const matchesRole = (currentSuperadminRole === 'all' || rowRole === currentSuperadminRole);
+
+                if (matchesYear && matchesRole) {
+                    row.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+
+            const emptyMsg = document.getElementById('no-superadmin-users-msg');
+            if (emptyMsg) {
+                if (visibleCount === 0) {
+                    emptyMsg.classList.remove('hidden');
+                } else {
+                    emptyMsg.classList.add('hidden');
+                }
+            }
         }
 
         function switchSuperadminTab(tab) {
