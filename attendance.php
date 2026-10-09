@@ -1497,10 +1497,28 @@ require_login(); ?>
 
             const isClockOut = (currentAttType === 'out');
             const now = new Date();
+            const todayStr = formatDate(now);
+            const todayRecord = getRecord(todayStr);
 
-            if (!isClockOut && now.getHours() >= 14) {
-                showToast('Batas waktu Clock In (14:00) telah lewat. Anda dianggap Tidak Masuk.', 'warning');
-                return;
+            // Validasi urutan Clock In & Clock Out
+            if (isClockOut) {
+                if (!todayRecord || !todayRecord.clockIn) {
+                    showToast('Anda belum Clock In hari ini! Silakan Clock In terlebih dahulu.', 'warning');
+                    return;
+                }
+                if (todayRecord.clockOut) {
+                    showToast(`Anda sudah Clock Out hari ini pada pukul ${formatTime12(todayRecord.clockOut)}.`, 'warning');
+                    return;
+                }
+            } else {
+                if (todayRecord && todayRecord.clockIn) {
+                    showToast(`Anda sudah Clock In hari ini pada pukul ${formatTime12(todayRecord.clockIn)}.`, 'warning');
+                    return;
+                }
+                if (now.getHours() >= 14) {
+                    showToast('Batas waktu Clock In (14:00) telah lewat. Anda dianggap Tidak Masuk.', 'warning');
+                    return;
+                }
             }
 
             const modal = document.getElementById('att-modal');
@@ -1963,13 +1981,58 @@ require_login(); ?>
         }
 
         // ============================================================
-        // REFRESH ALL
+        // REFRESH ALL & BUTTON STATE
         // ============================================================
+        function updateAttendanceButtonsUI() {
+            if (isAdminPreview) return;
+            const inBtn = document.getElementById('main-input-btn');
+            const outBtn = document.getElementById('main-clockout-btn');
+            if (!inBtn || !outBtn) return;
+
+            const todayStr = formatDate(new Date());
+            const rec = getRecord(todayStr);
+
+            if (!rec || !rec.clockIn) {
+                // Belum Clock In
+                inBtn.disabled = false;
+                inBtn.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold hover:opacity-90 transition-all shadow-sm active:scale-95';
+                inBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">login</span>Clock In`;
+
+                outBtn.disabled = true;
+                outBtn.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-200 text-slate-400 border border-slate-300 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold cursor-not-allowed transition-all opacity-80';
+                outBtn.title = 'Lakukan Clock In terlebih dahulu';
+                outBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">lock</span>Clock Out`;
+            } else if (rec.clockIn && !rec.clockOut) {
+                // Sudah Clock In, Belum Clock Out
+                inBtn.disabled = true;
+                inBtn.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-300 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold cursor-default transition-all';
+                inBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">check_circle</span>Sudah Masuk (${rec.clockIn})`;
+                inBtn.title = `Clock In tercatat pada ${rec.clockIn}`;
+
+                outBtn.disabled = false;
+                outBtn.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 bg-rose-600 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold hover:bg-rose-700 transition-all shadow-sm active:scale-95 animate-pulse';
+                outBtn.title = 'Klik untuk melakukan Clock Out';
+                outBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">logout</span>Clock Out`;
+            } else {
+                // Sudah Clock In DAN Sudah Clock Out
+                inBtn.disabled = true;
+                inBtn.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-300 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold cursor-default transition-all';
+                inBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">check_circle</span>Masuk (${rec.clockIn})`;
+                inBtn.title = `Clock In tercatat pada ${rec.clockIn}`;
+
+                outBtn.disabled = true;
+                outBtn.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-100 text-slate-500 border border-slate-300 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold cursor-default transition-all';
+                outBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">task_alt</span>Pulang (${rec.clockOut})`;
+                outBtn.title = `Clock Out tercatat pada ${rec.clockOut}`;
+            }
+        }
+
         function refreshAll() {
             renderCalendar();
             renderStats();
             renderMonthlySummary();
             renderTable(currentFilter);
+            updateAttendanceButtonsUI();
         }
 
         // ============================================================

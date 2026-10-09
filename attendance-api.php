@@ -411,23 +411,29 @@ if ($action === 'save_out' && $method === 'POST') {
     }
 
     // Cek record hari ini sudah ada atau belum
-    $sqlCheck = "SELECT id, clock_in FROM attendance WHERE username = ? AND date = ? LIMIT 1";
+    $sqlCheck = "SELECT id, clock_in, clock_out FROM attendance WHERE username = ? AND date = ? LIMIT 1";
     $stmtCheck = mysqli_prepare($conn, $sqlCheck);
     mysqli_stmt_bind_param($stmtCheck, "ss", $username, $today);
     mysqli_stmt_execute($stmtCheck);
     $existing = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtCheck));
 
-    if ($existing) {
-        $sql = "UPDATE attendance SET clock_out=?, photo_out=?, location_out=?, lat_out=?, lng_out=? WHERE id=?";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sssddi", $time, $relativePath, $location, $lat, $lng, $existing['id']);
-    } else {
-        // Jika belum ada record hari ini, buat record baru
-        $defaultStatus = 'present';
-        $sql = "INSERT INTO attendance (username, date, status, clock_out, photo_out, location_out, lat_out, lng_out) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssssssdd", $username, $today, $defaultStatus, $time, $relativePath, $location, $lat, $lng);
+    // Wajib sudah Clock In terlebih dahulu
+    if (!$existing || empty($existing['clock_in'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Anda harus melakukan Clock In terlebih dahulu hari ini sebelum dapat Clock Out!']);
+        exit;
     }
+
+    // Jika sudah pernah Clock Out hari ini
+    if (!empty($existing['clock_out'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Anda sudah melakukan Clock Out hari ini (' . $existing['clock_out'] . ').']);
+        exit;
+    }
+
+    $sql = "UPDATE attendance SET clock_out=?, photo_out=?, location_out=?, lat_out=?, lng_out=? WHERE id=?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "sssddi", $time, $relativePath, $location, $lat, $lng, $existing['id']);
 
     if (!mysqli_stmt_execute($stmt)) {
         http_response_code(500);
