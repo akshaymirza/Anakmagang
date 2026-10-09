@@ -49,6 +49,10 @@ ensure_attendance_column($conn, 'location_in', 'TEXT DEFAULT NULL');
 ensure_attendance_column($conn, 'photo_in', 'VARCHAR(255) DEFAULT NULL');
 ensure_attendance_column($conn, 'lat_in', 'DECIMAL(11,8) DEFAULT NULL');
 ensure_attendance_column($conn, 'lng_in', 'DECIMAL(11,8) DEFAULT NULL');
+ensure_attendance_column($conn, 'location_out', 'TEXT DEFAULT NULL');
+ensure_attendance_column($conn, 'photo_out', 'VARCHAR(255) DEFAULT NULL');
+ensure_attendance_column($conn, 'lat_out', 'DECIMAL(11,8) DEFAULT NULL');
+ensure_attendance_column($conn, 'lng_out', 'DECIMAL(11,8) DEFAULT NULL');
 
 // Helper: Hitung jarak GPS (Haversine formula dalam meter)
 function calculate_haversine_distance($lat1, $lon1, $lat2, $lon2) {
@@ -119,7 +123,7 @@ if ($action === 'all_summary' && $method === 'GET') {
 
     // 2. Ambil semua data presensi di database
     $attendanceMap = [];
-    $resAtt = mysqli_query($conn, "SELECT username, date, status, clock_in, clock_out, reason, location_in, photo_in, lat_in, lng_in FROM attendance");
+    $resAtt = mysqli_query($conn, "SELECT username, date, status, clock_in, clock_out, reason, location_in, photo_in, lat_in, lng_in, location_out, photo_out, lat_out, lng_out FROM attendance");
     if ($resAtt) {
         while ($row = mysqli_fetch_assoc($resAtt)) {
             $uName = $row['username'];
@@ -137,6 +141,10 @@ if ($action === 'all_summary' && $method === 'GET') {
                 'photo' => $row['photo_in'],
                 'lat' => isset($row['lat_in']) ? (float) $row['lat_in'] : null,
                 'lng' => isset($row['lng_in']) ? (float) $row['lng_in'] : null,
+                'locationOut' => $row['location_out'] ?? null,
+                'photoOut' => $row['photo_out'] ?? null,
+                'latOut' => isset($row['lat_out']) ? (float) $row['lat_out'] : null,
+                'lngOut' => isset($row['lng_out']) ? (float) $row['lng_out'] : null,
             ];
         }
     }
@@ -165,13 +173,18 @@ if ($action === 'today' && $method === 'GET') {
     }
 
     echo json_encode([
-        'exists'      => true,
-        'status'      => $row['status'],
-        'clock_in'    => $row['clock_in'],
-        'photo_in'    => $row['photo_in'] ? $row['photo_in'] : null,
-        'location_in' => $row['location_in'],
-        'lat_in'      => isset($row['lat_in']) ? (float) $row['lat_in'] : null,
-        'lng_in'      => isset($row['lng_in']) ? (float) $row['lng_in'] : null,
+        'exists'       => true,
+        'status'       => $row['status'],
+        'clock_in'     => $row['clock_in'],
+        'photo_in'     => $row['photo_in'] ? $row['photo_in'] : null,
+        'location_in'  => $row['location_in'],
+        'lat_in'       => isset($row['lat_in']) ? (float) $row['lat_in'] : null,
+        'lng_in'       => isset($row['lng_in']) ? (float) $row['lng_in'] : null,
+        'clock_out'    => $row['clock_out'],
+        'photo_out'    => $row['photo_out'] ? $row['photo_out'] : null,
+        'location_out' => $row['location_out'],
+        'lat_out'      => isset($row['lat_out']) ? (float) $row['lat_out'] : null,
+        'lng_out'      => isset($row['lng_out']) ? (float) $row['lng_out'] : null,
     ]);
     exit;
 }
@@ -319,11 +332,128 @@ if ($action === 'save' && $method === 'POST') {
 }
 
 // --------------------------------------------------------------
+// 4b. SIMPAN CLOCK OUT (?action=save_out, POST)
+// --------------------------------------------------------------
+if ($action === 'save_out' && $method === 'POST') {
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    $time      = trim($input['time'] ?? '');     // 'HH:MM'
+    $location  = trim($input['location'] ?? '');
+    $lat       = isset($input['lat']) ? (float) $input['lat'] : null;
+    $lng       = isset($input['lng']) ? (float) $input['lng'] : null;
+    $photoData = $input['photo'] ?? '';          // data:image/jpeg;base64,....
+
+    if (empty($time)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Data tidak lengkap (time)']);
+        exit;
+    }
+    if (empty($photoData)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Foto Clock Out wajib disertakan']);
+        exit;
+    }
+
+    // Geofence check
+    $zoneSettings = get_attendance_settings($conn);
+    $internDist = null;
+
+    if ($lat !== null && $lng !== null) {
+        $internDist = calculate_haversine_distance($lat, $lng, $zoneSettings['latitude'], $zoneSettings['longitude']);
+    }
+
+    if ($zoneSettings['is_strict'] == 1) {
+        if ($lat === null || $lng === null) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Izin lokasi GPS wajib diaktifkan untuk Clock Out!']);
+            exit;
+        }
+
+        if ($internDist !== null && $internDist > $zoneSettings['radius_meters']) {
+            http_response_code(403);
+            echo json_encode([
+                'error' => "Anda berada di luar zona absensi kantor! Jarak Anda: {$internDist} m (Batas toleransi: {$zoneSettings['radius_meters']} m). Silakan mendekat ke lokasi kantor.",
+                'distance' => $internDist,
+                'radius' => $zoneSettings['radius_meters']
+            ]);
+            exit;
+        }
+    }
+
+    // Decode foto
+    if (!preg_match('/^data:image\/(\w+);base64,/', $photoData, $m)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Format foto tidak valid']);
+        exit;
+    }
+    $ext       = $m[1] === 'jpeg' ? 'jpg' : $m[1];
+    $base64Raw = substr($photoData, strpos($photoData, ',') + 1);
+    $binary    = base64_decode($base64Raw);
+    if ($binary === false) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Gagal decode foto']);
+        exit;
+    }
+
+    $uploadDir = __DIR__ . '/uploads/attendance/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+    $safeUsername = preg_replace('/[^A-Za-z0-9_\-]/', '_', $username);
+    $fileName     = $safeUsername . '_' . $today . '_out_' . time() . '.' . $ext;
+    $filePath     = $uploadDir . $fileName;
+    $relativePath = 'uploads/attendance/' . $fileName;
+
+    if (file_put_contents($filePath, $binary) === false) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Gagal menyimpan file foto']);
+        exit;
+    }
+
+    // Cek record hari ini sudah ada atau belum
+    $sqlCheck = "SELECT id, clock_in FROM attendance WHERE username = ? AND date = ? LIMIT 1";
+    $stmtCheck = mysqli_prepare($conn, $sqlCheck);
+    mysqli_stmt_bind_param($stmtCheck, "ss", $username, $today);
+    mysqli_stmt_execute($stmtCheck);
+    $existing = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtCheck));
+
+    if ($existing) {
+        $sql = "UPDATE attendance SET clock_out=?, photo_out=?, location_out=?, lat_out=?, lng_out=? WHERE id=?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "sssddi", $time, $relativePath, $location, $lat, $lng, $existing['id']);
+    } else {
+        // Jika belum ada record hari ini, buat record baru
+        $defaultStatus = 'present';
+        $sql = "INSERT INTO attendance (username, date, status, clock_out, photo_out, location_out, lat_out, lng_out) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ssssssdd", $username, $today, $defaultStatus, $time, $relativePath, $location, $lat, $lng);
+    }
+
+    if (!mysqli_stmt_execute($stmt)) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Gagal menyimpan ke database: ' . mysqli_error($conn)]);
+        exit;
+    }
+
+    echo json_encode([
+        'message'      => 'Clock Out berhasil disimpan',
+        'photo'        => $relativePath,
+        'time'         => $time,
+        'location'     => $location,
+        'lat'          => $lat,
+        'lng'          => $lng,
+        'distance'     => $internDist,
+        'in_radius'    => ($internDist === null || $internDist <= $zoneSettings['radius_meters']),
+    ]);
+    exit;
+}
+
+// --------------------------------------------------------------
 // 5. RIWAYAT KEHADIRAN UNTUK KALENDER (?action=history, GET)
 //    Dipakai oleh attendance.php (kalender + tabel riwayat milik intern sendiri)
 // --------------------------------------------------------------
 if ($action === 'history' && $method === 'GET') {
-    $sql = "SELECT date, status, clock_in, clock_out, reason, location_in, lat_in, lng_in
+    $sql = "SELECT date, status, clock_in, clock_out, reason, location_in, photo_in, lat_in, lng_in, location_out, photo_out, lat_out, lng_out
             FROM attendance WHERE username = ? ORDER BY date DESC";
     $stmt = mysqli_prepare($conn, $sql);
     if (!$stmt) {
@@ -338,14 +468,19 @@ if ($action === 'history' && $method === 'GET') {
     $rows = [];
     while ($r = mysqli_fetch_assoc($result)) {
         $rows[] = [
-            'date'        => $r['date'],
-            'status'      => $r['status'],
-            'clock_in'    => $r['clock_in'],
-            'clock_out'   => $r['clock_out'],
-            'reason'      => $r['reason'],
-            'location_in' => $r['location_in'],
-            'lat_in'      => $r['lat_in'] !== null ? (float) $r['lat_in'] : null,
-            'lng_in'      => $r['lng_in'] !== null ? (float) $r['lng_in'] : null,
+            'date'         => $r['date'],
+            'status'       => $r['status'],
+            'clock_in'     => $r['clock_in'],
+            'clock_out'    => $r['clock_out'],
+            'reason'       => $r['reason'],
+            'location_in'  => $r['location_in'],
+            'photo_in'     => $r['photo_in'],
+            'lat_in'       => $r['lat_in'] !== null ? (float) $r['lat_in'] : null,
+            'lng_in'       => $r['lng_in'] !== null ? (float) $r['lng_in'] : null,
+            'location_out' => $r['location_out'] ?? null,
+            'photo_out'    => $r['photo_out'] ?? null,
+            'lat_out'      => $r['lat_out'] !== null ? (float) $r['lat_out'] : null,
+            'lng_out'      => $r['lng_out'] !== null ? (float) $r['lng_out'] : null,
         ];
     }
     echo json_encode($rows);

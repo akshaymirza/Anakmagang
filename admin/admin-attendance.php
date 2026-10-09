@@ -575,21 +575,50 @@ if ($db_query) {
                                 </div>
                             </div>` : ''}
 
-                            ${record && record.photo ? `
-                            <div class="mt-2 rounded-lg overflow-hidden border border-outline-variant/60">
-                                <img src="../${escHtml(record.photo)}" class="w-full h-32 object-cover" alt="Foto Absen">
+                            <!-- Bukti Foto & Lokasi Clock In -->
+                            ${record && (record.photo || record.location) ? `
+                            <div class="mt-2.5 bg-surface-container-low rounded-xl p-3 border border-outline-variant/60">
+                                <div class="flex items-center gap-1.5 mb-1.5 text-xs font-bold text-primary uppercase">
+                                    <span class="material-symbols-outlined text-[15px]">login</span>
+                                    <span>Bukti Clock In</span>
+                                </div>
+                                ${record.photo ? `
+                                <div class="rounded-lg overflow-hidden border border-outline-variant/60 mb-2">
+                                    <img src="../${escHtml(record.photo)}" class="w-full h-32 object-cover cursor-pointer hover:opacity-95" alt="Foto Clock In" onclick="window.open(this.src, '_blank')">
+                                </div>` : ''}
+                                ${record.location ? `
+                                <div class="text-xs text-slate-600 flex items-start gap-1">
+                                    <span class="material-symbols-outlined text-[14px] text-primary shrink-0 mt-0.5">location_on</span>
+                                    <span class="line-clamp-2">${escHtml(record.location)}</span>
+                                </div>` : ''}
+                                ${record.lat && record.lng ? `
+                                <div class="mt-1 text-[11px] text-indigo-700 font-mono flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100 w-fit">
+                                    <span class="material-symbols-outlined text-[13px]">pin_drop</span>
+                                    <span>📍 ${record.lat.toFixed(6)}, ${record.lng.toFixed(6)}</span>
+                                </div>` : ''}
                             </div>` : ''}
 
-                            ${record && record.location ? `
-                            <div class="mt-2 text-xs text-slate-600 flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[14px] text-primary">location_on</span>
-                                <span class="truncate">${escHtml(record.location)}</span>
-                            </div>` : ''}
-
-                            ${record && record.lat && record.lng ? `
-                            <div class="mt-1 text-[11px] text-indigo-700 font-mono flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100 w-fit">
-                                <span class="material-symbols-outlined text-[13px]">pin_drop</span>
-                                <span>📍 ${record.lat.toFixed(6)}, ${record.lng.toFixed(6)}</span>
+                            <!-- Bukti Foto & Lokasi Clock Out -->
+                            ${record && (record.photoOut || record.locationOut) ? `
+                            <div class="mt-2.5 bg-surface-container-low rounded-xl p-3 border border-outline-variant/60">
+                                <div class="flex items-center gap-1.5 mb-1.5 text-xs font-bold text-rose-600 uppercase">
+                                    <span class="material-symbols-outlined text-[15px]">logout</span>
+                                    <span>Bukti Clock Out</span>
+                                </div>
+                                ${record.photoOut ? `
+                                <div class="rounded-lg overflow-hidden border border-outline-variant/60 mb-2">
+                                    <img src="../${escHtml(record.photoOut)}" class="w-full h-32 object-cover cursor-pointer hover:opacity-95" alt="Foto Clock Out" onclick="window.open(this.src, '_blank')">
+                                </div>` : ''}
+                                ${record.locationOut ? `
+                                <div class="text-xs text-slate-600 flex items-start gap-1">
+                                    <span class="material-symbols-outlined text-[14px] text-rose-600 shrink-0 mt-0.5">location_on</span>
+                                    <span class="line-clamp-2">${escHtml(record.locationOut)}</span>
+                                </div>` : ''}
+                                ${record.latOut && record.lngOut ? `
+                                <div class="mt-1 text-[11px] text-indigo-700 font-mono flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100 w-fit">
+                                    <span class="material-symbols-outlined text-[13px]">pin_drop</span>
+                                    <span>📍 ${record.latOut.toFixed(6)}, ${record.lngOut.toFixed(6)}</span>
+                                </div>` : ''}
                             </div>` : ''}
 
                             ${record && record.reason ? `<div class="mt-2 bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-xs text-amber-900"><strong>Alasan / Keterangan:</strong> ${escHtml(record.reason)}</div>` : ''}

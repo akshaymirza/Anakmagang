@@ -244,12 +244,18 @@ require_login(); ?>
                 <p class="text-xs sm:text-sm text-on-surface-variant mt-0.5" id="page-subtitle">Pantau presensi, status kedatangan,
                     dan riwayat selama masa PKL.</p>
             </div>
-            <div class="flex gap-2 w-full sm:w-auto shrink-0 mt-1 sm:mt-0">
-                <button id="main-input-btn" onclick="attStartCapture()"
+            <div class="flex flex-wrap gap-2 w-full sm:w-auto shrink-0 mt-1 sm:mt-0">
+                <button id="main-input-btn" onclick="attStartCapture('in')"
                     class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold hover:opacity-90 transition-all shadow-sm active:scale-95">
                     <span class="material-symbols-outlined text-[18px]"
-                        style="font-variation-settings:'FILL' 1;">photo_camera</span>
+                        style="font-variation-settings:'FILL' 1;">login</span>
                     Clock In
+                </button>
+                <button id="main-clockout-btn" onclick="attStartCapture('out')"
+                    class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-rose-600 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold hover:bg-rose-700 transition-all shadow-sm active:scale-95">
+                    <span class="material-symbols-outlined text-[18px]"
+                        style="font-variation-settings:'FILL' 1;">logout</span>
+                    Clock Out
                 </button>
                 <button onclick="exportAttendanceCSV()"
                     class="flex-1 sm:flex-none flex items-center justify-center gap-2 border border-outline-variant text-on-surface bg-surface-container-lowest px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-surface-container-low transition-colors">
@@ -623,6 +629,39 @@ require_login(); ?>
                     <p class="text-xs font-bold text-amber-700 uppercase mb-1">Alasan</p>
                     <p id="detail-reason" class="text-sm text-amber-900"></p>
                 </div>
+
+                <!-- Detail Foto & Lokasi (Clock In & Clock Out) -->
+                <div id="detail-media-wrap" class="space-y-2.5 pt-1">
+                    <!-- Clock In Info -->
+                    <div id="detail-in-block" class="hidden bg-surface-container-low rounded-xl p-3 border border-outline-variant/60">
+                        <div class="flex items-center gap-1.5 mb-1.5 text-xs font-bold text-primary uppercase">
+                            <span class="material-symbols-outlined text-[16px]">login</span>
+                            <span>Bukti Clock In</span>
+                        </div>
+                        <div id="detail-in-photo-wrap" class="rounded-lg overflow-hidden border border-outline-variant mb-1.5 hidden">
+                            <img id="detail-in-photo" src="" alt="Foto Clock In" class="w-full h-36 object-cover cursor-pointer hover:opacity-95" onclick="window.open(this.src, '_blank')">
+                        </div>
+                        <p id="detail-in-loc" class="text-xs text-on-surface-variant flex items-start gap-1">
+                            <span class="material-symbols-outlined text-[15px] text-primary shrink-0 mt-0.5">location_on</span>
+                            <span id="detail-in-loc-text" class="line-clamp-2"></span>
+                        </p>
+                    </div>
+
+                    <!-- Clock Out Info -->
+                    <div id="detail-out-block" class="hidden bg-surface-container-low rounded-xl p-3 border border-outline-variant/60">
+                        <div class="flex items-center gap-1.5 mb-1.5 text-xs font-bold text-rose-600 uppercase">
+                            <span class="material-symbols-outlined text-[16px]">logout</span>
+                            <span>Bukti Clock Out</span>
+                        </div>
+                        <div id="detail-out-photo-wrap" class="rounded-lg overflow-hidden border border-outline-variant mb-1.5 hidden">
+                            <img id="detail-out-photo" src="" alt="Foto Clock Out" class="w-full h-36 object-cover cursor-pointer hover:opacity-95" onclick="window.open(this.src, '_blank')">
+                        </div>
+                        <p id="detail-out-loc" class="text-xs text-on-surface-variant flex items-start gap-1">
+                            <span class="material-symbols-outlined text-[15px] text-rose-600 shrink-0 mt-0.5">location_on</span>
+                            <span id="detail-out-loc-text" class="line-clamp-2"></span>
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -737,7 +776,15 @@ require_login(); ?>
                         status: r.status,
                         clockIn: r.clock_in || '',
                         clockOut: r.clock_out || '',
-                        reason: r.reason || ''
+                        reason: r.reason || '',
+                        photoIn: r.photo_in || '',
+                        locationIn: r.location_in || '',
+                        latIn: r.lat_in,
+                        lngIn: r.lng_in,
+                        photoOut: r.photo_out || '',
+                        locationOut: r.location_out || '',
+                        latOut: r.lat_out,
+                        lngOut: r.lng_out
                     }));
                 }
             } catch (err) {
@@ -763,6 +810,7 @@ require_login(); ?>
             document.getElementById('admin-preview-banner').classList.remove('hidden');
             document.getElementById('admin-preview-name').textContent = activeInternName;
             document.getElementById('main-input-btn')?.classList.add('hidden');
+            document.getElementById('main-clockout-btn')?.classList.add('hidden');
             document.querySelectorAll('.att-add-trigger').forEach(el => el.classList.add('hidden'));
         }
 
@@ -1173,6 +1221,60 @@ require_login(); ?>
                 reasonWrap.classList.add('hidden');
             }
 
+            // Bukti Clock In (Foto & Lokasi)
+            const inBlock = document.getElementById('detail-in-block');
+            const inPhotoWrap = document.getElementById('detail-in-photo-wrap');
+            const inPhoto = document.getElementById('detail-in-photo');
+            const inLoc = document.getElementById('detail-in-loc');
+            const inLocText = document.getElementById('detail-in-loc-text');
+            const hasInPhoto = !!(rec.photoIn || rec.photo);
+            const hasInLoc = !!(rec.locationIn || rec.location);
+
+            if (hasInPhoto || hasInLoc) {
+                inBlock.classList.remove('hidden');
+                if (hasInPhoto) {
+                    inPhotoWrap.classList.remove('hidden');
+                    inPhoto.src = rec.photoIn || rec.photo;
+                } else {
+                    inPhotoWrap.classList.add('hidden');
+                }
+                if (hasInLoc) {
+                    inLoc.classList.remove('hidden');
+                    inLocText.textContent = rec.locationIn || rec.location;
+                } else {
+                    inLoc.classList.add('hidden');
+                }
+            } else {
+                inBlock.classList.add('hidden');
+            }
+
+            // Bukti Clock Out (Foto & Lokasi)
+            const outBlock = document.getElementById('detail-out-block');
+            const outPhotoWrap = document.getElementById('detail-out-photo-wrap');
+            const outPhoto = document.getElementById('detail-out-photo');
+            const outLoc = document.getElementById('detail-out-loc');
+            const outLocText = document.getElementById('detail-out-loc-text');
+            const hasOutPhoto = !!rec.photoOut;
+            const hasOutLoc = !!rec.locationOut;
+
+            if (hasOutPhoto || hasOutLoc) {
+                outBlock.classList.remove('hidden');
+                if (hasOutPhoto) {
+                    outPhotoWrap.classList.remove('hidden');
+                    outPhoto.src = rec.photoOut;
+                } else {
+                    outPhotoWrap.classList.add('hidden');
+                }
+                if (hasOutLoc) {
+                    outLoc.classList.remove('hidden');
+                    outLocText.textContent = rec.locationOut;
+                } else {
+                    outLoc.classList.add('hidden');
+                }
+            } else {
+                outBlock.classList.add('hidden');
+            }
+
             const modal = document.getElementById('detail-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -1350,6 +1452,7 @@ require_login(); ?>
         let attPendingLng = null;
         let officeGeofenceConfig = null;
         let currentFacingMode = 'user'; // 'user' (kamera depan) atau 'environment' (kamera belakang)
+        let currentAttType = 'in';      // 'in' (Clock In) atau 'out' (Clock Out)
 
         function attCalculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371000; // Radius bumi dalam meter
@@ -1378,20 +1481,26 @@ require_login(); ?>
 
         function attPad(n) { return String(n).padStart(2, '0'); }
 
-        async function attStartCapture(facing) {
+        async function attStartCapture(typeOrFacing, facingMode) {
             if (isAdminPreview) {
-                showToast('Admin tidak bisa Clock In.', 'warning');
+                showToast('Admin tidak bisa melakukan absensi.', 'warning');
                 return;
             }
 
+            // Tentukan mode: 'in' atau 'out'
+            if (typeOrFacing === 'in' || typeOrFacing === 'out') {
+                currentAttType = typeOrFacing;
+                if (facingMode) currentFacingMode = facingMode;
+            } else if (typeOrFacing === 'user' || typeOrFacing === 'environment') {
+                currentFacingMode = typeOrFacing;
+            }
+
+            const isClockOut = (currentAttType === 'out');
             const now = new Date();
-            if (now.getHours() >= 14) {
+
+            if (!isClockOut && now.getHours() >= 14) {
                 showToast('Batas waktu Clock In (14:00) telah lewat. Anda dianggap Tidak Masuk.', 'warning');
                 return;
-            }
-
-            if (facing) {
-                currentFacingMode = facing;
             }
 
             const modal = document.getElementById('att-modal');
@@ -1415,7 +1524,7 @@ require_login(); ?>
                 geofenceBadge.classList.remove('hidden');
             }
 
-            titleEl.textContent = 'Clock In - Ambil Foto';
+            titleEl.textContent = isClockOut ? 'Clock Out - Ambil Foto Pulang' : 'Clock In - Ambil Foto Masuk';
             statusEl.textContent = 'Membuka kamera...';
             video.classList.remove('hidden');
             canvas.classList.add('hidden');
@@ -1493,7 +1602,7 @@ require_login(); ?>
 
         async function attSwitchCamera() {
             currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
-            await attStartCapture(currentFacingMode);
+            await attStartCapture(currentAttType, currentFacingMode);
         }
 
         function attStopCamera() {
@@ -1794,7 +1903,7 @@ require_login(); ?>
         function attRetake() {
             document.getElementById('att-modal')?.classList.add('hidden');
             attPendingDataUrl = null;
-            attStartCapture();
+            attStartCapture(currentAttType, currentFacingMode);
         }
 
         function attConfirm() {
@@ -1803,33 +1912,47 @@ require_login(); ?>
             const statusEl = document.getElementById('att-modal-status');
             const now = new Date();
             const timeStr = `${attPad(now.getHours())}:${attPad(now.getMinutes())}`;
+            const isClockOut = (currentAttType === 'out');
             const status = now.getHours() >= CUTOFF_HOUR ? 'late' : 'present';
 
             if (confirmBtn) confirmBtn.disabled = true;
             if (statusEl) statusEl.textContent = 'Menyimpan ke database...';
 
-            fetch('attendance-api.php?action=save', {
+            const endpoint = isClockOut ? 'attendance-api.php?action=save_out' : 'attendance-api.php?action=save';
+            const payload = isClockOut ? {
+                time: timeStr,
+                photo: attPendingDataUrl,
+                location: attPendingAddress,
+                lat: attPendingLat,
+                lng: attPendingLng
+            } : {
+                time: timeStr,
+                status: status,
+                photo: attPendingDataUrl,
+                location: attPendingAddress,
+                lat: attPendingLat,
+                lng: attPendingLng
+            };
+
+            fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    time: timeStr,
-                    status: status,
-                    photo: attPendingDataUrl,
-                    location: attPendingAddress,
-                    lat: attPendingLat,
-                    lng: attPendingLng
-                })
+                body: JSON.stringify(payload)
             })
                 .then(async r => {
                     const data = await r.json().catch(() => ({}));
-                    if (!r.ok) throw new Error(data.error || 'Gagal menyimpan absensi');
+                    if (!r.ok) throw new Error(data.error || (isClockOut ? 'Gagal menyimpan Clock Out' : 'Gagal menyimpan Clock In'));
                     return data;
                 })
                 .then(async () => {
                     document.getElementById('att-modal')?.classList.add('hidden');
                     attPendingDataUrl = null;
-                    const label = status === 'present' ? 'Hadir Tepat Waktu' : 'Terlambat';
-                    showToast(`Clock In berhasil! ${timeStr} — ${label}`, 'success');
+                    if (isClockOut) {
+                        showToast(`Clock Out berhasil! ${timeStr}`, 'success');
+                    } else {
+                        const label = status === 'present' ? 'Hadir Tepat Waktu' : 'Terlambat';
+                        showToast(`Clock In berhasil! ${timeStr} — ${label}`, 'success');
+                    }
                     await fetchServerData();
                     refreshAll();
                 })
