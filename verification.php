@@ -51,6 +51,20 @@
             background: #fff; border-radius: .8cqw; padding: .9cqw; box-sizing: border-box;
         }
         .cert-qr img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .cert-approval-watermark {
+            position: absolute; inset: 0; z-index: 25; pointer-events: none;
+            display: flex; align-items: flex-end; justify-content: space-between;
+            padding: 4% 6%;
+        }
+        .cert-stamp-cover {
+            position: absolute; bottom: 8%; width: 28%; height: 22%;
+            background: rgba(245, 243, 231, 0.94); border: 2px dashed #f59e0b;
+            border-radius: 0.8cqw; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+            padding: 2%; box-sizing: border-box;
+        }
+        .cert-stamp-cover.left { left: 8%; }
+        .cert-stamp-cover.right { right: 8%; }
 
         /* ── Cetak / Simpan PDF: hanya sertifikat, A4 landscape, tanpa margin ── */
         @page { size: A4 landscape; margin: 0; }
@@ -123,18 +137,22 @@ include 'partials/topnav-public.php';
         <!-- Trust Badge -->
         <div class="w-full bg-surface-container-lowest rounded-2xl border border-outline-variant p-md md:p-lg mb-xl flex flex-col md:flex-row items-center justify-between gap-md soft-shadow">
             <div class="flex items-center gap-md">
-                <div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center">
-                    <span class="material-symbols-outlined filled-icon text-primary text-3xl">verified</span>
+                <div id="badge-icon-box" class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center">
+                    <span id="badge-icon" class="material-symbols-outlined filled-icon text-primary text-3xl">verified</span>
                 </div>
                 <div>
-                    <h1 class="font-headline-lg text-primary font-bold">Sertifikat Valid</h1>
-                    <p class="text-on-surface-variant font-body-sm mt-1">Dokumen ini terverifikasi melalui sistem Kedayweb.</p>
+                    <h1 id="badge-title" class="font-headline-lg text-primary font-bold">Sertifikat Valid</h1>
+                    <p id="badge-subtitle" class="text-on-surface-variant font-body-sm mt-1">Dokumen ini terverifikasi melalui sistem Kedayweb.</p>
                 </div>
             </div>
-            <div class="flex items-center gap-sm">
-                <span class="bg-[#dcfce7] text-[#166534] px-4 py-2 rounded-full flex items-center gap-2 font-bold text-sm shadow-sm">
+            <div class="flex flex-wrap items-center gap-sm" id="badge-status-container">
+                <span id="status-chip" class="bg-[#dcfce7] text-[#166534] px-4 py-2 rounded-full flex items-center gap-2 font-bold text-sm shadow-sm">
                     <span class="material-symbols-outlined text-[20px] filled-icon">check_circle</span>
-                    Status: Aktif
+                    <span id="status-chip-text">Status: Aktif</span>
+                </span>
+                <span id="approval-chip" class="bg-amber-100 text-amber-800 px-4 py-2 rounded-full flex items-center gap-2 font-bold text-sm shadow-sm hidden">
+                    <span class="material-symbols-outlined text-[20px]">pending</span>
+                    <span>Menunggu Approval Super Admin</span>
                 </span>
             </div>
         </div>
@@ -157,6 +175,19 @@ include 'partials/topnav-public.php';
                         <div id="cert-name" class="cert-name">—</div>
                         <div id="cert-qr" class="cert-qr" style="display:none">
                             <img id="cert-qr-img" alt="QR verifikasi sertifikat"/>
+                        </div>
+                        <!-- Watermark pelindung tanda tangan jika belum disetujui Super Admin -->
+                        <div id="cert-unapproved-covers" style="display:none;">
+                            <div class="cert-stamp-cover left">
+                                <span class="material-symbols-outlined text-amber-600 text-sm md:text-lg mb-0.5">lock</span>
+                                <span class="text-[9px] md:text-[11px] font-bold text-amber-800 leading-tight">Menunggu Approval</span>
+                                <span class="text-[7px] md:text-[9px] text-amber-700">Tanda Tangan Belum Sah</span>
+                            </div>
+                            <div class="cert-stamp-cover right">
+                                <span class="material-symbols-outlined text-amber-600 text-sm md:text-lg mb-0.5">lock</span>
+                                <span class="text-[9px] md:text-[11px] font-bold text-amber-800 leading-tight">Menunggu Approval</span>
+                                <span class="text-[7px] md:text-[9px] text-amber-700">Super Admin</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -199,6 +230,10 @@ include 'partials/topnav-public.php';
                         <div class="text-right">
                             <span class="block font-label-sm text-on-surface-variant uppercase mb-1 text-[11px]">Tanggal Terbit</span>
                             <span id="res-issue" class="font-body-sm text-on-surface">—</span>
+                        </div>
+                        <div class="col-span-2 pt-2 border-t border-outline-variant/60 flex items-center justify-between">
+                            <span class="block font-label-sm text-on-surface-variant uppercase text-[11px]">Status Persetujuan TTD</span>
+                            <span id="res-approval-status" class="text-xs font-bold px-2.5 py-1 rounded-full">—</span>
                         </div>
                     </div>
                 </div>
@@ -324,6 +359,31 @@ function showResult(d) {
     document.getElementById('res-grade').textContent      = d.final_grade || '—';
     document.getElementById('res-period').textContent     = d.start_date + ' – ' + d.end_date;
     document.getElementById('res-issue').textContent      = d.issue_date;
+
+    // Approval Status UI
+    const isApproved = !!d.is_approved;
+    const approvalChip = document.getElementById('approval-chip');
+    const covers = document.getElementById('cert-unapproved-covers');
+    const resApprovalStatus = document.getElementById('res-approval-status');
+
+    if (isApproved) {
+        if (approvalChip) approvalChip.classList.add('hidden');
+        if (covers) covers.style.display = 'none';
+        if (resApprovalStatus) {
+            resApprovalStatus.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1';
+            resApprovalStatus.innerHTML = '<span class="material-symbols-outlined text-sm">verified</span> Disetujui Super Admin';
+        }
+    } else {
+        if (approvalChip) {
+            approvalChip.classList.remove('hidden');
+            approvalChip.innerHTML = '<span class="material-symbols-outlined text-[18px]">pending</span> Menunggu Approval Super Admin';
+        }
+        if (covers) covers.style.display = 'block';
+        if (resApprovalStatus) {
+            resApprovalStatus.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 flex items-center gap-1';
+            resApprovalStatus.innerHTML = '<span class="material-symbols-outlined text-sm">hourglass_empty</span> Belum Disetujui Super Admin';
+        }
+    }
 
     // Avatar initials
     const initials = d.intern_name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();

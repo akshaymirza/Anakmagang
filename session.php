@@ -139,9 +139,19 @@ if (!function_exists('ensure_intern_certificate')) {
 		$today = date('Y-m-d');
 		$end_date = date('Y-m-d', strtotime('+3 months'));
 
+		// Auto migration: ensure is_approved column exists in certificates
+		$chk_appr = @mysqli_query($conn, "SHOW COLUMNS FROM certificates LIKE 'is_approved'");
+		if ($chk_appr && mysqli_num_rows($chk_appr) == 0) {
+			@mysqli_query($conn, "ALTER TABLE certificates ADD COLUMN is_approved TINYINT(1) NOT NULL DEFAULT 0");
+		}
+		$chk_appr_at = @mysqli_query($conn, "SHOW COLUMNS FROM certificates LIKE 'approved_at'");
+		if ($chk_appr_at && mysqli_num_rows($chk_appr_at) == 0) {
+			@mysqli_query($conn, "ALTER TABLE certificates ADD COLUMN approved_at DATETIME DEFAULT NULL");
+		}
+
 		$ins = mysqli_prepare($conn, "INSERT INTO certificates 
-			(certificate_id, user_id, intern_name, intern_position, university, major, start_date, end_date, issue_date, score_technical, score_discipline, score_attitude, final_grade, supervisor_name, status) 
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 85, 85, 85, 'A', 'Shaliza Mirza', 'active')");
+			(certificate_id, user_id, intern_name, intern_position, university, major, start_date, end_date, issue_date, score_technical, score_discipline, score_attitude, final_grade, supervisor_name, status, is_approved) 
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 85, 85, 85, 'A', 'Shaliza Mirza', 'active', 0)");
 		if ($ins) {
 			mysqli_stmt_bind_param($ins, "sisssssss", $cert_code, $user_id, $username, $pos, $univ, $maj, $today, $end_date, $end_date);
 			mysqli_stmt_execute($ins);

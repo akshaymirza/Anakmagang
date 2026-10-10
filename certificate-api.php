@@ -31,6 +31,16 @@ if ($conn) {
     if ($chk_col && mysqli_num_rows($chk_col) == 0) {
         @mysqli_query($conn, "ALTER TABLE attendance_settings ADD COLUMN certificate_enabled TINYINT(1) NOT NULL DEFAULT 1");
     }
+
+    // Auto migration: Ensure is_approved column exists in certificates table
+    $chk_appr = @mysqli_query($conn, "SHOW COLUMNS FROM certificates LIKE 'is_approved'");
+    if ($chk_appr && mysqli_num_rows($chk_appr) == 0) {
+        @mysqli_query($conn, "ALTER TABLE certificates ADD COLUMN is_approved TINYINT(1) NOT NULL DEFAULT 0");
+    }
+    $chk_appr_at = @mysqli_query($conn, "SHOW COLUMNS FROM certificates LIKE 'approved_at'");
+    if ($chk_appr_at && mysqli_num_rows($chk_appr_at) == 0) {
+        @mysqli_query($conn, "ALTER TABLE certificates ADD COLUMN approved_at DATETIME DEFAULT NULL");
+    }
 }
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'verify';
@@ -71,6 +81,43 @@ if ($action === 'toggle_master_status' && $_SERVER['REQUEST_METHOD'] === 'POST')
 
     $msg = $enabled ? 'Tombol Sertifikat di Panel Intern BERHASIL DITAMPILKAN!' : 'Tombol Sertifikat di Panel Intern BERHASIL DISEMBUNYIKAN!';
     echo json_encode(['success' => true, 'message' => $msg, 'enabled' => (bool)$enabled]);
+    exit;
+}
+
+function check_superadmin_api(): void {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+    $is_logged = !empty($_SESSION['user_logged_in']);
+    $role = (string)($_SESSION['role'] ?? '');
+    if (!$is_logged || $role !== 'superadmin') {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Akses ditolak. Fitur ini hanya dapat diakses oleh Super Admin.']);
+        exit;
+    }
+}
+
+// ── APPROVE / UNAPPROVE CERTIFICATE FOR SIGNATURE (superadmin only) ─────────
+if ($action === 'toggle_approval' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    check_superadmin_api();
+
+    $id = (int)($_POST['id'] ?? 0);
+    $approved = isset($_POST['approved']) && ($_POST['approved'] == '1' || $_POST['approved'] === 'true' || $_POST['approved'] === true) ? 1 : 0;
+
+    if ($conn && $id > 0) {
+        $approved_at = $approved ? date('Y-m-d H:i:s') : null;
+        $stmt = mysqli_prepare($conn, "UPDATE certificates SET is_approved = ?, approved_at = ? WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, "isi", $approved, $approved_at, $id);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+
+        $msg = $approved 
+            ? 'Sertifikat BERHASIL DISETUJUI oleh Super Admin! Tanda tangan dan stempel resmi kini aktif.' 
+            : 'Persetujuan sertifikat DIBATALKAN oleh Super Admin. Tanda tangan dinonaktifkan kembali.';
+        echo json_encode(['success' => true, 'message' => $msg, 'is_approved' => (bool)$approved, 'approved_at' => $approved_at]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'ID sertifikat tidak valid.']);
+    }
     exit;
 }
 
@@ -154,6 +201,8 @@ if ($action === 'verify') {
         'final_grade'      => $cert['final_grade'],
         'supervisor_name'  => $cert['supervisor_name'],
         'status'           => $cert['status'],
+        'is_approved'      => (int)($cert['is_approved'] ?? 0),
+        'approved_at'      => $cert['approved_at'] ?? null,
         'notes'            => $cert['notes'],
     ]);
     exit;
@@ -177,7 +226,7 @@ if ($action === 'list') {
     )";
 
     $sql = "SELECT id, certificate_id, intern_name, intern_position, university,
-                   final_grade, status,
+                   final_grade, status, is_approved, approved_at,
                    DATE_FORMAT(issue_date, '%d %b %Y') AS issue_fmt,
                    CAST($year_expr AS UNSIGNED) AS entry_year
             FROM certificates

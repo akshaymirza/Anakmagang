@@ -45,8 +45,10 @@ if ($conn) {
 }
 
 $avg_score = 0;
+$is_approved = 0;
 if ($cert) {
     $avg_score = round(($cert['score_technical'] + $cert['score_discipline'] + $cert['score_attitude']) / 3);
+    $is_approved = intval($cert['is_approved'] ?? 0);
     if ($master_enabled && !empty($cert['certificate_id'])) {
         header('Location: verification.php?id=' . urlencode($cert['certificate_id']));
         exit;
@@ -219,6 +221,7 @@ include 'partials/sidebar-intern.php';
                     </div>
 
                     <!-- Signatures Row -->
+                    <?php if ($is_approved): ?>
                     <div class="grid grid-cols-2 gap-6 pt-6 border-t border-slate-200 max-w-2xl mx-auto items-end text-xs">
                         <div class="text-center">
                             <p class="text-slate-500 mb-8">Diterbitkan Pada: <span class="font-bold text-slate-800"><?php echo htmlspecialchars($cert['issue_fmt']); ?></span></p>
@@ -237,7 +240,18 @@ include 'partials/sidebar-intern.php';
                             <p class="text-[11px] text-slate-500">Supervisor / Evaluator</p>
                         </div>
                     </div>
-
+                    <?php else: ?>
+                    <!-- Pending Approval Watermark -->
+                    <div class="pt-6 border-t border-amber-200 max-w-2xl mx-auto">
+                        <div class="flex items-center justify-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+                            <span class="material-symbols-outlined text-amber-600 text-2xl shrink-0">pending_actions</span>
+                            <div class="text-center">
+                                <p class="font-bold text-amber-900 text-sm">Menunggu Persetujuan Super Admin</p>
+                                <p class="text-amber-700 text-xs mt-0.5">Tanda tangan dan stempel resmi akan muncul setelah Super Admin menyetujui sertifikat ini.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endif; ?>

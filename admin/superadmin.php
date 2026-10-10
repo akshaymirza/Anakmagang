@@ -234,27 +234,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $msg = "Posisi berhasil dihapus dari index.php.";
         $msg_type = "danger";
     } elseif ($action === 'save_attendance_zone') {
-        $office_name   = trim($_POST['office_name'] ?? 'Kantor Kedayweb');
-        $address       = trim($_POST['address'] ?? '');
-        $latitude      = (float) ($_POST['latitude'] ?? -8.219321);
-        $longitude     = (float) ($_POST['longitude'] ?? 114.369458);
-        $radius_meters = max(10, intval($_POST['radius_meters'] ?? 100));
-        $is_strict     = isset($_POST['is_strict']) && $_POST['is_strict'] == '1' ? 1 : 0;
+        $office_name      = trim($_POST['office_name'] ?? 'Kantor Kedayweb');
+        $address          = trim($_POST['address'] ?? '');
+        $latitude         = (float) ($_POST['latitude'] ?? -8.219321);
+        $longitude        = (float) ($_POST['longitude'] ?? 114.369458);
+        $radius_meters    = max(10, intval($_POST['radius_meters'] ?? 100));
+        $is_strict        = isset($_POST['is_strict']) && $_POST['is_strict'] == '1' ? 1 : 0;
+        $check_in_time    = trim($_POST['check_in_time'] ?? '08:00');
+        $attendance_days_arr = $_POST['attendance_days'] ?? [];
+        $attendance_days  = implode(',', array_map('trim', (array)$attendance_days_arr));
 
         if ($conn) {
+            // Auto-migrate kolom baru jika belum ada
+            $att_cols = [
+                'check_in_time'   => "VARCHAR(10) NOT NULL DEFAULT '08:00'",
+                'attendance_days' => "VARCHAR(100) NOT NULL DEFAULT 'Senin,Selasa,Rabu,Kamis,Jumat,Sabtu'"
+            ];
+            foreach ($att_cols as $col_name => $col_def) {
+                $chk_col = @mysqli_query($conn, "SHOW COLUMNS FROM attendance_settings LIKE '$col_name'");
+                if ($chk_col && mysqli_num_rows($chk_col) == 0) {
+                    @mysqli_query($conn, "ALTER TABLE attendance_settings ADD COLUMN $col_name $col_def");
+                }
+            }
+
             $chk = mysqli_query($conn, "SELECT id FROM attendance_settings WHERE id = 1 LIMIT 1");
             if ($chk && mysqli_num_rows($chk) > 0) {
-                $stmt = mysqli_prepare($conn, "UPDATE attendance_settings SET office_name=?, address=?, latitude=?, longitude=?, radius_meters=?, is_strict=? WHERE id = 1");
-                mysqli_stmt_bind_param($stmt, "ssddii", $office_name, $address, $latitude, $longitude, $radius_meters, $is_strict);
+                $stmt = mysqli_prepare($conn, "UPDATE attendance_settings SET office_name=?, address=?, latitude=?, longitude=?, radius_meters=?, is_strict=?, check_in_time=?, attendance_days=? WHERE id = 1");
+                mysqli_stmt_bind_param($stmt, "ssddiiss", $office_name, $address, $latitude, $longitude, $radius_meters, $is_strict, $check_in_time, $attendance_days);
                 mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
             } else {
-                $stmt = mysqli_prepare($conn, "INSERT INTO attendance_settings (id, office_name, address, latitude, longitude, radius_meters, is_strict) VALUES (1, ?, ?, ?, ?, ?, ?)");
-                mysqli_stmt_bind_param($stmt, "ssddii", $office_name, $address, $latitude, $longitude, $radius_meters, $is_strict);
+                $stmt = mysqli_prepare($conn, "INSERT INTO attendance_settings (id, office_name, address, latitude, longitude, radius_meters, is_strict, check_in_time, attendance_days) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)");
+                mysqli_stmt_bind_param($stmt, "ssddiiss", $office_name, $address, $latitude, $longitude, $radius_meters, $is_strict, $check_in_time, $attendance_days);
                 mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
             }
-            $msg = "Pengaturan titik zona koordinat absensi berhasil disimpan!";
+
+            // Sync work_hours ke footer_settings.json secara otomatis
+            $days_label = !empty($attendance_days) ? $attendance_days : 'Senin - Sabtu';
+            $time_label = date('H:i', strtotime($check_in_time));
+            $new_work_hours = $days_label . ' (Masuk: ' . $time_label . ' WIB)';
+            $curr_footer = get_superadmin_footer_settings($footer_settings_file);
+            $curr_footer['work_hours'] = $new_work_hours;
+            file_put_contents($footer_settings_file, json_encode($curr_footer, JSON_PRETTY_PRINT));
+
+            $msg = "Pengaturan absensi berhasil disimpan dan footer otomatis diperbarui!";
             $msg_type = "success";
         }
     }
@@ -315,28 +339,68 @@ rsort($cohort_years);
 
 // Fetch Attendance Zone Settings
 $att_settings = [
-    'office_name'   => 'Kantor Kedayweb Banyuwangi',
-    'address'       => 'Jl. Tamansari, Tukangkayu, Banyuwangi, Jawa Timur',
-    'latitude'      => -8.21932100,
-    'longitude'     => 114.36945800,
-    'radius_meters' => 100,
-    'is_strict'     => 1
+    'office_name'     => 'Kantor Kedayweb Banyuwangi',
+    'address'         => 'Jl. Tamansari, Tukangkayu, Banyuwangi, Jawa Timur',
+    'latitude'        => -8.21932100,
+    'longitude'       => 114.36945800,
+    'radius_meters'   => 100,
+    'is_strict'       => 1,
+    'check_in_time'   => '08:00',
+    'attendance_days' => 'Senin,Selasa,Rabu,Kamis,Jumat,Sabtu'
 ];
 if ($conn) {
+    // Auto-migrate kolom baru jika belum ada (saat pertama load halaman)
+    $att_cols_migrate = [
+        'check_in_time'   => "VARCHAR(10) NOT NULL DEFAULT '08:00'",
+        'attendance_days' => "VARCHAR(100) NOT NULL DEFAULT 'Senin,Selasa,Rabu,Kamis,Jumat,Sabtu'"
+    ];
+    foreach ($att_cols_migrate as $col_name => $col_def) {
+        $chk_col = @mysqli_query($conn, "SHOW COLUMNS FROM attendance_settings LIKE '$col_name'");
+        if ($chk_col && mysqli_num_rows($chk_col) == 0) {
+            @mysqli_query($conn, "ALTER TABLE attendance_settings ADD COLUMN $col_name $col_def");
+        }
+    }
     $resAtt = @mysqli_query($conn, "SELECT * FROM attendance_settings WHERE id = 1 LIMIT 1");
     if ($resAtt && $rAtt = mysqli_fetch_assoc($resAtt)) {
-        $att_settings['office_name']   = $rAtt['office_name'] ?? $att_settings['office_name'];
-        $att_settings['address']       = $rAtt['address'] ?? $att_settings['address'];
-        $att_settings['latitude']      = (float) ($rAtt['latitude'] ?? $att_settings['latitude']);
-        $att_settings['longitude']     = (float) ($rAtt['longitude'] ?? $att_settings['longitude']);
-        $att_settings['radius_meters'] = (int) ($rAtt['radius_meters'] ?? $att_settings['radius_meters']);
-        $att_settings['is_strict']     = (int) ($rAtt['is_strict'] ?? $att_settings['is_strict']);
+        $att_settings['office_name']     = $rAtt['office_name'] ?? $att_settings['office_name'];
+        $att_settings['address']         = $rAtt['address'] ?? $att_settings['address'];
+        $att_settings['latitude']        = (float) ($rAtt['latitude'] ?? $att_settings['latitude']);
+        $att_settings['longitude']       = (float) ($rAtt['longitude'] ?? $att_settings['longitude']);
+        $att_settings['radius_meters']   = (int) ($rAtt['radius_meters'] ?? $att_settings['radius_meters']);
+        $att_settings['is_strict']       = (int) ($rAtt['is_strict'] ?? $att_settings['is_strict']);
+        $att_settings['check_in_time']   = $rAtt['check_in_time'] ?? $att_settings['check_in_time'];
+        $att_settings['attendance_days'] = $rAtt['attendance_days'] ?? $att_settings['attendance_days'];
     }
 }
+// Parse attendance_days ke array untuk tampilan checkbox
+$att_days_arr = array_filter(array_map('trim', explode(',', $att_settings['attendance_days'])));
 
 $positions = get_index_positions($positions_file);
 $footer_settings = get_superadmin_footer_settings($footer_settings_file);
 $current_active_role = current_user_role();
+
+// Fetch certificates list for superadmin approval section
+$certificates_list = [];
+if ($conn) {
+    // Auto-migrate is_approved and approved_at columns
+    $cert_cols = [
+        'is_approved' => "TINYINT(1) NOT NULL DEFAULT 0",
+        'approved_at' => "DATETIME DEFAULT NULL"
+    ];
+    foreach ($cert_cols as $col_name => $col_def) {
+        $chk_col = @mysqli_query($conn, "SHOW COLUMNS FROM certificates LIKE '$col_name'");
+        if ($chk_col && mysqli_num_rows($chk_col) == 0) {
+            @mysqli_query($conn, "ALTER TABLE certificates ADD COLUMN $col_name $col_def");
+        }
+    }
+    $res_certs = @mysqli_query($conn, "SELECT c.id, c.certificate_id, c.intern_name, c.intern_position, c.university, c.status, c.is_approved, c.approved_at, DATE_FORMAT(c.issue_date, '%d %b %Y') AS issue_fmt, u.username FROM certificates c LEFT JOIN users u ON u.id = c.user_id ORDER BY c.is_approved ASC, c.id DESC");
+    if ($res_certs) {
+        while ($row_c = mysqli_fetch_assoc($res_certs)) {
+            $certificates_list[] = $row_c;
+        }
+    }
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -417,12 +481,19 @@ $current_active_role = current_user_role();
                         <span>Set Account</span>
                     </button>
                     <button type="button" id="nav-btn-location" onclick="switchSuperadminTab('location')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high">
-                        <span class="material-symbols-outlined text-lg">location_on</span>
-                        <span>Set Location</span>
+                        <span class="material-symbols-outlined text-lg">event_available</span>
+                        <span>Set Absen</span>
                     </button>
                     <button type="button" id="nav-btn-footer" onclick="switchSuperadminTab('footer')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high">
                         <span class="material-symbols-outlined text-lg">table_rows</span>
                         <span>Set Footer</span>
+                    </button>
+                    <button type="button" id="nav-btn-approval" onclick="switchSuperadminTab('approval')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high relative">
+                        <span class="material-symbols-outlined text-lg">workspace_premium</span>
+                        <span>Approval Sertifikat</span>
+                        <?php $pending_count = count(array_filter($certificates_list, fn($c) => !$c['is_approved'] && $c['status'] === 'active')); if ($pending_count > 0): ?>
+                        <span class="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 text-white text-[10px] font-black rounded-full flex items-center justify-center"><?php echo $pending_count; ?></span>
+                        <?php endif; ?>
                     </button>
                     <button type="button" id="nav-btn-all" onclick="switchSuperadminTab('all')" class="hidden sm:flex px-4 py-2.5 rounded-xl font-bold text-sm transition-all items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high">
                         <span class="material-symbols-outlined text-lg">grid_view</span>
@@ -435,15 +506,15 @@ $current_active_role = current_user_role();
                 </div>
             </div>
 
-            <!-- Section 1: Pengaturan Titik Zona Koordinat Absensi (Geofencing) -->
+            <!-- Section 1: Pengaturan Absensi (Geofencing + Jam Masuk + Hari Hadir) -->
             <div class="glass-card rounded-2xl border border-outline-variant p-6 shadow-sm hidden" id="section-location">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-outline-variant mb-6">
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">near_me</span>
-                            <h3 class="font-headline-md font-bold text-on-surface">Titik Zona Koordinat Absensi (Geofencing)</h3>
+                            <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">event_available</span>
+                            <h3 class="font-headline-md font-bold text-on-surface">Pengaturan Absensi Magang</h3>
                         </div>
-                        <p class="text-sm text-on-surface-variant mt-1">Tentukan titik koordinat kantor dan radius toleransi jarak absensi untuk anak magang.</p>
+                        <p class="text-sm text-on-surface-variant mt-1">Atur titik koordinat kantor, radius geofence, jam masuk, dan hari wajib hadir. Footer akan otomatis diperbarui.</p>
                     </div>
                     <!-- Status Badges -->
                     <div class="flex flex-wrap items-center gap-2">
@@ -454,6 +525,10 @@ $current_active_role = current_user_role();
                         <span class="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-800 border border-indigo-200 flex items-center gap-1">
                             <span class="material-symbols-outlined text-sm text-indigo-600">radar</span>
                             Radius: <span id="badge-radius"><?php echo (int) $att_settings['radius_meters']; ?></span> m
+                        </span>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-violet-50 text-violet-800 border border-violet-200 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm text-violet-600">schedule</span>
+                            Masuk: <?php echo htmlspecialchars($att_settings['check_in_time'], ENT_QUOTES, 'UTF-8'); ?> WIB
                         </span>
                         <span class="px-3 py-1 rounded-full text-xs font-bold <?php echo $att_settings['is_strict'] ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'; ?> flex items-center gap-1">
                             <span class="material-symbols-outlined text-sm <?php echo $att_settings['is_strict'] ? 'text-emerald-600' : 'text-amber-600'; ?>">
@@ -535,10 +610,49 @@ $current_active_role = current_user_role();
                             </div>
                         </div>
 
+                        <!-- Jam Masuk & Hari Hadir -->
+                        <div class="p-3.5 bg-surface-container-low rounded-xl border border-outline-variant">
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Jam Masuk &amp; Hari Wajib Hadir</label>
+
+                            <!-- Jam Masuk -->
+                            <div class="mb-4">
+                                <label class="block text-xs font-semibold text-on-surface mb-1.5 flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-sm text-primary">schedule</span>
+                                    Jam Masuk
+                                </label>
+                                <input type="time" name="check_in_time" id="att-check-in-time"
+                                    value="<?php echo htmlspecialchars($att_settings['check_in_time'], ENT_QUOTES, 'UTF-8'); ?>"
+                                    class="w-40 px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary focus:outline-none"/>
+                                <p class="text-[11px] text-slate-400 mt-1">Jam ini akan tampil di footer website secara otomatis.</p>
+                            </div>
+
+                            <!-- Hari Hadir -->
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface mb-2 flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-sm text-primary">calendar_today</span>
+                                    Hari Wajib Hadir
+                                </label>
+                                <div class="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+                                    <?php
+                                    $all_days = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
+                                    foreach ($all_days as $day):
+                                        $checked = in_array($day, $att_days_arr) ? 'checked' : '';
+                                    ?>
+                                    <label class="flex items-center gap-1.5 cursor-pointer px-2 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container-high text-xs font-medium select-none">
+                                        <input type="checkbox" name="attendance_days[]" value="<?php echo $day; ?>" <?php echo $checked; ?>
+                                            class="text-primary focus:ring-primary rounded"/>
+                                        <?php echo $day; ?>
+                                    </label>
+                                    <?php endforeach; ?>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-1.5">Hari yang dipilih akan muncul di footer (misal: Senin,Selasa,Rabu,Kamis,Jumat,Sabtu).</p>
+                            </div>
+                        </div>
+
                         <div class="pt-2">
                             <button type="submit" class="w-full py-3 px-5 bg-primary text-on-primary rounded-xl font-bold hover:bg-primary-container transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer">
                                 <span class="material-symbols-outlined">save</span>
-                                <span>Simpan Pengaturan Titik Zona</span>
+                                <span>Simpan Pengaturan Absensi</span>
                             </button>
                         </div>
                     </div>
@@ -809,6 +923,121 @@ $current_active_role = current_user_role();
                                 <tr id="no-superadmin-users-msg" class="hidden">
                                     <td colspan="9" class="text-center py-6 text-on-surface-variant font-medium">Tidak ada data user yang sesuai dengan filter angkatan/search.</td>
                                 </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Section 4: Approval Sertifikat (Superadmin only) -->
+            <div class="glass-card rounded-2xl border border-outline-variant p-6 shadow-sm hidden" id="section-approval">
+                <!-- Header -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-outline-variant mb-6">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+                            <h3 class="font-headline-md font-bold text-on-surface">Approval Tanda Tangan Sertifikat</h3>
+                        </div>
+                        <p class="text-sm text-on-surface-variant mt-1">Sebagai Super Admin, Anda harus menyetujui sertifikat intern agar tanda tangan dan stempel resmi muncul di sertifikat mereka.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 shrink-0">
+                        <span class="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-sm text-amber-600">pending</span>
+                            Menunggu: <?php echo count(array_filter($certificates_list, fn($c) => !$c['is_approved'])); ?>
+                        </span>
+                        <span class="px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-sm text-emerald-600">verified</span>
+                            Disetujui: <?php echo count(array_filter($certificates_list, fn($c) => $c['is_approved'])); ?>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Info Box -->
+                <div class="mb-5 p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3">
+                    <span class="material-symbols-outlined text-amber-600 text-xl shrink-0 mt-0.5">info</span>
+                    <div class="text-sm text-amber-900">
+                        <p class="font-bold mb-1">Cara Kerja Approval Sertifikat</p>
+                        <p>Ketika Super Admin menekan tombol <strong class="text-emerald-700">Setujui Tanda Tangan</strong>, tanda tangan supervisor dan stempel Kedayweb akan otomatis muncul di halaman sertifikat dan verifikasi intern tersebut. Jika dinonaktifkan, sertifikat akan menampilkan watermark <em>"Menunggu Persetujuan Super Admin"</em>.</p>
+                    </div>
+                </div>
+
+                <!-- Certificates Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead>
+                            <tr class="border-b border-outline-variant bg-surface-container-low text-on-surface-variant">
+                                <th class="py-3 px-4 font-semibold">ID Sertifikat</th>
+                                <th class="py-3 px-4 font-semibold">Nama Intern</th>
+                                <th class="py-3 px-4 font-semibold">Posisi</th>
+                                <th class="py-3 px-4 font-semibold">Universitas</th>
+                                <th class="py-3 px-4 font-semibold text-center">Status Cert</th>
+                                <th class="py-3 px-4 font-semibold text-center">Approval TTD</th>
+                                <th class="py-3 px-4 font-semibold text-center">Tanggal Disetujui</th>
+                                <th class="py-3 px-4 font-semibold text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-outline-variant" id="approval-cert-tbody">
+                            <?php if (empty($certificates_list)): ?>
+                                <tr>
+                                    <td colspan="8" class="text-center py-8 text-on-surface-variant">Belum ada sertifikat intern di database.</td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($certificates_list as $cert_row): ?>
+                                    <tr class="hover:bg-surface-container-low transition-colors <?php echo !$cert_row['is_approved'] ? 'bg-amber-50/30' : ''; ?>" id="cert-row-<?php echo (int)$cert_row['id']; ?>">
+                                        <td class="py-3 px-4 font-mono text-xs font-bold text-primary"><?php echo htmlspecialchars($cert_row['certificate_id'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td class="py-3 px-4 font-medium text-on-surface">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-7 h-7 rounded-full bg-primary-container text-primary flex items-center justify-center text-xs font-bold shrink-0"><?php echo strtoupper(substr($cert_row['intern_name'], 0, 1)); ?></div>
+                                                <div>
+                                                    <p class="font-semibold"><?php echo htmlspecialchars($cert_row['intern_name'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                                    <?php if (!empty($cert_row['username'])): ?>
+                                                    <p class="text-[11px] text-on-surface-variant">@<?php echo htmlspecialchars($cert_row['username'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 text-on-surface-variant text-xs"><?php echo htmlspecialchars($cert_row['intern_position'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td class="py-3 px-4 text-on-surface-variant text-xs"><?php echo !empty($cert_row['university']) ? htmlspecialchars($cert_row['university'], ENT_QUOTES, 'UTF-8') : '<span class="text-slate-400">-</span>'; ?></td>
+                                        <td class="py-3 px-4 text-center">
+                                            <?php if ($cert_row['status'] === 'active'): ?>
+                                                <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[11px] font-bold">Aktif</span>
+                                            <?php else: ?>
+                                                <span class="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-[11px] font-bold">Dicabut</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="py-3 px-4 text-center">
+                                            <?php if ($cert_row['is_approved']): ?>
+                                                <span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full text-[11px] font-bold">
+                                                    <span class="material-symbols-outlined text-[13px] text-emerald-600">verified</span>
+                                                    Disetujui
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-[11px] font-bold">
+                                                    <span class="material-symbols-outlined text-[13px] text-amber-600">pending</span>
+                                                    Menunggu
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="py-3 px-4 text-center text-[11px] text-on-surface-variant" id="approved-at-<?php echo (int)$cert_row['id']; ?>">
+                                            <?php echo !empty($cert_row['approved_at']) ? date('d M Y H:i', strtotime($cert_row['approved_at'])) : '<span class="text-slate-400 italic">Belum disetujui</span>'; ?>
+                                        </td>
+                                        <td class="py-3 px-4 text-center">
+                                            <div class="flex items-center justify-center gap-1.5">
+                                                <button type="button"
+                                                    onclick="toggleCertApproval(<?php echo (int)$cert_row['id']; ?>, <?php echo $cert_row['is_approved'] ? 0 : 1; ?>)"
+                                                    id="btn-approve-<?php echo (int)$cert_row['id']; ?>"
+                                                    class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer shadow-xs <?php echo $cert_row['is_approved'] ? 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-600 hover:text-white' : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white'; ?>">
+                                                    <span class="material-symbols-outlined text-[14px]"><?php echo $cert_row['is_approved'] ? 'cancel' : 'verified'; ?></span>
+                                                    <span class="btn-approve-label"><?php echo $cert_row['is_approved'] ? 'Batalkan' : 'Setujui TTD'; ?></span>
+                                                </button>
+                                                <a href="../verification.php?id=<?php echo urlencode($cert_row['certificate_id']); ?>" target="_blank"
+                                                   class="p-1.5 rounded-lg hover:bg-primary-fixed text-primary transition-colors" title="Lihat Sertifikat">
+                                                    <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
                             <?php endif; ?>
                         </tbody>
                     </table>
@@ -1275,13 +1504,15 @@ $current_active_role = current_user_role();
             const sectionFooter = document.getElementById('section-footer');
             const sectionAccount = document.getElementById('section-account');
             const sectionPositions = document.getElementById('section-positions');
+            const sectionApproval = document.getElementById('section-approval');
             const btnLocation = document.getElementById('nav-btn-location');
             const btnFooter = document.getElementById('nav-btn-footer');
             const btnAccount = document.getElementById('nav-btn-account');
+            const btnApproval = document.getElementById('nav-btn-approval');
             const btnAll = document.getElementById('nav-btn-all');
             const activeLabel = document.getElementById('tab-active-label');
 
-            const allBtns = [btnLocation, btnFooter, btnAccount, btnAll];
+            const allBtns = [btnLocation, btnFooter, btnAccount, btnApproval, btnAll];
             allBtns.forEach(btn => {
                 if (!btn) return;
                 btn.classList.remove('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -1293,12 +1524,13 @@ $current_active_role = current_user_role();
                 if (sectionFooter) sectionFooter.classList.add('hidden');
                 if (sectionAccount) sectionAccount.classList.add('hidden');
                 if (sectionPositions) sectionPositions.classList.add('hidden');
+                if (sectionApproval) sectionApproval.classList.add('hidden');
 
                 if (btnLocation) {
                     btnLocation.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
                     btnLocation.classList.remove('text-on-surface-variant', 'hover:bg-surface-container-high');
                 }
-                if (activeLabel) activeLabel.textContent = 'Mode: Set Location';
+                if (activeLabel) activeLabel.textContent = 'Mode: Set Absen';
 
                 if (typeof geofenceMap !== 'undefined' && geofenceMap) {
                     setTimeout(() => {
@@ -1311,6 +1543,7 @@ $current_active_role = current_user_role();
                 if (sectionFooter) sectionFooter.classList.remove('hidden');
                 if (sectionAccount) sectionAccount.classList.add('hidden');
                 if (sectionPositions) sectionPositions.classList.add('hidden');
+                if (sectionApproval) sectionApproval.classList.add('hidden');
 
                 if (btnFooter) {
                     btnFooter.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -1318,11 +1551,25 @@ $current_active_role = current_user_role();
                 }
                 if (activeLabel) activeLabel.textContent = 'Mode: Set Footer';
                 history.replaceState(null, null, '#footer');
+            } else if (tab === 'approval') {
+                if (sectionLocation) sectionLocation.classList.add('hidden');
+                if (sectionFooter) sectionFooter.classList.add('hidden');
+                if (sectionAccount) sectionAccount.classList.add('hidden');
+                if (sectionPositions) sectionPositions.classList.add('hidden');
+                if (sectionApproval) sectionApproval.classList.remove('hidden');
+
+                if (btnApproval) {
+                    btnApproval.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
+                    btnApproval.classList.remove('text-on-surface-variant', 'hover:bg-surface-container-high');
+                }
+                if (activeLabel) activeLabel.textContent = 'Mode: Approval Sertifikat';
+                history.replaceState(null, null, '#approval');
             } else if (tab === 'all') {
                 if (sectionLocation) sectionLocation.classList.remove('hidden');
                 if (sectionFooter) sectionFooter.classList.remove('hidden');
                 if (sectionAccount) sectionAccount.classList.remove('hidden');
                 if (sectionPositions) sectionPositions.classList.remove('hidden');
+                if (sectionApproval) sectionApproval.classList.remove('hidden');
 
                 if (btnAll) {
                     btnAll.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -1341,6 +1588,7 @@ $current_active_role = current_user_role();
                 if (sectionFooter) sectionFooter.classList.add('hidden');
                 if (sectionAccount) sectionAccount.classList.remove('hidden');
                 if (sectionPositions) sectionPositions.classList.remove('hidden');
+                if (sectionApproval) sectionApproval.classList.add('hidden');
 
                 if (btnAccount) {
                     btnAccount.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -1348,6 +1596,48 @@ $current_active_role = current_user_role();
                 }
                 if (activeLabel) activeLabel.textContent = 'Mode: Set Account';
                 history.replaceState(null, null, '#account');
+            }
+        }
+
+        // ── Toggle Certificate Approval (Superadmin) ──────────────────────
+        async function toggleCertApproval(certDbId, approveVal) {
+            const btn = document.getElementById('btn-approve-' + certDbId);
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.6';
+                btn.innerHTML = '<span class="material-symbols-outlined text-[14px] animate-spin">refresh</span><span>Memproses…</span>';
+            }
+
+            try {
+                const fd = new FormData();
+                fd.append('action', 'toggle_approval');
+                fd.append('id', certDbId);
+                fd.append('approved', approveVal);
+
+                const res = await fetch('../certificate-api.php', { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (data.success) {
+                    const row = document.getElementById('cert-row-' + certDbId);
+                    // Update approved_at cell
+                    const approvedAtCell = document.getElementById('approved-at-' + certDbId);
+                    if (approvedAtCell) {
+                        if (approveVal == 1 && data.approved_at) {
+                            const dt = new Date(data.approved_at.replace(' ', 'T'));
+                            approvedAtCell.textContent = dt.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) + ' ' + dt.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+                        } else {
+                            approvedAtCell.innerHTML = '<span class="text-slate-400 italic">Belum disetujui</span>';
+                        }
+                    }
+                    // Reload page to reflect all changes (badge count, row color, etc)
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    alert('Gagal: ' + (data.message || 'Terjadi kesalahan.'));
+                    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+                }
+            } catch(e) {
+                alert('Gagal terhubung ke server.');
+                if (btn) { btn.disabled = false; btn.style.opacity = ''; }
             }
         }
 
@@ -1364,6 +1654,8 @@ $current_active_role = current_user_role();
                 defaultTab = 'location';
             } else if (window.location.hash === '#footer') {
                 defaultTab = 'footer';
+            } else if (window.location.hash === '#approval') {
+                defaultTab = 'approval';
             } else if (window.location.hash === '#all') {
                 defaultTab = 'all';
             } else if (window.location.hash === '#account') {

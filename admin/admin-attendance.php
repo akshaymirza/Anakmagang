@@ -145,6 +145,16 @@ if ($db_query) {
             color: #991b1b;
         }
 
+        .badge-sakit {
+            background: #ede9fe;
+            color: #6b21a8;
+        }
+
+        .badge-izin {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
         .badge-pending {
             background: #f1f5f9;
             color: #475569;
@@ -541,9 +551,26 @@ if ($db_query) {
                         status = 'absent';
                     }
 
-                    const label = { present: 'Hadir Tepat Waktu', late: 'Terlambat', absent: 'Tidak Masuk', pending: 'Belum Absen' }[status] || 'Belum Absen';
-                    const badgeClass = { present: 'badge-present', late: 'badge-late', absent: 'badge-absent', pending: 'badge-pending' }[status] || 'badge-pending';
-                    const icon = { present: 'check_circle', late: 'schedule', absent: 'cancel', pending: 'help' }[status] || 'help';
+                    let label = { present: 'Hadir Tepat Waktu', late: 'Terlambat', absent: 'Tidak Masuk', pending: 'Belum Absen' }[status] || 'Belum Absen';
+                    let badgeClass = { present: 'badge-present', late: 'badge-late', absent: 'badge-absent', pending: 'badge-pending' }[status] || 'badge-pending';
+                    let icon = { present: 'check_circle', late: 'schedule', absent: 'cancel', pending: 'help' }[status] || 'help';
+
+                    if (record && record.status === 'absent' && record.leaveType) {
+                        const lt = record.leaveType;
+                        if (lt === 'sakit') {
+                            label = 'Izin (Sakit)';
+                            badgeClass = 'badge-sakit';
+                            icon = 'medication';
+                        } else if (lt === 'izin') {
+                            label = 'Izin Keperluan';
+                            badgeClass = 'badge-izin';
+                            icon = 'event_busy';
+                        } else {
+                            label = `Izin (${lt})`;
+                            badgeClass = 'badge-sakit';
+                            icon = 'more_horiz';
+                        }
+                    }
 
                     const row = document.createElement('div');
                     row.className = 'border border-outline-variant rounded-xl p-3.5 bg-surface-container-lowest shadow-xs';

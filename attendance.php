@@ -178,6 +178,7 @@ require_login(); ?>
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
+
         .no-scrollbar {
             -ms-overflow-style: none;
             scrollbar-width: none;
@@ -231,272 +232,313 @@ require_login(); ?>
     <?php include 'partials/topnav-mobile.php'; ?>
 
     <!-- Main Content -->
-    <main class="flex-1 md:ml-[16.5rem] pt-16 md:pt-0 min-h-screen flex flex-col w-full max-w-full overflow-x-hidden min-w-0">
+    <main
+        class="flex-1 md:ml-[16.5rem] pt-16 md:pt-0 min-h-screen flex flex-col w-full max-w-full overflow-x-hidden min-w-0">
         <div class="flex-1 pb-10 px-2.5 sm:px-4 md:px-8 max-w-[1400px] mx-auto w-full min-w-0">
 
-        <!-- Page Header -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3 mt-4 md:mt-8">
-            <div>
-                <p class="text-xs font-bold uppercase tracking-widest text-primary mb-0.5" id="page-eyebrow">PKL Tracker
-                </p>
-                <h2 class="font-geist text-2xl sm:text-3xl md:text-4xl font-bold text-on-surface" id="page-title">Kehadiran Saya
-                </h2>
-                <p class="text-xs sm:text-sm text-on-surface-variant mt-0.5" id="page-subtitle">Pantau presensi, status kedatangan,
-                    dan riwayat selama masa PKL.</p>
-            </div>
-            <div class="flex flex-wrap gap-2 w-full sm:w-auto shrink-0 mt-1 sm:mt-0">
-                <button id="main-input-btn" onclick="attStartCapture('in')"
-                    class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold hover:opacity-90 transition-all shadow-sm active:scale-95">
-                    <span class="material-symbols-outlined text-[18px]"
-                        style="font-variation-settings:'FILL' 1;">login</span>
-                    Clock In
-                </button>
-                <button id="main-clockout-btn" onclick="attStartCapture('out')"
-                    class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-rose-600 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold hover:bg-rose-700 transition-all shadow-sm active:scale-95">
-                    <span class="material-symbols-outlined text-[18px]"
-                        style="font-variation-settings:'FILL' 1;">logout</span>
-                    Clock Out
-                </button>
-                <button onclick="exportAttendanceCSV()"
-                    class="flex-1 sm:flex-none flex items-center justify-center gap-2 border border-outline-variant text-on-surface bg-surface-container-lowest px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-surface-container-low transition-colors">
-                    <span class="material-symbols-outlined text-[18px]">download</span>
-                    Export CSV
-                </button>
-            </div>
-        </div>
-
-        <!-- Tracker mode info banner -->
-        <div
-            class="mb-5 flex items-center gap-2.5 bg-blue-50 border border-blue-200 text-blue-900 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm shadow-sm">
-            <span class="material-symbols-outlined text-blue-600 text-[18px] sm:text-[20px] shrink-0">info</span>
-            <span>Halaman ini berfungsi sebagai <strong>Tracker Kehadiran</strong>. Pengeditan dan pencatatan data
-                kehadiran dilakukan oleh <strong>Admin</strong>.</span>
-        </div>
-
-        <!-- Admin preview banner (hanya tampil jika dibuka via ?intern=Nama oleh Admin) -->
-        <div id="admin-preview-banner"
-            class="hidden mb-5 flex items-center gap-2.5 bg-amber-50 border border-amber-200 text-amber-900 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm">
-            <span class="material-symbols-outlined text-amber-600 shrink-0">visibility</span>
-            <span>Anda (Admin) sedang melihat kehadiran milik <strong id="admin-preview-name"></strong> dalam mode
-                baca-saja.</span>
-        </div>
-
-        <!-- Stats Row -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 mb-6">
-            <div class="stat-present rounded-2xl p-3 sm:p-4 border border-green-200">
-                <div class="flex items-center gap-1.5 mb-1.5">
-                    <span class="material-symbols-outlined text-green-700 text-[18px] sm:text-[20px]"
-                        style="font-variation-settings:'FILL' 1;">check_circle</span>
-                    <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-green-700">Hadir</span>
-                </div>
-                <div id="stat-present" class="text-2xl sm:text-3xl font-geist font-bold text-green-800">0</div>
-                <div class="text-[11px] sm:text-xs text-green-700 mt-0.5">hari</div>
-            </div>
-            <div class="stat-late rounded-2xl p-3 sm:p-4 border border-amber-200">
-                <div class="flex items-center gap-1.5 mb-1.5">
-                    <span class="material-symbols-outlined text-amber-700 text-[18px] sm:text-[20px]"
-                        style="font-variation-settings:'FILL' 1;">schedule</span>
-                    <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-amber-700">Terlambat</span>
-                </div>
-                <div id="stat-late" class="text-2xl sm:text-3xl font-geist font-bold text-amber-800">0</div>
-                <div class="text-[11px] sm:text-xs text-amber-700 mt-0.5">hari</div>
-            </div>
-            <div class="stat-absent rounded-2xl p-3 sm:p-4 border border-red-200">
-                <div class="flex items-center gap-1.5 mb-1.5">
-                    <span class="material-symbols-outlined text-red-700 text-[18px] sm:text-[20px]"
-                        style="font-variation-settings:'FILL' 1;">cancel</span>
-                    <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-red-700">Tidak Masuk</span>
-                </div>
-                <div id="stat-absent" class="text-2xl sm:text-3xl font-geist font-bold text-red-800">0</div>
-                <div class="text-[11px] sm:text-xs text-red-700 mt-0.5">hari</div>
-            </div>
-            <div class="stat-rate rounded-2xl p-3 sm:p-4 border border-blue-200">
-                <div class="flex items-center gap-1.5 mb-1.5">
-                    <span class="material-symbols-outlined text-blue-700 text-[18px] sm:text-[20px]"
-                        style="font-variation-settings:'FILL' 1;">insights</span>
-                    <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-blue-700">Kehadiran</span>
-                </div>
-                <div id="stat-rate" class="text-2xl sm:text-3xl font-geist font-bold text-blue-800">0%</div>
-                <div class="text-[11px] sm:text-xs text-blue-700 mt-0.5">tingkat hadir</div>
-            </div>
-        </div>
-
-        <!-- Main Bento Grid (Prioritize Calendar on Mobile) -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-6 sm:mb-8 min-w-0 w-full">
-
-            <!-- Right: Calendar (First on Mobile screens for fast access) -->
-            <div class="lg:col-span-8 order-1 lg:order-2 bg-surface-container-lowest rounded-2xl border border-outline-variant p-3 sm:p-5 min-w-0 w-full overflow-hidden">
-                <!-- Calendar Header -->
-                <div class="flex justify-between items-center mb-3 sm:mb-5">
-                    <h3 id="cal-title" class="font-geist text-base sm:text-xl font-bold text-on-surface">September 2026</h3>
-                    <div class="flex items-center gap-1">
-                        <button id="cal-prev" onclick="changeMonth(-1)"
-                            class="p-1.5 sm:p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-primary">
-                            <span class="material-symbols-outlined text-xl">chevron_left</span>
-                        </button>
-                        <button onclick="goToday()"
-                            class="px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold bg-primary-container text-on-primary-container hover:opacity-80 transition-opacity">
-                            Hari Ini
-                        </button>
-                        <button id="cal-next" onclick="changeMonth(1)"
-                            class="p-1.5 sm:p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-primary">
-                            <span class="material-symbols-outlined text-xl">chevron_right</span>
-                        </button>
-                    </div>
-                </div>
-                <!-- Day Headers (7 Columns Fit) -->
-                <div class="grid grid-cols-7 gap-1 sm:gap-1.5 mb-2 text-center w-full min-w-0">
-                    <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-red-500 truncate">Min</div>
-                    <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Sen</div>
-                    <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Sel</div>
-                    <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Rab</div>
-                    <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Kam</div>
-                    <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Jum</div>
-                    <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Sab</div>
-                </div>
-                <!-- Calendar Grid -->
-                <div id="cal-grid" class="grid grid-cols-7 gap-1 sm:gap-1.5 w-full min-w-0"></div>
-            </div>
-
-            <!-- Left: Streak + Legend + Summary (Second on Mobile screens) -->
-            <div class="lg:col-span-4 order-2 lg:order-1 flex flex-col gap-4">
-
-                <!-- Streak Card -->
-                <div
-                    class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4 sm:p-5 flex flex-col items-center text-center">
-                    <span class="material-symbols-outlined text-[36px] sm:text-[44px] text-amber-400 mb-1 sm:mb-2"
-                        style="font-variation-settings:'FILL' 1;">local_fire_department</span>
-                    <div id="streak-count" class="font-geist text-4xl sm:text-5xl font-black streak-badge mb-1">0</div>
-                    <p class="font-semibold text-sm sm:text-base text-on-surface mb-0.5">Hari Berturut-turut</p>
-                    <p id="streak-desc" class="text-xs text-on-surface-variant">Belum ada data kehadiran</p>
-                </div>
-
-                <!-- Legend Card -->
-                <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4 sm:p-5">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Keterangan
-                        Kalender</h3>
-                    <div class="space-y-2.5">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-700 text-xs font-bold shrink-0">
-                                12</div>
-                            <div>
-                                <div class="text-xs sm:text-sm font-semibold text-on-surface">Hadir Tepat Waktu</div>
-                                <div class="text-[11px] sm:text-xs text-on-surface-variant">Masuk sebelum pukul 09:00</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 text-xs font-bold shrink-0">
-                                12</div>
-                            <div>
-                                <div class="text-xs sm:text-sm font-semibold text-on-surface">Terlambat</div>
-                                <div class="text-[11px] sm:text-xs text-on-surface-variant">Masuk setelah pukul 09:00</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-700 text-xs font-bold shrink-0">
-                                12</div>
-                            <div>
-                                <div class="text-xs sm:text-sm font-semibold text-on-surface">Tidak Masuk</div>
-                                <div class="text-[11px] sm:text-xs text-on-surface-variant">Izin / Sakit / Alpha</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold shrink-0">
-                                12</div>
-                            <div>
-                                <div class="text-xs sm:text-sm font-semibold text-on-surface">Akhir Pekan / Kosong</div>
-                                <div class="text-[11px] sm:text-xs text-on-surface-variant">Weekend atau belum diisi</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick summary for current month -->
-                <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4 sm:p-5">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Bulan Ini</h3>
-                    <div class="space-y-2" id="monthly-summary">
-                        <div class="flex justify-between items-center text-xs sm:text-sm">
-                            <span class="text-on-surface-variant">Hadir</span>
-                            <span id="month-present" class="font-bold text-green-700">0 hari</span>
-                        </div>
-                        <div class="flex justify-between items-center text-xs sm:text-sm">
-                            <span class="text-on-surface-variant">Terlambat</span>
-                            <span id="month-late" class="font-bold text-amber-700">0 hari</span>
-                        </div>
-                        <div class="flex justify-between items-center text-xs sm:text-sm">
-                            <span class="text-on-surface-variant">Tidak Masuk</span>
-                            <span id="month-absent" class="font-bold text-red-700">0 hari</span>
-                        </div>
-                        <div class="h-px bg-outline-variant my-1"></div>
-                        <div class="flex justify-between items-center text-xs sm:text-sm">
-                            <span class="text-on-surface-variant font-semibold">Total Hari Kerja</span>
-                            <span id="month-total" class="font-bold text-on-surface">0 hari</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- History Table -->
-        <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant overflow-hidden">
-            <div
-                class="p-4 sm:p-5 border-b border-outline-variant flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <!-- Page Header -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3 mt-4 md:mt-8">
                 <div>
-                    <h3 class="font-geist text-base sm:text-lg font-bold text-on-surface">Riwayat Kehadiran</h3>
-                    <p class="text-xs text-on-surface-variant mt-0.5">Semua catatan kehadiran selama PKL</p>
+                    <p class="text-xs font-bold uppercase tracking-widest text-primary mb-0.5" id="page-eyebrow">PKL
+                        Tracker
+                    </p>
+                    <h2 class="font-geist text-2xl sm:text-3xl md:text-4xl font-bold text-on-surface" id="page-title">
+                        Kehadiran Saya
+                    </h2>
+                    <p class="text-xs sm:text-sm text-on-surface-variant mt-0.5" id="page-subtitle">Pantau presensi,
+                        status kedatangan,
+                        dan riwayat selama masa PKL.</p>
                 </div>
-                <!-- Filter Pills (Scrollable on Mobile) -->
+                <div class="flex flex-wrap gap-2 w-full sm:w-auto shrink-0 mt-1 sm:mt-0">
+                    <button id="main-input-btn" onclick="attStartCapture('in')"
+                        class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold hover:opacity-90 transition-all shadow-sm active:scale-95">
+                        <span class="material-symbols-outlined text-[18px]"
+                            style="font-variation-settings:'FILL' 1;">login</span>
+                        Clock In
+                    </button>
+                    <button id="main-clockout-btn" onclick="attStartCapture('out')"
+                        class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-rose-600 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold hover:bg-rose-700 transition-all shadow-sm active:scale-95">
+                        <span class="material-symbols-outlined text-[18px]"
+                            style="font-variation-settings:'FILL' 1;">logout</span>
+                        Clock Out
+                    </button>
+                    <button id="main-leave-btn" onclick="openLeaveModal()"
+                        class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-amber-600 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold hover:bg-amber-700 transition-all shadow-sm active:scale-95">
+                        <span class="material-symbols-outlined text-[18px]"
+                            style="font-variation-settings:'FILL' 1;">event_busy</span>
+                        Ajukan Izin
+                    </button>
+                    <button onclick="exportAttendanceCSV()"
+                        class="flex-1 sm:flex-none flex items-center justify-center gap-2 border border-outline-variant text-on-surface bg-surface-container-lowest px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-surface-container-low transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">download</span>
+                        Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tracker mode info banner -->
+            <div
+                class="mb-5 flex items-center gap-2.5 bg-blue-50 border border-blue-200 text-blue-900 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm shadow-sm">
+                <span class="material-symbols-outlined text-blue-600 text-[18px] sm:text-[20px] shrink-0">info</span>
+                <span>Halaman ini berfungsi sebagai <strong>Tracker Kehadiran</strong>. Pengeditan dan pencatatan data
+                    kehadiran dilakukan oleh <strong>Admin</strong>.</span>
+            </div>
+
+            <!-- Admin preview banner (hanya tampil jika dibuka via ?intern=Nama oleh Admin) -->
+            <div id="admin-preview-banner"
+                class="hidden mb-5 flex items-center gap-2.5 bg-amber-50 border border-amber-200 text-amber-900 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm">
+                <span class="material-symbols-outlined text-amber-600 shrink-0">visibility</span>
+                <span>Anda (Admin) sedang melihat kehadiran milik <strong id="admin-preview-name"></strong> dalam mode
+                    baca-saja.</span>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 mb-6">
+                <div class="stat-present rounded-2xl p-3 sm:p-4 border border-green-200">
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                        <span class="material-symbols-outlined text-green-700 text-[18px] sm:text-[20px]"
+                            style="font-variation-settings:'FILL' 1;">check_circle</span>
+                        <span
+                            class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-green-700">Hadir</span>
+                    </div>
+                    <div id="stat-present" class="text-2xl sm:text-3xl font-geist font-bold text-green-800">0</div>
+                    <div class="text-[11px] sm:text-xs text-green-700 mt-0.5">hari</div>
+                </div>
+                <div class="stat-late rounded-2xl p-3 sm:p-4 border border-amber-200">
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                        <span class="material-symbols-outlined text-amber-700 text-[18px] sm:text-[20px]"
+                            style="font-variation-settings:'FILL' 1;">schedule</span>
+                        <span
+                            class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-amber-700">Terlambat</span>
+                    </div>
+                    <div id="stat-late" class="text-2xl sm:text-3xl font-geist font-bold text-amber-800">0</div>
+                    <div class="text-[11px] sm:text-xs text-amber-700 mt-0.5">hari</div>
+                </div>
+                <div class="stat-absent rounded-2xl p-3 sm:p-4 border border-red-200">
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                        <span class="material-symbols-outlined text-red-700 text-[18px] sm:text-[20px]"
+                            style="font-variation-settings:'FILL' 1;">cancel</span>
+                        <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-red-700">Tidak
+                            Masuk</span>
+                    </div>
+                    <div id="stat-absent" class="text-2xl sm:text-3xl font-geist font-bold text-red-800">0</div>
+                    <div class="text-[11px] sm:text-xs text-red-700 mt-0.5">hari</div>
+                </div>
+                <div class="stat-rate rounded-2xl p-3 sm:p-4 border border-blue-200">
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                        <span class="material-symbols-outlined text-blue-700 text-[18px] sm:text-[20px]"
+                            style="font-variation-settings:'FILL' 1;">insights</span>
+                        <span
+                            class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-blue-700">Kehadiran</span>
+                    </div>
+                    <div id="stat-rate" class="text-2xl sm:text-3xl font-geist font-bold text-blue-800">0%</div>
+                    <div class="text-[11px] sm:text-xs text-blue-700 mt-0.5">tingkat hadir</div>
+                </div>
+            </div>
+
+            <!-- Main Bento Grid (Prioritize Calendar on Mobile) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-6 sm:mb-8 min-w-0 w-full">
+
+                <!-- Right: Calendar (First on Mobile screens for fast access) -->
                 <div
-                    class="flex items-center gap-1 bg-surface-container-low rounded-xl p-1 border border-outline-variant text-xs max-w-full overflow-x-auto no-scrollbar w-full sm:w-auto">
-                    <button onclick="setFilter('all')" id="filter-all"
-                        class="px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold bg-white text-primary shadow-sm shrink-0">Semua</button>
-                    <button onclick="setFilter('present')" id="filter-present"
-                        class="px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold text-on-surface-variant hover:text-green-700 shrink-0">Hadir</button>
-                    <button onclick="setFilter('late')" id="filter-late"
-                        class="px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold text-on-surface-variant hover:text-amber-700 shrink-0">Terlambat</button>
-                    <button onclick="setFilter('absent')" id="filter-absent"
-                        class="px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold text-on-surface-variant hover:text-red-700 shrink-0">Tidak Masuk</button>
+                    class="lg:col-span-8 order-1 lg:order-2 bg-surface-container-lowest rounded-2xl border border-outline-variant p-3 sm:p-5 min-w-0 w-full overflow-hidden">
+                    <!-- Calendar Header -->
+                    <div class="flex justify-between items-center mb-3 sm:mb-5">
+                        <h3 id="cal-title" class="font-geist text-base sm:text-xl font-bold text-on-surface">September
+                            2026</h3>
+                        <div class="flex items-center gap-1">
+                            <button id="cal-prev" onclick="changeMonth(-1)"
+                                class="p-1.5 sm:p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-primary">
+                                <span class="material-symbols-outlined text-xl">chevron_left</span>
+                            </button>
+                            <button onclick="goToday()"
+                                class="px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold bg-primary-container text-on-primary-container hover:opacity-80 transition-opacity">
+                                Hari Ini
+                            </button>
+                            <button id="cal-next" onclick="changeMonth(1)"
+                                class="p-1.5 sm:p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-primary">
+                                <span class="material-symbols-outlined text-xl">chevron_right</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Day Headers (7 Columns Fit) -->
+                    <div class="grid grid-cols-7 gap-1 sm:gap-1.5 mb-2 text-center w-full min-w-0">
+                        <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-red-500 truncate">Min
+                        </div>
+                        <div
+                            class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">
+                            Sen</div>
+                        <div
+                            class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">
+                            Sel</div>
+                        <div
+                            class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">
+                            Rab</div>
+                        <div
+                            class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">
+                            Kam</div>
+                        <div
+                            class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">
+                            Jum</div>
+                        <div
+                            class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">
+                            Sab</div>
+                    </div>
+                    <!-- Calendar Grid -->
+                    <div id="cal-grid" class="grid grid-cols-7 gap-1 sm:gap-1.5 w-full min-w-0"></div>
+                </div>
+
+                <!-- Left: Streak + Legend + Summary (Second on Mobile screens) -->
+                <div class="lg:col-span-4 order-2 lg:order-1 flex flex-col gap-4">
+
+                    <!-- Streak Card -->
+                    <div
+                        class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4 sm:p-5 flex flex-col items-center text-center">
+                        <span class="material-symbols-outlined text-[36px] sm:text-[44px] text-amber-400 mb-1 sm:mb-2"
+                            style="font-variation-settings:'FILL' 1;">local_fire_department</span>
+                        <div id="streak-count" class="font-geist text-4xl sm:text-5xl font-black streak-badge mb-1">0
+                        </div>
+                        <p class="font-semibold text-sm sm:text-base text-on-surface mb-0.5">Hari Berturut-turut</p>
+                        <p id="streak-desc" class="text-xs text-on-surface-variant">Belum ada data kehadiran</p>
+                    </div>
+
+                    <!-- Legend Card -->
+                    <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4 sm:p-5">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Keterangan
+                            Kalender</h3>
+                        <div class="space-y-2.5">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-700 text-xs font-bold shrink-0">
+                                    12</div>
+                                <div>
+                                    <div class="text-xs sm:text-sm font-semibold text-on-surface">Hadir Tepat Waktu
+                                    </div>
+                                    <div class="text-[11px] sm:text-xs text-on-surface-variant">Masuk sebelum pukul
+                                        09:00</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 text-xs font-bold shrink-0">
+                                    12</div>
+                                <div>
+                                    <div class="text-xs sm:text-sm font-semibold text-on-surface">Terlambat</div>
+                                    <div class="text-[11px] sm:text-xs text-on-surface-variant">Masuk setelah pukul
+                                        09:00</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-700 text-xs font-bold shrink-0">
+                                    12</div>
+                                <div>
+                                    <div class="text-xs sm:text-sm font-semibold text-on-surface">Tidak Masuk</div>
+                                    <div class="text-[11px] sm:text-xs text-on-surface-variant">Izin / Sakit / Alpha
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold shrink-0">
+                                    12</div>
+                                <div>
+                                    <div class="text-xs sm:text-sm font-semibold text-on-surface">Akhir Pekan / Kosong
+                                    </div>
+                                    <div class="text-[11px] sm:text-xs text-on-surface-variant">Weekend atau belum diisi
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick summary for current month -->
+                    <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4 sm:p-5">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Bulan Ini
+                        </h3>
+                        <div class="space-y-2" id="monthly-summary">
+                            <div class="flex justify-between items-center text-xs sm:text-sm">
+                                <span class="text-on-surface-variant">Hadir</span>
+                                <span id="month-present" class="font-bold text-green-700">0 hari</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs sm:text-sm">
+                                <span class="text-on-surface-variant">Terlambat</span>
+                                <span id="month-late" class="font-bold text-amber-700">0 hari</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs sm:text-sm">
+                                <span class="text-on-surface-variant">Tidak Masuk</span>
+                                <span id="month-absent" class="font-bold text-red-700">0 hari</span>
+                            </div>
+                            <div class="h-px bg-outline-variant my-1"></div>
+                            <div class="flex justify-between items-center text-xs sm:text-sm">
+                                <span class="text-on-surface-variant font-semibold">Total Hari Kerja</span>
+                                <span id="month-total" class="font-bold text-on-surface">0 hari</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-xs sm:text-sm">
-                    <thead>
-                        <tr class="bg-surface-container-low border-b border-outline-variant">
-                            <th
-                                class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">
-                                Tanggal</th>
-                            <th
-                                class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">
-                                Jam Masuk</th>
-                            <th
-                                class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">
-                                Jam Keluar</th>
-                            <th
-                                class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">
-                                Status</th>
-                            <th
-                                class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">
-                                Alasan / Keterangan</th>
-                        </tr>
-                    </thead>
-                    <tbody id="att-table-body" class="divide-y divide-outline-variant">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
-                <div id="att-empty" class="hidden text-center py-12 sm:py-16">
-                    <span class="material-symbols-outlined text-4xl sm:text-5xl text-on-surface-variant mb-2 sm:mb-3">event_busy</span>
-                    <p class="font-semibold text-sm sm:text-base text-on-surface">Belum ada catatan kehadiran</p>
-                    <p class="text-xs text-on-surface-variant mt-1">Data kehadiran diperbarui oleh Admin</p>
+
+            <!-- History Table -->
+            <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant overflow-hidden">
+                <div
+                    class="p-4 sm:p-5 border-b border-outline-variant flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <h3 class="font-geist text-base sm:text-lg font-bold text-on-surface">Riwayat Kehadiran</h3>
+                        <p class="text-xs text-on-surface-variant mt-0.5">Semua catatan kehadiran selama PKL</p>
+                    </div>
+                    <!-- Filter Pills (Scrollable on Mobile) -->
+                    <div
+                        class="flex items-center gap-1 bg-surface-container-low rounded-xl p-1 border border-outline-variant text-xs max-w-full overflow-x-auto no-scrollbar w-full sm:w-auto">
+                        <button onclick="setFilter('all')" id="filter-all"
+                            class="px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold bg-white text-primary shadow-sm shrink-0">Semua</button>
+                        <button onclick="setFilter('present')" id="filter-present"
+                            class="px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold text-on-surface-variant hover:text-green-700 shrink-0">Hadir</button>
+                        <button onclick="setFilter('late')" id="filter-late"
+                            class="px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold text-on-surface-variant hover:text-amber-700 shrink-0">Terlambat</button>
+                        <button onclick="setFilter('absent')" id="filter-absent"
+                            class="px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold text-on-surface-variant hover:text-red-700 shrink-0">Tidak
+                            Masuk</button>
+                        <button onclick="setFilter('leave')" id="filter-leave"
+                            class="px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold text-on-surface-variant hover:text-amber-700 shrink-0">Izin / Sakit</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs sm:text-sm">
+                        <thead>
+                            <tr class="bg-surface-container-low border-b border-outline-variant">
+                                <th
+                                    class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">
+                                    Tanggal</th>
+                                <th
+                                    class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">
+                                    Jam Masuk</th>
+                                <th
+                                    class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">
+                                    Jam Keluar</th>
+                                <th
+                                    class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">
+                                    Status</th>
+                                <th
+                                    class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">
+                                    Alasan / Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="att-table-body" class="divide-y divide-outline-variant">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                    <div id="att-empty" class="hidden text-center py-12 sm:py-16">
+                        <span
+                            class="material-symbols-outlined text-4xl sm:text-5xl text-on-surface-variant mb-2 sm:mb-3">event_busy</span>
+                        <p class="font-semibold text-sm sm:text-base text-on-surface">Belum ada catatan kehadiran</p>
+                        <p class="text-xs text-on-surface-variant mt-1">Data kehadiran diperbarui oleh Admin</p>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="mt-auto shrink-0 w-full">
-            <?php include 'partials/footer.php'; ?>
-        </div>
+            <div class="mt-auto shrink-0 w-full">
+                <?php include 'partials/footer.php'; ?>
+            </div>
     </main>
 
     <!-- ============================================================
@@ -633,36 +675,142 @@ require_login(); ?>
                 <!-- Detail Foto & Lokasi (Clock In & Clock Out) -->
                 <div id="detail-media-wrap" class="space-y-2.5 pt-1">
                     <!-- Clock In Info -->
-                    <div id="detail-in-block" class="hidden bg-surface-container-low rounded-xl p-3 border border-outline-variant/60">
+                    <div id="detail-in-block"
+                        class="hidden bg-surface-container-low rounded-xl p-3 border border-outline-variant/60">
                         <div class="flex items-center gap-1.5 mb-1.5 text-xs font-bold text-primary uppercase">
                             <span class="material-symbols-outlined text-[16px]">login</span>
                             <span>Bukti Clock In</span>
                         </div>
-                        <div id="detail-in-photo-wrap" class="rounded-lg overflow-hidden border border-outline-variant mb-1.5 hidden">
-                            <img id="detail-in-photo" src="" alt="Foto Clock In" class="w-full h-36 object-cover cursor-pointer hover:opacity-95" onclick="window.open(this.src, '_blank')">
+                        <div id="detail-in-photo-wrap"
+                            class="rounded-lg overflow-hidden border border-outline-variant mb-1.5 hidden">
+                            <img id="detail-in-photo" src="" alt="Foto Clock In"
+                                class="w-full h-36 object-cover cursor-pointer hover:opacity-95"
+                                onclick="window.open(this.src, '_blank')">
                         </div>
                         <p id="detail-in-loc" class="text-xs text-on-surface-variant flex items-start gap-1">
-                            <span class="material-symbols-outlined text-[15px] text-primary shrink-0 mt-0.5">location_on</span>
+                            <span
+                                class="material-symbols-outlined text-[15px] text-primary shrink-0 mt-0.5">location_on</span>
                             <span id="detail-in-loc-text" class="line-clamp-2"></span>
                         </p>
                     </div>
 
                     <!-- Clock Out Info -->
-                    <div id="detail-out-block" class="hidden bg-surface-container-low rounded-xl p-3 border border-outline-variant/60">
+                    <div id="detail-out-block"
+                        class="hidden bg-surface-container-low rounded-xl p-3 border border-outline-variant/60">
                         <div class="flex items-center gap-1.5 mb-1.5 text-xs font-bold text-rose-600 uppercase">
                             <span class="material-symbols-outlined text-[16px]">logout</span>
                             <span>Bukti Clock Out</span>
                         </div>
-                        <div id="detail-out-photo-wrap" class="rounded-lg overflow-hidden border border-outline-variant mb-1.5 hidden">
-                            <img id="detail-out-photo" src="" alt="Foto Clock Out" class="w-full h-36 object-cover cursor-pointer hover:opacity-95" onclick="window.open(this.src, '_blank')">
+                        <div id="detail-out-photo-wrap"
+                            class="rounded-lg overflow-hidden border border-outline-variant mb-1.5 hidden">
+                            <img id="detail-out-photo" src="" alt="Foto Clock Out"
+                                class="w-full h-36 object-cover cursor-pointer hover:opacity-95"
+                                onclick="window.open(this.src, '_blank')">
                         </div>
                         <p id="detail-out-loc" class="text-xs text-on-surface-variant flex items-start gap-1">
-                            <span class="material-symbols-outlined text-[15px] text-rose-600 shrink-0 mt-0.5">location_on</span>
+                            <span
+                                class="material-symbols-outlined text-[15px] text-rose-600 shrink-0 mt-0.5">location_on</span>
                             <span id="detail-out-loc-text" class="line-clamp-2"></span>
                         </p>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+     LEAVE MODAL (Pengajuan Izin Tidak Masuk)
+     ============================================================ -->
+    <div id="leave-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-outline-variant overflow-hidden">
+            <div class="p-5 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-amber-600"
+                        style="font-variation-settings:'FILL' 1;">event_busy</span>
+                    <h3 class="font-geist font-bold text-on-surface text-base sm:text-lg">Ajukan Izin Tidak Masuk</h3>
+                </div>
+                <button onclick="closeLeaveModal()"
+                    class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-lg hover:bg-surface-container-low">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form id="leave-form" onsubmit="submitLeave(event)" class="p-5 space-y-4">
+                <!-- Date -->
+                <div>
+                    <label class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1.5">
+                        Tanggal Izin <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" id="leave-date" required
+                        class="w-full rounded-xl border border-outline-variant bg-surface-bright px-3 py-2.5 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" />
+                </div>
+                <!-- Leave Type -->
+                <div>
+                    <label class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1.5">
+                        Jenis Izin <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label id="leave-type-btn-sakit" onclick="selectLeaveType('sakit')"
+                            class="flex flex-col items-center gap-1 border-2 border-outline-variant rounded-xl p-3 cursor-pointer hover:border-purple-400 transition-all text-center">
+                            <span class="material-symbols-outlined text-purple-600 text-[22px]"
+                                style="font-variation-settings:'FILL' 1;">medication</span>
+                            <span class="text-xs font-bold text-purple-700">Sakit</span>
+                            <input type="radio" name="leave_type" value="sakit" class="sr-only" required />
+                        </label>
+                        <label id="leave-type-btn-izin" onclick="selectLeaveType('izin')"
+                            class="flex flex-col items-center gap-1 border-2 border-outline-variant rounded-xl p-3 cursor-pointer hover:border-amber-400 transition-all text-center">
+                            <span class="material-symbols-outlined text-amber-600 text-[22px]"
+                                style="font-variation-settings:'FILL' 1;">event_busy</span>
+                            <span class="text-xs font-bold text-amber-700">Izin</span>
+                            <input type="radio" name="leave_type" value="izin" class="sr-only" />
+                        </label>
+                        <label id="leave-type-btn-lainnya" onclick="selectLeaveType('lainnya')"
+                            class="flex flex-col items-center gap-1 border-2 border-outline-variant rounded-xl p-3 cursor-pointer hover:border-blue-400 transition-all text-center">
+                            <span class="material-symbols-outlined text-blue-600 text-[22px]"
+                                style="font-variation-settings:'FILL' 1;">more_horiz</span>
+                            <span class="text-xs font-bold text-blue-700">Lainnya</span>
+                            <input type="radio" name="leave_type" value="lainnya" class="sr-only" />
+                        </label>
+                    </div>
+                    <input type="hidden" id="leave-type-hidden" name="leave-type-val" />
+                </div>
+                <!-- Reason -->
+                <div>
+                    <label class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1.5">
+                        Alasan / Keterangan <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="leave-reason" rows="3" required placeholder="Contoh: Demam tinggi, perlu istirahat 1 hari..."
+                        class="w-full rounded-xl border border-outline-variant bg-surface-bright px-3 py-2.5 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none resize-none"></textarea>
+                </div>
+                <!-- Proof Photo / Surat Attachment (Optional) -->
+                <div>
+                    <label class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1.5">
+                        Surat Dokter / Bukti Foto <span class="text-slate-400 font-normal lowercase">(opsional)</span>
+                    </label>
+                    <div class="space-y-2">
+                        <input type="file" id="leave-photo-file" accept="image/*" onchange="handleLeavePhotoUpload(event)"
+                            class="block w-full text-xs text-on-surface-variant file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 cursor-pointer" />
+                        <div id="leave-photo-preview-wrap" class="hidden relative rounded-xl overflow-hidden border border-outline-variant max-h-40">
+                            <img id="leave-photo-preview" src="" alt="Preview Bukti" class="w-full h-40 object-cover" />
+                            <button type="button" onclick="clearLeavePhoto()"
+                                class="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 transition-all">
+                                <span class="material-symbols-outlined text-[16px] block">close</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Actions -->
+                <div class="flex justify-end gap-2 pt-2 border-t border-outline-variant">
+                    <button type="button" onclick="closeLeaveModal()"
+                        class="px-4 py-2.5 rounded-xl border border-outline-variant text-sm font-semibold text-on-surface-variant hover:bg-surface-container-low transition-colors">
+                        Batal
+                    </button>
+                    <button type="submit" id="leave-submit-btn"
+                        class="px-5 py-2.5 rounded-xl bg-amber-600 text-white text-sm font-bold hover:bg-amber-700 transition-opacity shadow-sm flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[18px]">send</span>
+                        Kirim Izin
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -672,17 +820,22 @@ require_login(); ?>
     <!-- ============================================================
      CLOCK IN CONFIRMATION MODAL (Live Camera Stream)
      ============================================================ -->
-    <div id="att-modal" class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-        <div class="bg-surface-container-lowest rounded-2xl p-4 sm:p-5 max-w-md w-full shadow-2xl my-auto transition-all">
+    <div id="att-modal"
+        class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div
+            class="bg-surface-container-lowest rounded-2xl p-4 sm:p-5 max-w-md w-full shadow-2xl my-auto transition-all">
             <div class="flex items-center justify-between mb-3">
-                <h4 class="font-geist font-bold text-on-surface text-base sm:text-lg" id="att-modal-title">Clock In - Ambil Foto</h4>
-                <button onclick="attCloseModal()" class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-lg">
+                <h4 class="font-geist font-bold text-on-surface text-base sm:text-lg" id="att-modal-title">Clock In -
+                    Ambil Foto</h4>
+                <button onclick="attCloseModal()"
+                    class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-lg">
                     <span class="material-symbols-outlined text-xl">close</span>
                 </button>
             </div>
 
             <!-- Geofence Status Badge -->
-            <div id="att-geofence-badge" class="mb-3 px-3 py-2 rounded-xl text-xs flex items-center gap-2 border hidden">
+            <div id="att-geofence-badge"
+                class="mb-3 px-3 py-2 rounded-xl text-xs flex items-center gap-2 border hidden">
                 <span id="att-geofence-icon" class="material-symbols-outlined text-sm">near_me</span>
                 <span id="att-geofence-text" class="font-medium">Memeriksa zona lokasi kantor...</span>
             </div>
@@ -690,7 +843,8 @@ require_login(); ?>
             <!-- Responsive Video/Canvas Container -->
             <div id="att-video-wrap"
                 class="relative rounded-xl overflow-hidden border border-outline-variant mb-3 w-full mx-auto transition-all">
-                <video id="att-video" autoplay playsinline class="w-full block rounded-xl transition-transform duration-300"></video>
+                <video id="att-video" autoplay playsinline
+                    class="w-full block rounded-xl transition-transform duration-300"></video>
                 <canvas id="att-canvas" class="hidden w-full block rounded-xl"></canvas>
 
                 <!-- Floating Switch Camera Button (Depan/Belakang) -->
@@ -701,7 +855,8 @@ require_login(); ?>
                 </button>
             </div>
 
-            <p class="font-body-sm text-xs sm:text-sm text-on-surface-variant text-center mb-4" id="att-modal-status">Membuka kamera...</p>
+            <p class="font-body-sm text-xs sm:text-sm text-on-surface-variant text-center mb-4" id="att-modal-status">
+                Membuka kamera...</p>
 
             <div id="att-cam-actions" class="grid grid-cols-2 gap-2 sm:gap-3">
                 <button onclick="attCloseModal()"
@@ -768,7 +923,10 @@ require_login(); ?>
 
                 if (isAdminPreview) {
                     const map = (json.attendanceMap && json.attendanceMap[activeInternName]) || {};
-                    attendanceData = Object.values(map);
+                    attendanceData = Object.values(map).map(r => ({
+                        ...r,
+                        leaveType: r.leaveType || r.leave_type || null
+                    }));
                 } else {
                     const rows = Array.isArray(json) ? json : [];
                     attendanceData = rows.map(r => ({
@@ -777,6 +935,7 @@ require_login(); ?>
                         clockIn: r.clock_in || '',
                         clockOut: r.clock_out || '',
                         reason: r.reason || '',
+                        leaveType: r.leave_type || r.leaveType || null,
                         photoIn: r.photo_in || '',
                         locationIn: r.location_in || '',
                         latIn: r.lat_in,
@@ -811,6 +970,7 @@ require_login(); ?>
             document.getElementById('admin-preview-name').textContent = activeInternName;
             document.getElementById('main-input-btn')?.classList.add('hidden');
             document.getElementById('main-clockout-btn')?.classList.add('hidden');
+            document.getElementById('main-leave-btn')?.classList.add('hidden');
             document.querySelectorAll('.att-add-trigger').forEach(el => el.classList.add('hidden'));
         }
 
@@ -890,7 +1050,11 @@ require_login(); ?>
                 } else if (isFuture) {
                     cell.classList.add('future');
                 } else if (rec) {
-                    cell.classList.add(`status-${rec.status}`);
+                    if (rec.status === 'absent' && rec.leaveType) {
+                        cell.classList.add(`status-${rec.leaveType}`);
+                    } else {
+                        cell.classList.add(`status-${rec.status}`);
+                    }
                     cell.addEventListener('click', () => openDetailModal(dateStr));
                 } else if (isPastDay || isTodayPastCutoff) {
                     // Belum absen dan sudah lewat jam 14:00 atau hari lalu -> Merah (absent)
@@ -909,7 +1073,11 @@ require_login(); ?>
                 if (currentStatus && !isWeekend) {
                     const dot = document.createElement('div');
                     dot.className = 'status-dot';
-                    dot.style.background = currentStatus === 'present' ? '#16a34a' : currentStatus === 'late' ? '#d97706' : '#dc2626';
+                    if (rec && rec.status === 'absent' && rec.leaveType) {
+                        dot.style.background = rec.leaveType === 'sakit' ? '#7c3aed' : '#d97706';
+                    } else {
+                        dot.style.background = currentStatus === 'present' ? '#16a34a' : currentStatus === 'late' ? '#d97706' : '#dc2626';
+                    }
                     cell.appendChild(dot);
                 }
                 grid.appendChild(cell);
@@ -989,7 +1157,10 @@ require_login(); ?>
         // ============================================================
         function renderTable(filter = 'all') {
             const all = loadData().sort((a, b) => b.date.localeCompare(a.date));
-            const data = filter === 'all' ? all : all.filter(r => r.status === filter);
+            const data = filter === 'all' ? all :
+                         filter === 'leave' ? all.filter(r => r.status === 'absent' && !!r.leaveType) :
+                         filter === 'absent' ? all.filter(r => r.status === 'absent' && !r.leaveType) :
+                         all.filter(r => r.status === filter);
 
             const tbody = document.getElementById('att-table-body');
             const empty = document.getElementById('att-empty');
@@ -1003,12 +1174,26 @@ require_login(); ?>
 
             data.forEach(rec => {
                 const tr = document.createElement('tr');
-                tr.className = 'att-row';
-                const statusHtml = {
-                    present: `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold badge-present"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1;">check_circle</span>Hadir</span>`,
-                    late: `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold badge-late"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1;">schedule</span>Terlambat</span>`,
-                    absent: `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold badge-absent"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1;">cancel</span>Tidak Masuk</span>`,
-                }[rec.status];
+                tr.className = 'att-row cursor-pointer hover:bg-surface-container-low transition-colors';
+                tr.addEventListener('click', () => openDetailModal(rec.date));
+
+                let statusHtml;
+                if (rec.status === 'absent' && rec.leaveType) {
+                    const lt = rec.leaveType;
+                    if (lt === 'sakit') {
+                        statusHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold badge-sakit"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1;">medication</span>Sakit</span>`;
+                    } else if (lt === 'izin') {
+                        statusHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold badge-izin"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1;">event_busy</span>Izin</span>`;
+                    } else {
+                        statusHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold badge-lainnya"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1;">more_horiz</span>Izin (${escHtml(lt)})</span>`;
+                    }
+                } else {
+                    statusHtml = {
+                        present: `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold badge-present"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1;">check_circle</span>Hadir</span>`,
+                        late: `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold badge-late"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1;">schedule</span>Terlambat</span>`,
+                        absent: `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold badge-absent"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1;">cancel</span>Tidak Masuk</span>`,
+                    }[rec.status] || `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold badge-absent">${escHtml(rec.status)}</span>`;
+                }
 
                 tr.innerHTML = `
             <td class="px-5 py-3.5 font-semibold text-on-surface text-sm whitespace-nowrap">${formatDateDisplay(rec.date)}</td>
@@ -1027,7 +1212,7 @@ require_login(); ?>
         // ============================================================
         function setFilter(f) {
             currentFilter = f;
-            ['all', 'present', 'late', 'absent'].forEach(id => {
+            ['all', 'present', 'late', 'absent', 'leave'].forEach(id => {
                 const btn = document.getElementById(`filter-${id}`);
                 if (!btn) return;
                 btn.className = f === id
@@ -1191,9 +1376,27 @@ require_login(); ?>
             }
             detailDate = dateStr;
 
-            const statusLabel = { present: 'Hadir', late: 'Terlambat', absent: 'Tidak Masuk' }[rec.status];
-            const badgeClass = { present: 'badge-present', late: 'badge-late', absent: 'badge-absent' }[rec.status];
-            const iconName = { present: 'check_circle', late: 'schedule', absent: 'cancel' }[rec.status];
+            let statusLabel, badgeClass, iconName;
+            if (rec.status === 'absent' && rec.leaveType) {
+                const lt = rec.leaveType;
+                if (lt === 'sakit') {
+                    statusLabel = 'Izin (Sakit)';
+                    badgeClass = 'badge-sakit';
+                    iconName = 'medication';
+                } else if (lt === 'izin') {
+                    statusLabel = 'Izin Keperluan';
+                    badgeClass = 'badge-izin';
+                    iconName = 'event_busy';
+                } else {
+                    statusLabel = `Izin (${lt})`;
+                    badgeClass = 'badge-lainnya';
+                    iconName = 'more_horiz';
+                }
+            } else {
+                statusLabel = { present: 'Hadir', late: 'Terlambat', absent: 'Tidak Masuk' }[rec.status] || rec.status;
+                badgeClass = { present: 'badge-present', late: 'badge-late', absent: 'badge-absent' }[rec.status] || 'badge-absent';
+                iconName = { present: 'check_circle', late: 'schedule', absent: 'cancel' }[rec.status] || 'help';
+            }
 
             document.getElementById('detail-date-label').textContent = formatDateDisplay(dateStr);
             const badge = document.getElementById('detail-badge');
@@ -1207,21 +1410,34 @@ require_login(); ?>
             if (rec.reason) {
                 reasonWrap.classList.remove('hidden');
                 document.getElementById('detail-reason').textContent = rec.reason;
-                // Different color for absent vs late
-                if (rec.status === 'absent') {
+                const reasonTitle = reasonWrap.querySelector('p');
+                if (rec.status === 'absent' && rec.leaveType) {
+                    reasonWrap.className = 'bg-amber-50 border border-amber-200 rounded-xl p-3';
+                    document.getElementById('detail-reason').className = 'text-sm text-amber-900';
+                    if (reasonTitle) {
+                        reasonTitle.className = 'text-xs font-bold text-amber-700 uppercase mb-1';
+                        reasonTitle.textContent = 'Alasan / Keterangan Izin';
+                    }
+                } else if (rec.status === 'absent') {
                     reasonWrap.className = 'bg-red-50 border border-red-200 rounded-xl p-3';
                     document.getElementById('detail-reason').className = 'text-sm text-red-900';
-                    reasonWrap.querySelector('p').className = 'text-xs font-bold text-red-700 uppercase mb-1';
+                    if (reasonTitle) {
+                        reasonTitle.className = 'text-xs font-bold text-red-700 uppercase mb-1';
+                        reasonTitle.textContent = 'Alasan';
+                    }
                 } else {
                     reasonWrap.className = 'bg-amber-50 border border-amber-200 rounded-xl p-3';
                     document.getElementById('detail-reason').className = 'text-sm text-amber-900';
-                    reasonWrap.querySelector('p').className = 'text-xs font-bold text-amber-700 uppercase mb-1';
+                    if (reasonTitle) {
+                        reasonTitle.className = 'text-xs font-bold text-amber-700 uppercase mb-1';
+                        reasonTitle.textContent = 'Alasan';
+                    }
                 }
             } else {
                 reasonWrap.classList.add('hidden');
             }
 
-            // Bukti Clock In (Foto & Lokasi)
+            // Bukti Clock In / Surat Izin (Foto & Lokasi)
             const inBlock = document.getElementById('detail-in-block');
             const inPhotoWrap = document.getElementById('detail-in-photo-wrap');
             const inPhoto = document.getElementById('detail-in-photo');
@@ -1232,6 +1448,16 @@ require_login(); ?>
 
             if (hasInPhoto || hasInLoc) {
                 inBlock.classList.remove('hidden');
+                const inHeader = inBlock.querySelector('div.flex');
+                if (inHeader) {
+                    if (rec.leaveType) {
+                        inHeader.className = 'flex items-center gap-1.5 mb-1.5 text-xs font-bold text-amber-700 uppercase';
+                        inHeader.innerHTML = `<span class="material-symbols-outlined text-[16px]">description</span><span>Surat / Bukti Lampiran</span>`;
+                    } else {
+                        inHeader.className = 'flex items-center gap-1.5 mb-1.5 text-xs font-bold text-primary uppercase';
+                        inHeader.innerHTML = `<span class="material-symbols-outlined text-[16px]">login</span><span>Bukti Clock In</span>`;
+                    }
+                }
                 if (hasInPhoto) {
                     inPhotoWrap.classList.remove('hidden');
                     inPhoto.src = rec.photoIn || rec.photo;
@@ -1443,6 +1669,154 @@ require_login(); ?>
         document.getElementById('att-modal').addEventListener('click', function (e) {
             if (e.target === this) { document.getElementById('att-modal').classList.add('hidden'); attPendingDataUrl = null; }
         });
+        document.getElementById('leave-modal').addEventListener('click', function (e) {
+            if (e.target === this) closeLeaveModal();
+        });
+
+        // ============================================================
+        // LEAVE MODAL (IZIN TIDAK MASUK)
+        // ============================================================
+        let selectedLeaveType = 'sakit';
+        let leavePhotoBase64 = null;
+
+        function openLeaveModal() {
+            if (isAdminPreview) {
+                showToast('Mode Admin hanya untuk melihat.', 'warning');
+                return;
+            }
+            const modal = document.getElementById('leave-modal');
+            const todayStr = formatDate(new Date());
+            document.getElementById('leave-date').value = todayStr;
+            document.getElementById('leave-reason').value = '';
+            clearLeavePhoto();
+            selectLeaveType('sakit');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeLeaveModal() {
+            const modal = document.getElementById('leave-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            clearLeavePhoto();
+        }
+
+        function selectLeaveType(type) {
+            selectedLeaveType = type;
+            const valid = ['sakit', 'izin', 'lainnya'];
+            valid.forEach(t => {
+                const btn = document.getElementById(`leave-type-btn-${t}`);
+                if (!btn) return;
+                btn.classList.remove('border-purple-500', 'bg-purple-50', 'border-amber-500', 'bg-amber-50', 'border-blue-500', 'bg-blue-50');
+                btn.classList.add('border-outline-variant');
+                const radio = btn.querySelector('input[type="radio"]');
+                if (radio) radio.checked = (t === type);
+            });
+
+            const activeBtn = document.getElementById(`leave-type-btn-${type}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-outline-variant');
+                if (type === 'sakit') {
+                    activeBtn.classList.add('border-purple-500', 'bg-purple-50');
+                } else if (type === 'izin') {
+                    activeBtn.classList.add('border-amber-500', 'bg-amber-50');
+                } else {
+                    activeBtn.classList.add('border-blue-500', 'bg-blue-50');
+                }
+            }
+            const hiddenInput = document.getElementById('leave-type-hidden');
+            if (hiddenInput) hiddenInput.value = type;
+        }
+
+        function handleLeavePhotoUpload(e) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('Ukuran file maksimal 5MB', 'warning');
+                e.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                leavePhotoBase64 = evt.target.result;
+                const preview = document.getElementById('leave-photo-preview');
+                const wrap = document.getElementById('leave-photo-preview-wrap');
+                if (preview && wrap) {
+                    preview.src = leavePhotoBase64;
+                    wrap.classList.remove('hidden');
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearLeavePhoto() {
+            leavePhotoBase64 = null;
+            const fileInput = document.getElementById('leave-photo-file');
+            if (fileInput) fileInput.value = '';
+            const wrap = document.getElementById('leave-photo-preview-wrap');
+            if (wrap) wrap.classList.add('hidden');
+            const preview = document.getElementById('leave-photo-preview');
+            if (preview) preview.src = '';
+        }
+
+        async function submitLeave(e) {
+            e.preventDefault();
+            if (isAdminPreview) {
+                showToast('Mode Admin hanya untuk melihat.', 'warning');
+                return;
+            }
+
+            const date = document.getElementById('leave-date').value;
+            const reason = document.getElementById('leave-reason').value.trim();
+            const leaveType = selectedLeaveType;
+
+            if (!date) {
+                showToast('Pilih tanggal izin!', 'warning');
+                return;
+            }
+            if (!reason) {
+                showToast('Keterangan / alasan izin wajib diisi!', 'warning');
+                document.getElementById('leave-reason').focus();
+                return;
+            }
+
+            const submitBtn = document.getElementById('leave-submit-btn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> Mengirim...`;
+            }
+
+            try {
+                const res = await fetch('attendance-api.php?action=submit_leave', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        date: date,
+                        leave_type: leaveType,
+                        reason: reason,
+                        photo: leavePhotoBase64 || ''
+                    })
+                });
+
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || 'Gagal mengajukan izin');
+
+                closeLeaveModal();
+                showToast(data.message || 'Permohonan izin berhasil dikirim!', 'success');
+                await fetchServerData();
+                refreshAll();
+            } catch (err) {
+                showToast(err.message || 'Gagal mengirim permohonan izin.', 'warning');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">send</span> Kirim Izin`;
+                }
+            }
+        }
 
         // ---------------- Kamera + Geotag (Live Camera Feed) ----------------
         let attStream = null;
@@ -1459,8 +1833,8 @@ require_login(); ?>
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             return Math.round(R * c);
         }
@@ -1587,8 +1961,8 @@ require_login(); ?>
                     video.style.maxHeight = maxH + 'px';
                 }, { once: true });
 
-                statusEl.textContent = currentFacingMode === 'user' 
-                    ? 'Posisikan wajah Anda lalu tekan Ambil Foto.' 
+                statusEl.textContent = currentFacingMode === 'user'
+                    ? 'Posisikan wajah Anda lalu tekan Ambil Foto.'
                     : 'Arahkan kamera ke objek/sekitar lalu tekan Ambil Foto.';
             } catch (err) {
                 console.warn('Camera live feed failed, trying fallback:', err);
@@ -1987,10 +2361,36 @@ require_login(); ?>
             if (isAdminPreview) return;
             const inBtn = document.getElementById('main-input-btn');
             const outBtn = document.getElementById('main-clockout-btn');
+            const leaveBtn = document.getElementById('main-leave-btn');
             if (!inBtn || !outBtn) return;
 
             const todayStr = formatDate(new Date());
             const rec = getRecord(todayStr);
+
+            // Jika hari ini sedang izin (sakit / izin / lainnya)
+            if (rec && rec.status === 'absent' && rec.leaveType) {
+                const typeLabel = { sakit: 'Sakit', izin: 'Izin', lainnya: 'Lainnya' }[rec.leaveType] || rec.leaveType;
+                inBtn.disabled = true;
+                inBtn.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 bg-amber-50 text-amber-700 border border-amber-300 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold cursor-default transition-all';
+                inBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">event_busy</span>Izin (${typeLabel})`;
+
+                outBtn.disabled = true;
+                outBtn.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-100 text-slate-400 border border-slate-200 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold cursor-not-allowed transition-all opacity-70';
+                outBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">block</span>Tidak Perlu Clock Out`;
+
+                if (leaveBtn) {
+                    leaveBtn.disabled = true;
+                    leaveBtn.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 bg-amber-100 text-amber-800 border border-amber-300 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold cursor-default transition-all';
+                    leaveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">check</span>Izin Tercatat`;
+                }
+                return;
+            }
+
+            if (leaveBtn) {
+                leaveBtn.disabled = false;
+                leaveBtn.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 bg-amber-600 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold hover:bg-amber-700 transition-all shadow-sm active:scale-95';
+                leaveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">event_busy</span>Ajukan Izin`;
+            }
 
             if (!rec || !rec.clockIn) {
                 // Belum Clock In
