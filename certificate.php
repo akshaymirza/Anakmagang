@@ -77,13 +77,159 @@ if ($cert) {
             border: 12px double #1e3a8a;
             background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
         }
+
+        /* ── Slider wrapper ── */
+        .cert-slider-outer {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            max-width: 56rem;
+            margin: 0 auto;
+        }
+        .cert-slider-track {
+            display: flex;
+            transition: transform .45s cubic-bezier(.4,0,.2,1);
+            will-change: transform;
+        }
+        .cert-slide {
+            flex: 0 0 100%;
+            width: 100%;
+        }
+
+        /* ── Dot indicators ── */
+        .slider-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .slider-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            cursor: pointer;
+            transition: background .3s, transform .3s;
+        }
+        .slider-dot.active {
+            background: #1e3a8a;
+            transform: scale(1.3);
+        }
+
+        /* ── Tabel Nilai (slide-2) ── */
+        .cert-back-canvas {
+            width: 100%;
+            aspect-ratio: 297 / 210;
+            position: relative;
+            overflow: hidden;
+            background: #f5f3e7 url('uploads/Certificate/Sertifikat_Belakang.png') center / 100% 100% no-repeat;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,.25);
+            container-type: inline-size;
+            font-family: 'Poppins', sans-serif;
+            color: #000;
+        }
+        .cert-back-inner {
+            position: absolute;
+            inset: 0;
+            padding: 3.3cqw 5.4cqw 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .cb-judul {
+            font-size: 2.1cqw;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.35;
+        }
+        .cb-data {
+            margin-top: 2cqw;
+            display: grid;
+            row-gap: .1cqw;
+            font-size: 1.08cqw;
+            line-height: 1.65cqw;
+        }
+        .cb-baris {
+            display: grid;
+            grid-template-columns: 23cqw 2cqw 1fr;
+        }
+        .cb-label { font-weight: 500; }
+        .cb-table {
+            width: 100%;
+            margin-top: 1.4cqw;
+            border-collapse: collapse;
+            table-layout: fixed;
+            border: 1px solid #000;
+            font-size: 1.06cqw;
+            line-height: 1.4;
+        }
+        .cb-table col.no   { width: 2.7cqw; }
+        .cb-table col.skor { width: 3.9cqw; }
+        .cb-table th, .cb-table td {
+            border: 1px solid #000;
+            padding: 0 .6cqw;
+            vertical-align: middle;
+        }
+        .cb-table th { font-weight: 500; text-align: center; }
+        .cb-table td { height: 2.05cqw; }
+        .cb-table td.no, .cb-table td.skor { text-align: center; padding: 0; }
+        .cb-table thead tr.judul-tb th { height: 2.2cqw; }
+        .cb-table thead tr.aspek  th { height: 2.1cqw; }
+        .cb-tfoot-rata td { height: 2.1cqw; text-align: center; }
+        .cb-tfoot-kum td  { height: 6.8cqw; padding: 0; }
+        .cb-hasil { font-weight: 500; }
+        .cb-rumus {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: .4cqw;
+            font-weight: 500;
+            font-size: 1.05cqw;
+        }
+        .cb-pecahan {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-weight: 400;
+        }
+        .cb-pembilang { border-bottom: 1px solid #000; padding: 0 .2cqw; }
+        .cb-bawah {
+            margin-top: 1.4cqw;
+            padding-right: 2.4cqw;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            font-size: 1.05cqw;
+        }
+        .cb-predikat {
+            width: 19cqw;
+            border-collapse: collapse;
+            table-layout: fixed;
+            font-size: .87cqw;
+            line-height: 1.15cqw;
+        }
+        .cb-predikat th {
+            font-weight: 500;
+            padding: .1cqw 0;
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #000;
+        }
+        .cb-predikat td { padding: 0; text-align: center; }
+        .cb-ttd p { line-height: 1.65cqw; font-size: 1.05cqw; }
+        .cb-ttd .ruang { height: 4.2cqw; }
+        .cb-ttd .nama { font-weight: 500; text-decoration: underline; }
+
         @media print {
             body { background: white !important; color: black !important; }
             aside, header, footer, .no-print { display: none !important; }
             main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
             .cert-container { border: 8px double #1e3a8a !important; box-shadow: none !important; }
+            .cert-slider-outer { max-width: 100%; }
+            .cert-slider-track { transform: none !important; }
+            .cert-slide { display: block; page-break-after: always; }
+            .slider-nav, .slider-dots, .no-print { display: none !important; }
+            .cert-back-canvas { box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet"/>
 </head>
 <body class="bg-background text-on-surface font-body-md flex h-screen overflow-hidden">
 
@@ -146,114 +292,219 @@ include 'partials/sidebar-intern.php';
                     <span class="text-xs text-on-surface-variant font-medium">ID: <strong class="font-mono text-primary"><?php echo htmlspecialchars($cert['certificate_id']); ?></strong></span>
                 </div>
                 <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <a href="verification.php?id=<?php echo urlencode($cert['certificate_id']); ?>" target="_blank" class="flex-1 sm:flex-none px-4 py-2 bg-surface-container-high hover:bg-surface-container-highest text-primary border border-outline-variant rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs">
+                    <a href="verification.php?id=<?php echo urlencode($cert['certificate_id']); ?>" target="_blank"
+                       class="flex-1 sm:flex-none px-4 py-2 bg-surface-container-high hover:bg-surface-container-highest text-primary border border-outline-variant rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs">
                         <span class="material-symbols-outlined text-sm">open_in_new</span>
                         <span>Verifikasi Publik</span>
                     </a>
-                    <button onclick="window.print()" class="flex-1 sm:flex-none px-4 py-2 bg-primary text-on-primary rounded-xl text-xs font-bold hover:bg-primary-container transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
+                    <button onclick="window.print()"
+                            class="flex-1 sm:flex-none px-4 py-2 bg-primary text-on-primary rounded-xl text-xs font-bold hover:bg-primary-container transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
                         <span class="material-symbols-outlined text-sm">print</span>
                         <span>Cetak / Simpan PDF</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Certificate Card Printable -->
-            <div class="cert-container cert-border rounded-3xl p-8 md:p-12 shadow-xl max-w-4xl mx-auto relative overflow-hidden">
-                <!-- Watermark Background -->
-                <div class="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none">
-                    <span class="material-symbols-outlined text-[400px]">workspace_premium</span>
-                </div>
+            <!-- ═══ SLIDER WRAPPER ═══ -->
+            <div class="cert-slider-outer" id="certSliderOuter">
 
-                <div class="relative z-10 text-center space-y-6">
-                    <!-- Brand Header -->
-                    <div class="flex flex-col items-center justify-center gap-1">
-                        <div class="w-14 h-14 rounded-2xl bg-blue-900 text-amber-400 flex items-center justify-center shadow-md mb-2">
-                            <span class="material-symbols-outlined text-3xl filled-icon">school</span>
-                        </div>
-                        <h2 class="text-2xl font-black tracking-wider text-blue-950 uppercase font-headline-lg">KEDAYWEB INTERNSHIP</h2>
-                        <p class="text-xs tracking-widest text-slate-500 uppercase font-semibold">Teknologi Informasi & Pengembang Software</p>
-                    </div>
-
-                    <div class="w-24 h-1 bg-gradient-to-r from-amber-400 via-blue-900 to-amber-400 mx-auto rounded-full my-2"></div>
-
-                    <!-- Certificate Title -->
-                    <div class="space-y-1">
-                        <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 font-headline-xl tracking-tight uppercase" style="font-family: 'Cinzel', serif;">SERTIFIKAT MAGANG</h1>
-                        <p class="text-xs md:text-sm text-slate-500 italic font-medium">Certificate of Internship Completion</p>
-                        <p class="text-xs font-mono text-blue-800 font-bold mt-1">No: <?php echo htmlspecialchars($cert['certificate_id']); ?></p>
-                    </div>
-
-                    <p class="text-xs text-slate-600 font-medium">Diberikan secara resmi kepada:</p>
-
-                    <!-- Recipient Name -->
-                    <div class="py-2 border-b-2 border-slate-300 max-w-lg mx-auto">
-                        <h3 class="text-2xl md:text-3xl font-extrabold text-blue-950 uppercase tracking-wide"><?php echo htmlspecialchars($cert['intern_name']); ?></h3>
-                    </div>
-
-                    <!-- Details Description -->
-                    <p class="text-xs md:text-sm text-slate-700 max-w-2xl mx-auto leading-relaxed">
-                        Telah dengan sukses menyelesaikan Program Magang Kerja Industri sebagai <strong class="text-blue-900 font-bold"><?php echo htmlspecialchars($cert['intern_position']); ?></strong> 
-                        <?php if (!empty($cert['university']) && $cert['university'] !== '-'): ?>
-                            utusan dari <strong class="text-slate-900"><?php echo htmlspecialchars($cert['university']); ?></strong>
-                            <?php if (!empty($cert['major']) && $cert['major'] !== '-'): ?> (Jurusan <?php echo htmlspecialchars($cert['major']); ?>)<?php endif; ?>
-                        <?php endif; ?>
-                        terhitung mulai tanggal <span class="font-bold text-slate-900"><?php echo htmlspecialchars($cert['start_fmt']); ?></span> s/d <span class="font-bold text-slate-900"><?php echo htmlspecialchars($cert['end_fmt']); ?></span>.
+                <!-- Slide navigation label -->
+                <div class="flex items-center justify-between mb-3 no-print">
+                    <p class="text-xs text-on-surface-variant font-semibold uppercase tracking-wide flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-base filled-icon text-primary">workspace_premium</span>
+                        <span id="slideLabel">Sertifikat Depan</span>
                     </p>
-
-                    <!-- Grades Summary Grid -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-50/80 p-4 rounded-2xl border border-slate-200 max-w-2xl mx-auto my-4 text-left">
-                        <div class="p-2.5 bg-white rounded-xl border border-slate-100 shadow-2xs">
-                            <p class="text-[10px] uppercase font-bold text-slate-400">Teknis</p>
-                            <p class="text-lg font-extrabold text-slate-800"><?php echo (int)$cert['score_technical']; ?> <span class="text-[11px] text-slate-400 font-normal">/100</span></p>
-                        </div>
-                        <div class="p-2.5 bg-white rounded-xl border border-slate-100 shadow-2xs">
-                            <p class="text-[10px] uppercase font-bold text-slate-400">Disiplin</p>
-                            <p class="text-lg font-extrabold text-slate-800"><?php echo (int)$cert['score_discipline']; ?> <span class="text-[11px] text-slate-400 font-normal">/100</span></p>
-                        </div>
-                        <div class="p-2.5 bg-white rounded-xl border border-slate-100 shadow-2xs">
-                            <p class="text-[10px] uppercase font-bold text-slate-400">Sikap</p>
-                            <p class="text-lg font-extrabold text-slate-800"><?php echo (int)$cert['score_attitude']; ?> <span class="text-[11px] text-slate-400 font-normal">/100</span></p>
-                        </div>
-                        <div class="p-2.5 bg-blue-900 text-white rounded-xl shadow-xs">
-                            <p class="text-[10px] uppercase font-bold text-amber-300">Grade Akhir</p>
-                            <p class="text-lg font-black text-white"><?php echo htmlspecialchars($cert['final_grade'] ?: 'A'); ?> <span class="text-[10px] text-amber-300 font-bold">(Rata-rata <?php echo $avg_score; ?>)</span></p>
-                        </div>
+                    <div class="flex items-center gap-2">
+                        <button id="btnPrev" onclick="certSlide(-1)"
+                                disabled
+                                class="p-2 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-primary hover:text-on-primary hover:border-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                                title="Sertifikat Depan">
+                            <span class="material-symbols-outlined text-xl">chevron_left</span>
+                        </button>
+                        <button id="btnNext" onclick="certSlide(1)"
+                                class="p-2 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-primary hover:text-on-primary hover:border-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                                title="Tabel Nilai / Sertifikat Belakang">
+                            <span class="material-symbols-outlined text-xl">chevron_right</span>
+                        </button>
                     </div>
-
-                    <!-- Signatures Row -->
-                    <?php if ($is_approved): ?>
-                    <div class="grid grid-cols-2 gap-6 pt-6 border-t border-slate-200 max-w-2xl mx-auto items-end text-xs">
-                        <div class="text-center">
-                            <p class="text-slate-500 mb-8">Diterbitkan Pada: <span class="font-bold text-slate-800"><?php echo htmlspecialchars($cert['issue_fmt']); ?></span></p>
-                            <div class="w-24 h-12 mx-auto flex items-center justify-center opacity-80">
-                                <span class="font-bold text-blue-900 text-lg border-b-2 border-blue-900 pb-0.5">KEDAYWEB</span>
-                            </div>
-                            <p class="font-bold text-slate-900 mt-1">Tim Admin Kedayweb</p>
-                            <p class="text-[11px] text-slate-500">Penyelenggara Program</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-slate-500 mb-8">Pembimbing Magang</p>
-                            <div class="w-28 h-12 mx-auto flex items-center justify-center">
-                                <span class="font-serif italic font-extrabold text-blue-950 text-xl border-b border-slate-400 px-3 pb-1"><?php echo htmlspecialchars($cert['supervisor_name'] ?: 'Shaliza Mirza'); ?></span>
-                            </div>
-                            <p class="font-bold text-slate-900 mt-1"><?php echo htmlspecialchars($cert['supervisor_name'] ?: 'Shaliza Mirza'); ?></p>
-                            <p class="text-[11px] text-slate-500">Supervisor / Evaluator</p>
-                        </div>
-                    </div>
-                    <?php else: ?>
-                    <!-- Pending Approval Watermark -->
-                    <div class="pt-6 border-t border-amber-200 max-w-2xl mx-auto">
-                        <div class="flex items-center justify-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
-                            <span class="material-symbols-outlined text-amber-600 text-2xl shrink-0">pending_actions</span>
-                            <div class="text-center">
-                                <p class="font-bold text-amber-900 text-sm">Menunggu Persetujuan Super Admin</p>
-                                <p class="text-amber-700 text-xs mt-0.5">Tanda tangan dan stempel resmi akan muncul setelah Super Admin menyetujui sertifikat ini.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endif; ?>
                 </div>
-            </div>
+
+                <!-- Track -->
+                <div class="cert-slider-track" id="certSliderTrack">
+
+                    <!-- ── SLIDE 1: Sertifikat Depan ── -->
+                    <div class="cert-slide" id="certSlide0">
+                        <div class="cert-container cert-border rounded-3xl p-8 md:p-12 shadow-xl relative overflow-hidden">
+                            <!-- Watermark -->
+                            <div class="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none">
+                                <span class="material-symbols-outlined text-[400px]">workspace_premium</span>
+                            </div>
+
+                            <div class="relative z-10 text-center space-y-6">
+                                <!-- Brand Header -->
+                                <div class="flex flex-col items-center justify-center gap-1">
+                                    <div class="w-14 h-14 rounded-2xl bg-blue-900 text-amber-400 flex items-center justify-center shadow-md mb-2">
+                                        <span class="material-symbols-outlined text-3xl filled-icon">school</span>
+                                    </div>
+                                    <h2 class="text-2xl font-black tracking-wider text-blue-950 uppercase font-headline-lg">KEDAYWEB INTERNSHIP</h2>
+                                    <p class="text-xs tracking-widest text-slate-500 uppercase font-semibold">Teknologi Informasi &amp; Pengembang Software</p>
+                                </div>
+                                <div class="w-24 h-1 bg-gradient-to-r from-amber-400 via-blue-900 to-amber-400 mx-auto rounded-full my-2"></div>
+                                <!-- Certificate Title -->
+                                <div class="space-y-1">
+                                    <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 font-headline-xl tracking-tight uppercase" style="font-family:'Cinzel',serif">SERTIFIKAT MAGANG</h1>
+                                    <p class="text-xs md:text-sm text-slate-500 italic font-medium">Certificate of Internship Completion</p>
+                                    <p class="text-xs font-mono text-blue-800 font-bold mt-1">No: <?php echo htmlspecialchars($cert['certificate_id']); ?></p>
+                                </div>
+                                <p class="text-xs text-slate-600 font-medium">Diberikan secara resmi kepada:</p>
+                                <!-- Recipient Name -->
+                                <div class="py-2 border-b-2 border-slate-300 max-w-lg mx-auto">
+                                    <h3 class="text-2xl md:text-3xl font-extrabold text-blue-950 uppercase tracking-wide"><?php echo htmlspecialchars($cert['intern_name']); ?></h3>
+                                </div>
+                                <!-- Details -->
+                                <p class="text-xs md:text-sm text-slate-700 max-w-2xl mx-auto leading-relaxed">
+                                    Telah dengan sukses menyelesaikan Program Magang Kerja Industri sebagai
+                                    <strong class="text-blue-900 font-bold"><?php echo htmlspecialchars($cert['intern_position']); ?></strong>
+                                    <?php if (!empty($cert['university']) && $cert['university'] !== '-'): ?>
+                                        utusan dari <strong class="text-slate-900"><?php echo htmlspecialchars($cert['university']); ?></strong>
+                                        <?php if (!empty($cert['major']) && $cert['major'] !== '-'): ?> (Jurusan <?php echo htmlspecialchars($cert['major']); ?>)<?php endif; ?>
+                                    <?php endif; ?>
+                                    terhitung mulai tanggal <span class="font-bold text-slate-900"><?php echo htmlspecialchars($cert['start_fmt']); ?></span>
+                                    s/d <span class="font-bold text-slate-900"><?php echo htmlspecialchars($cert['end_fmt']); ?></span>.
+                                </p>
+                                <!-- Grades Grid -->
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-50/80 p-4 rounded-2xl border border-slate-200 max-w-2xl mx-auto my-4 text-left">
+                                    <div class="p-2.5 bg-white rounded-xl border border-slate-100 shadow-2xs">
+                                        <p class="text-[10px] uppercase font-bold text-slate-400">Teknis</p>
+                                        <p class="text-lg font-extrabold text-slate-800"><?php echo (int)$cert['score_technical']; ?> <span class="text-[11px] text-slate-400 font-normal">/100</span></p>
+                                    </div>
+                                    <div class="p-2.5 bg-white rounded-xl border border-slate-100 shadow-2xs">
+                                        <p class="text-[10px] uppercase font-bold text-slate-400">Disiplin</p>
+                                        <p class="text-lg font-extrabold text-slate-800"><?php echo (int)$cert['score_discipline']; ?> <span class="text-[11px] text-slate-400 font-normal">/100</span></p>
+                                    </div>
+                                    <div class="p-2.5 bg-white rounded-xl border border-slate-100 shadow-2xs">
+                                        <p class="text-[10px] uppercase font-bold text-slate-400">Sikap</p>
+                                        <p class="text-lg font-extrabold text-slate-800"><?php echo (int)$cert['score_attitude']; ?> <span class="text-[11px] text-slate-400 font-normal">/100</span></p>
+                                    </div>
+                                    <div class="p-2.5 bg-blue-900 text-white rounded-xl shadow-xs">
+                                        <p class="text-[10px] uppercase font-bold text-amber-300">Grade Akhir</p>
+                                        <p class="text-lg font-black text-white"><?php echo htmlspecialchars($cert['final_grade'] ?: 'A'); ?> <span class="text-[10px] text-amber-300 font-bold">(Rata-rata <?php echo $avg_score; ?>)</span></p>
+                                    </div>
+                                </div>
+                                <!-- Signatures -->
+                                <?php if ($is_approved): ?>
+                                <div class="grid grid-cols-2 gap-6 pt-6 border-t border-slate-200 max-w-2xl mx-auto items-end text-xs">
+                                    <div class="text-center">
+                                        <p class="text-slate-500 mb-8">Diterbitkan Pada: <span class="font-bold text-slate-800"><?php echo htmlspecialchars($cert['issue_fmt']); ?></span></p>
+                                        <div class="w-24 h-12 mx-auto flex items-center justify-center opacity-80">
+                                            <span class="font-bold text-blue-900 text-lg border-b-2 border-blue-900 pb-0.5">KEDAYWEB</span>
+                                        </div>
+                                        <p class="font-bold text-slate-900 mt-1">Tim Admin Kedayweb</p>
+                                        <p class="text-[11px] text-slate-500">Penyelenggara Program</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-slate-500 mb-8">Pembimbing Magang</p>
+                                        <div class="w-28 h-12 mx-auto flex items-center justify-center">
+                                            <span class="font-serif italic font-extrabold text-blue-950 text-xl border-b border-slate-400 px-3 pb-1"><?php echo htmlspecialchars($cert['supervisor_name'] ?: 'M. Lutfi Nur Fauzi, S.Kom.'); ?></span>
+                                        </div>
+                                        <p class="font-bold text-slate-900 mt-1"><?php echo htmlspecialchars($cert['supervisor_name'] ?: 'M. Lutfi Nur Fauzi, S.Kom.'); ?></p>
+                                        <p class="text-[11px] text-slate-500">Supervisor / Evaluator</p>
+                                    </div>
+                                </div>
+                                <?php else: ?>
+                                <div class="pt-6 border-t border-amber-200 max-w-2xl mx-auto">
+                                    <div class="flex items-center justify-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+                                        <span class="material-symbols-outlined text-amber-600 text-2xl shrink-0">pending_actions</span>
+                                        <div class="text-center">
+                                            <p class="font-bold text-amber-900 text-sm">Menunggu Persetujuan Super Admin</p>
+                                            <p class="text-amber-700 text-xs mt-0.5">Tanda tangan dan stempel resmi akan muncul setelah Super Admin menyetujui sertifikat ini.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div><!-- /slide-1 -->
+
+                    <!-- ── SLIDE 2: Sertifikat Belakang + Tabel Nilai ── -->
+                    <?php
+                        // Skor yang tersedia di DB
+                        $skor_disiplin  = (int)$cert['score_discipline'];
+                        $skor_teknis    = (int)$cert['score_technical'];
+                        $skor_sikap     = (int)$cert['score_attitude'];
+
+                        // Distribusi skor ke 6 komponen non-teknis & 6 teknis
+                        $nonTeknis = [$skor_disiplin, $skor_disiplin, $skor_disiplin, $skor_sikap, $skor_sikap, $skor_sikap];
+                        $teknis    = [$skor_teknis,   $skor_teknis,   $skor_teknis,   $skor_teknis, $skor_teknis, $skor_teknis];
+
+                        $labelNonTeknis = ['Kedisiplinan','Kemauan Kerja Dan Motivasi','Kerajinan','Inisiatif Dan Kreatifitas','Kerjasama Dan Tanggung Jawab','Sikap Dan Perilaku'];
+                        $labelTeknis    = ['Penguasaan Tools Dan Perangkat Kerja Utama','Kualitas & Ketepatan Hasil Pekerjaan','Pemahaman Brief & Penerapan Spesifikasi Tugas','Kecepatan & Ketepatan Waktu Penyelesaian Tugas','Kemampuan Penyelesaian Masalah','Laporan Hasil Kerja'];
+
+                        $rataaNonTeknis = round(array_sum($nonTeknis) / count($nonTeknis), 2);
+                        $rataaTeknis    = round(array_sum($teknis) / count($teknis), 2);
+                        $kumulatif      = round(($rataaNonTeknis + $rataaTeknis) / 2, 2);
+
+                        $waktu = $cert['start_fmt'] . ' sampai ' . $cert['end_fmt'];
+                        $tempatTanggal = 'Banyuwangi, ' . (date('d F Y', strtotime($cert['issue_date'] ?? $cert['end_date'] ?? 'now')));
+                        $penandatangan = htmlspecialchars($cert['supervisor_name'] ?: 'M. Lutfi Nur Fauzi, S.Kom.');
+                        $jabatan = 'Founder &amp; Director Kedayweb';
+
+                        $ketentuan = [
+                            ['90–100', 'A', 'Sangat Baik'],
+                            ['80–89',  'B', 'Baik'],
+                            ['75–79',  'C', 'Cukup'],
+                            ['&le;74', 'D', 'Kurang'],
+                        ];
+                    ?>
+                    <div class="cert-slide" id="certSlide1">
+                        <div style="width: 100%; aspect-ratio: 1.414; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                            <iframe src="tabel-nilai-viewer.php?id=<?php echo urlencode($cert['certificate_id']); ?>" style="width: 100%; height: 100%; border: none; display: block;" title="Tabel Nilai Sertifikat"></iframe>
+                        </div>
+                    </div><!-- /slide-2 -->
+
+                </div><!-- /cert-slider-track -->
+
+                <!-- Dot indicators -->
+                <div class="slider-dots no-print" id="certDots">
+                    <span class="slider-dot active" id="dot0" onclick="certGoTo(0)" title="Sertifikat Depan"></span>
+                    <span class="slider-dot" id="dot1" onclick="certGoTo(1)" title="Tabel Nilai"></span>
+                </div>
+
+            </div><!-- /cert-slider-outer -->
+
+            <script>
+            (function(){
+                const TOTAL = 2;
+                let cur = 0;
+                const track  = document.getElementById('certSliderTrack');
+                const btnP   = document.getElementById('btnPrev');
+                const btnN   = document.getElementById('btnNext');
+                const labels = ['Sertifikat Depan', 'Tabel Nilai (Halaman Belakang)'];
+
+                function update() {
+                    track.style.transform = 'translateX(-' + (cur * 100) + '%)';
+                    document.getElementById('slideLabel').textContent = labels[cur];
+                    btnP.disabled = (cur === 0);
+                    btnN.disabled = (cur === TOTAL - 1);
+                    for (let i = 0; i < TOTAL; i++) {
+                        const d = document.getElementById('dot' + i);
+                        if (d) d.classList.toggle('active', i === cur);
+                    }
+                }
+
+                window.certSlide = function(dir) {
+                    cur = Math.max(0, Math.min(TOTAL - 1, cur + dir));
+                    update();
+                };
+                window.certGoTo = function(idx) {
+                    cur = idx;
+                    update();
+                };
+
+                update();
+            })();
+            </script>
+
         <?php endif; ?>
     </div>
 

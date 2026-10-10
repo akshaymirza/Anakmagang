@@ -176,9 +176,9 @@ CREATE TABLE `certificates` (
 --
 
 INSERT INTO `certificates` (`id`, `certificate_id`, `user_id`, `intern_name`, `intern_position`, `university`, `major`, `start_date`, `end_date`, `issue_date`, `score_technical`, `score_discipline`, `score_attitude`, `final_grade`, `supervisor_name`, `status`, `notes`, `created_at`, `updated_at`) VALUES
-(1, 'IS-2024-001', 1, 'INT-2024-001', 'Web Developer Intern', 'Universitas Indonesia', 'Ilmu Komputer', '2024-07-01', '2024-10-01', '2024-10-05', 88, 90, 92, 'A', 'Shaliza Mirza', 'active', NULL, '2026-09-16 12:35:41', '2026-09-16 12:35:41'),
-(2, 'IS-2024-002', 4, 'Fairuz', 'UI/UX Design Intern', 'Institut Teknologi Bandung', 'Desain Komunikasi Visual', '2024-07-01', '2024-10-01', '2024-10-05', 85, 88, 95, 'A', 'Shaliza Mirza', 'active', NULL, '2026-09-16 12:35:41', '2026-09-16 12:35:41'),
-(3, 'IS-2024-003', 5, 'Filbert', 'Backend Engineer Intern', 'Universitas Gadjah Mada', 'Teknik Informatika', '2024-07-01', '2024-10-01', '2024-10-05', 92, 85, 88, 'A', 'Shaliza Mirza', 'active', NULL, '2026-09-16 12:35:41', '2026-09-16 12:35:41');
+(1, 'IS-2024-001', 1, 'INT-2024-001', 'Web Developer Intern', 'Universitas Indonesia', 'Ilmu Komputer', '2024-07-01', '2024-10-01', '2024-10-05', 88, 90, 92, 'A', 'M. Lutfi Nur Fauzi, S.Kom.', 'active', NULL, '2026-09-16 12:35:41', '2026-09-16 12:35:41'),
+(2, 'IS-2024-002', 4, 'Fairuz', 'UI/UX Design Intern', 'Institut Teknologi Bandung', 'Desain Komunikasi Visual', '2024-07-01', '2024-10-01', '2024-10-05', 85, 88, 95, 'A', 'M. Lutfi Nur Fauzi, S.Kom.', 'active', NULL, '2026-09-16 12:35:41', '2026-09-16 12:35:41'),
+(3, 'IS-2024-003', 5, 'Filbert', 'Backend Engineer Intern', 'Universitas Gadjah Mada', 'Teknik Informatika', '2024-07-01', '2024-10-01', '2024-10-05', 92, 85, 88, 'A', 'M. Lutfi Nur Fauzi, S.Kom.', 'active', NULL, '2026-09-16 12:35:41', '2026-09-16 12:35:41');
 
 -- --------------------------------------------------------
 

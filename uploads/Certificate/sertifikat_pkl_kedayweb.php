@@ -66,7 +66,7 @@
         width: 1000px;
         aspect-ratio: 297 / 210;
 
-        background-image: url('Sertifikat.png');
+        background-image: url('SertifikatNew.png');
         background-size: 100% 100%;
         background-repeat: no-repeat;
         background-position: center;

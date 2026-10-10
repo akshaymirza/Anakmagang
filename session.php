@@ -151,7 +151,7 @@ if (!function_exists('ensure_intern_certificate')) {
 
 		$ins = mysqli_prepare($conn, "INSERT INTO certificates 
 			(certificate_id, user_id, intern_name, intern_position, university, major, start_date, end_date, issue_date, score_technical, score_discipline, score_attitude, final_grade, supervisor_name, status, is_approved) 
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 85, 85, 85, 'A', 'Shaliza Mirza', 'active', 0)");
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 85, 85, 85, 'A', 'M. Lutfi Nur Fauzi, S.Kom.', 'active', 0)");
 		if ($ins) {
 			mysqli_stmt_bind_param($ins, "sisssssss", $cert_code, $user_id, $username, $pos, $univ, $maj, $today, $end_date, $end_date);
 			mysqli_stmt_execute($ins);

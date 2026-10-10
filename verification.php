@@ -66,6 +66,76 @@
         .cert-stamp-cover.left { left: 8%; }
         .cert-stamp-cover.right { right: 8%; }
 
+        /* ── Slider ── */
+        .vf-slider-outer { overflow: hidden; width: 100%; }
+        .vf-slider-track {
+            display: flex;
+            transition: transform .45s cubic-bezier(.4,0,.2,1);
+            will-change: transform;
+        }
+        .vf-slide { flex: 0 0 100%; width: 100%; }
+        .vf-slider-dots { display:flex; justify-content:center; gap:7px; padding:10px 0 4px; }
+        .vf-dot {
+            width:7px; height:7px; border-radius:50%;
+            background:#cbd5e1; cursor:pointer;
+            transition: background .25s, transform .25s;
+        }
+        .vf-dot.active { background:#1e3a8a; transform:scale(1.35); }
+
+        /* ── Slide 2: halaman belakang tabel nilai ── */
+        .cert-back-canvas {
+            width: 100%; aspect-ratio: 297 / 210;
+            position: relative; overflow: hidden;
+            background: #f5f3e7 url('uploads/Certificate/Sertifikat_Belakang.png') center / 100% 100% no-repeat;
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            container-type: inline-size;
+            font-family: 'Poppins', sans-serif; color: #000;
+        }
+        .cert-back-inner {
+            position: absolute; inset: 0;
+            padding: 3.3cqw 5.4cqw 0;
+            display: flex; flex-direction: column;
+        }
+        .cb-judul { font-size:2.1cqw; font-weight:700; text-align:center; line-height:1.35; }
+        .cb-data { margin-top:2cqw; display:grid; row-gap:.1cqw; font-size:1.08cqw; line-height:1.65cqw; }
+        .cb-baris { display:grid; grid-template-columns:23cqw 2cqw 1fr; }
+        .cb-label { font-weight:500; }
+        .cb-table {
+            width:100%; margin-top:1.4cqw; border-collapse:collapse;
+            table-layout:fixed; border:1px solid #000; font-size:1.06cqw; line-height:1.4;
+        }
+        .cb-table col.no   { width:2.7cqw; }
+        .cb-table col.skor { width:3.9cqw; }
+        .cb-table th,.cb-table td { border:1px solid #000; padding:0 .6cqw; vertical-align:middle; }
+        .cb-table th { font-weight:500; text-align:center; }
+        .cb-table td { height:2.05cqw; }
+        .cb-table td.no,.cb-table td.skor { text-align:center; padding:0; }
+        .cb-table thead tr.judul-tb th { height:2.2cqw; }
+        .cb-table thead tr.aspek  th   { height:2.1cqw; }
+        .cb-tfoot-rata { height:2.1cqw; text-align:center; }
+        .cb-tfoot-kum  { height:6.8cqw; padding:0 !important; }
+        .cb-hasil { font-weight:500; }
+        .cb-rumus {
+            display:flex; justify-content:center; align-items:flex-start;
+            gap:.4cqw; font-weight:500; font-size:1.05cqw;
+        }
+        .cb-pecahan { display:flex; flex-direction:column; align-items:center; font-weight:400; }
+        .cb-pembilang { border-bottom:1px solid #000; padding:0 .2cqw; }
+        .cb-bawah {
+            margin-top:1.4cqw; padding-right:2.4cqw;
+            display:flex; justify-content:space-between; align-items:flex-start;
+            font-size:1.05cqw;
+        }
+        .cb-predikat {
+            width:19cqw; border-collapse:collapse; table-layout:fixed;
+            font-size:.87cqw; line-height:1.15cqw;
+        }
+        .cb-predikat th { font-weight:500; padding:.1cqw 0; border-top:1px solid #000; border-bottom:1px solid #000; }
+        .cb-predikat td { padding:0; text-align:center; }
+        .cb-ttd p { line-height:1.65cqw; font-size:1.05cqw; }
+        .cb-ttd-ruang { height:4.2cqw; }
+        .cb-ttd-nama { font-weight:500; text-decoration:underline; }
+
         /* ── Cetak / Simpan PDF: hanya sertifikat, A4 landscape, tanpa margin ── */
         @page { size: A4 landscape; margin: 0; }
         @media print {
@@ -80,6 +150,7 @@
             }
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet"/>
 </head>
 <body class="bg-background min-h-screen flex flex-col font-body-md text-body-md text-on-surface">
 <?php
@@ -159,38 +230,78 @@ include 'partials/topnav-public.php';
 
         <!-- Bento Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
-            <!-- Certificate Preview (Left) -->
+            <!-- Certificate Preview (Left) - Slider -->
             <div class="lg:col-span-7 bg-surface-container-lowest rounded-2xl border border-outline-variant overflow-hidden hover:soft-shadow transition-shadow duration-300 self-start">
+                <!-- Card Header -->
                 <div class="p-4 bg-surface-container-low border-b border-outline-variant flex justify-between items-center">
-                    <span class="font-label-md text-on-surface-variant uppercase tracking-wider">Preview Sertifikat</span>
-                    <button onclick="downloadCertificate()"
-                            class="text-primary hover:bg-primary-container hover:text-on-primary-container px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-semibold" title="Cetak / Simpan PDF">
-                        <span class="material-symbols-outlined text-[20px]">download</span> Unduh PDF
-                    </button>
-                </div>
-                <!-- Certificate Design: gambar latar + nama + QR (lihat uploads/Certificate/) -->
-                <div class="p-3 md:p-lg bg-surface">
-                    <div id="cert-preview" class="cert-canvas" role="img" aria-label="Preview sertifikat magang">
-                        <img class="cert-bg" src="uploads/Certificate/Sertifikat_Ril.png" alt="" draggable="false"/>
-                        <div id="cert-name" class="cert-name">—</div>
-                        <div id="cert-qr" class="cert-qr" style="display:none">
-                            <img id="cert-qr-img" alt="QR verifikasi sertifikat"/>
-                        </div>
-                        <!-- Watermark pelindung tanda tangan jika belum disetujui Super Admin -->
-                        <div id="cert-unapproved-covers" style="display:none;">
-                            <div class="cert-stamp-cover left">
-                                <span class="material-symbols-outlined text-amber-600 text-sm md:text-lg mb-0.5">lock</span>
-                                <span class="text-[9px] md:text-[11px] font-bold text-amber-800 leading-tight">Menunggu Approval</span>
-                                <span class="text-[7px] md:text-[9px] text-amber-700">Tanda Tangan Belum Sah</span>
-                            </div>
-                            <div class="cert-stamp-cover right">
-                                <span class="material-symbols-outlined text-amber-600 text-sm md:text-lg mb-0.5">lock</span>
-                                <span class="text-[9px] md:text-[11px] font-bold text-amber-800 leading-tight">Menunggu Approval</span>
-                                <span class="text-[7px] md:text-[9px] text-amber-700">Super Admin</span>
-                            </div>
+                    <div class="flex items-center gap-2">
+                        <span id="vf-slide-label" class="font-label-md text-on-surface-variant uppercase tracking-wider">Preview Sertifikat</span>
+                        <!-- Dot navigation -->
+                        <div class="vf-slider-dots" style="padding:0;margin-left:6px">
+                            <span class="vf-dot active" id="vf-dot0" onclick="vfGoTo(0)" title="Sertifikat Depan"></span>
+                            <span class="vf-dot" id="vf-dot1" onclick="vfGoTo(1)" title="Tabel Nilai"></span>
                         </div>
                     </div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="vfSlide(-1)" id="vf-btn-prev" disabled
+                                class="p-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-primary hover:text-on-primary hover:border-primary transition-all disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer"
+                                title="Sertifikat Depan">
+                            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                        </button>
+                        <button onclick="vfSlide(1)" id="vf-btn-next"
+                                class="p-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-primary hover:text-on-primary hover:border-primary transition-all disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer"
+                                title="Tabel Nilai / Halaman Belakang">
+                            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                        </button>
+                        <button onclick="downloadCertificate()"
+                                class="text-primary hover:bg-primary-container hover:text-on-primary-container px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-semibold ml-1" title="Cetak / Simpan PDF">
+                            <span class="material-symbols-outlined text-[20px]">download</span> Unduh PDF
+                        </button>
+                    </div>
                 </div>
+
+                <!-- Slider track -->
+                <div class="vf-slider-outer">
+                    <div class="vf-slider-track" id="vfSliderTrack">
+
+                        <!-- Slide 1: Sertifikat Depan -->
+                        <div class="vf-slide">
+                            <div class="p-3 md:p-lg bg-surface">
+                                <div id="cert-preview" class="cert-canvas" role="img" aria-label="Preview sertifikat magang">
+                                    <img class="cert-bg" src="uploads/Certificate/SertifikatNew.png" alt="" draggable="false"/>
+                                    <div id="cert-name" class="cert-name">—</div>
+                                    <div id="cert-qr" class="cert-qr" style="display:none">
+                                        <img id="cert-qr-img" alt="QR verifikasi sertifikat"/>
+                                    </div>
+                                    <!-- Watermark pelindung tanda tangan jika belum disetujui Super Admin -->
+                                    <div id="cert-unapproved-covers" style="display:none;">
+                                        <div class="cert-stamp-cover left">
+                                            <span class="material-symbols-outlined text-amber-600 text-sm md:text-lg mb-0.5">lock</span>
+                                            <span class="text-[9px] md:text-[11px] font-bold text-amber-800 leading-tight">Menunggu Approval</span>
+                                            <span class="text-[7px] md:text-[9px] text-amber-700">Tanda Tangan Belum Sah</span>
+                                        </div>
+                                        <div class="cert-stamp-cover right">
+                                            <span class="material-symbols-outlined text-amber-600 text-sm md:text-lg mb-0.5">lock</span>
+                                            <span class="text-[9px] md:text-[11px] font-bold text-amber-800 leading-tight">Menunggu Approval</span>
+                                            <span class="text-[7px] md:text-[9px] text-amber-700">Super Admin</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- /slide-1 -->
+
+                        <!-- Slide 2: Tabel Nilai / Halaman Belakang -->
+                        <div class="vf-slide">
+                            <div class="p-3 md:p-lg bg-surface">
+                                <div style="width: 100%; aspect-ratio: 1.414; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                                    <iframe id="cert-back-iframe" src="about:blank" style="width: 100%; height: 100%; border: none; display: block;" title="Tabel Nilai Sertifikat"></iframe>
+                                </div>
+                            </div>
+                        </div><!-- /slide-2 -->
+
+                    </div><!-- /vfSliderTrack -->
+                </div><!-- /vf-slider-outer -->
+
                 <div class="px-4 py-3 bg-surface-container-low border-t border-outline-variant flex flex-wrap justify-between items-center gap-2 text-xs text-on-surface-variant">
                     <span>ID Sertifikat: <b id="cert-id-display" class="font-mono text-on-surface">—</b>
                         <span class="text-emerald-600 font-semibold ml-1">✓ Terverifikasi</span></span>
@@ -403,6 +514,9 @@ function showResult(d) {
     fitCertName();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitCertName);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // ── Render slide 2: Tabel Nilai / Halaman Belakang ──
+    renderCertBack(d);
 }
 
 /* Perkecil font nama otomatis jika terlalu panjang (maks. 50% lebar sertifikat) */
@@ -486,6 +600,41 @@ function downloadCertificate() {
 window.addEventListener('afterprint', () => {
     if (_titleBackup !== null) { document.title = _titleBackup; _titleBackup = null; }
 });
+
+/* ── Slider ── */
+(function() {
+    const TOTAL = 2;
+    let cur = 0;
+    const LABELS = ['Preview Sertifikat', 'Tabel Nilai (Halaman Belakang)'];
+
+    function vfUpdate() {
+        const track = document.getElementById('vfSliderTrack');
+        const lbl   = document.getElementById('vf-slide-label');
+        const bp    = document.getElementById('vf-btn-prev');
+        const bn    = document.getElementById('vf-btn-next');
+        if (!track) return;
+        track.style.transform = 'translateX(-' + (cur * 100) + '%)';
+        if (lbl) lbl.textContent = LABELS[cur];
+        if (bp) bp.disabled = cur === 0;
+        if (bn) bn.disabled = cur === TOTAL - 1;
+        for (let i = 0; i < TOTAL; i++) {
+            const d = document.getElementById('vf-dot' + i);
+            if (d) d.classList.toggle('active', i === cur);
+        }
+    }
+
+    window.vfSlide = function(dir) { cur = Math.max(0, Math.min(TOTAL - 1, cur + dir)); vfUpdate(); };
+    window.vfGoTo  = function(idx) { cur = idx; vfUpdate(); };
+    vfUpdate();
+})();
+
+/* ── Render halaman belakang sertifikat (Tabel Nilai PKL) ── */
+function renderCertBack(d) {
+    const iframe = document.getElementById('cert-back-iframe');
+    if (iframe && d && d.certificate_id) {
+        iframe.src = 'tabel-nilai-viewer.php?id=' + encodeURIComponent(d.certificate_id);
+    }
+}
 </script>
 </body>
 </html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daftar Nilai PKL</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  /* Ukuran kertas: A4 landscape. 1pt di CSS = 1px di desain Figma (845 px ≈ 842 pt). */
+  @page { size: A4 landscape; margin: 0; }
+
+  :root {
+    --garis: 1px solid #000;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    font-size: 11pt;
+    line-height: 17pt;
+    color: #000;
+    background: #d9d9d9;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ---------- Halaman + gambar latar ---------- */
+  .page {
+    width: 297mm;
+    height: 210mm;
+    margin: 24px auto;
+    padding: 31pt 51pt 0;
+    position: relative;
+    overflow: hidden;
+    background: #f5f3e7 url('Sertifikat_Belakang.png') center / 100% 100% no-repeat;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, .25);
+  }
+
+  @media print {
+    body { background: none; }
+    .page { margin: 0; box-shadow: none; }
+  }
+
+  /* ---------- Judul ---------- */
+  .judul {
+    font-size: 20pt;
+    line-height: 30pt;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  /* ---------- Data siswa ---------- */
+  .data-siswa {
+    margin-top: 20pt;
+    display: grid;
+    row-gap: 1pt;
+  }
+  .data-siswa .baris {
+    display: grid;
+    grid-template-columns: 220pt 20pt 1fr;
+    min-height: 17pt;
+  }
+  .data-siswa .label { font-weight: 500; }
+
+  /* ---------- Tabel penilaian ---------- */
+  .nilai {
+    width: 100%;
+    margin-top: 14pt;
+    border-collapse: collapse;
+    table-layout: fixed;
+    border: var(--garis);
+  }
+  .nilai col.no   { width: 28pt; }
+  .nilai col.skor { width: 41pt; }
+
+  .nilai th,
+  .nilai td {
+    border: var(--garis);
+    padding: 0 6pt;
+    vertical-align: middle;
+  }
+  .nilai th { font-weight: 500; text-align: center; }
+  .nilai td { height: 21pt; }
+  .nilai td.no,
+  .nilai td.skor { text-align: center; padding: 0; }
+
+  .nilai thead tr.judul-tabel th { height: 23pt; }
+  .nilai thead tr.aspek th       { height: 22pt; }
+  .nilai tfoot td.rata           { height: 22pt; text-align: center; }
+  .nilai tfoot td.kumulatif      { height: 71pt; padding: 0; }
+
+  .hasil { font-weight: 500; }
+
+  .rumus {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 4pt;
+    font-weight: 500;
+  }
+  .pecahan {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-weight: 400;
+  }
+  .pembilang {
+    border-bottom: var(--garis);
+    padding: 0 2pt;
+  }
+
+  /* ---------- Ketentuan + tanda tangan ---------- */
+  .bawah {
+    margin-top: 14pt;
+    padding-right: 24pt;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .judul-ketentuan { font-weight: 500; margin-bottom: 4pt; }
+
+  .predikat {
+    width: 190pt;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 9pt;
+    line-height: 12pt;
+  }
+  .predikat th {
+    font-weight: 500;
+    padding: 1pt 0;
+    border-top: var(--garis);
+    border-bottom: var(--garis);
+  }
+  .predikat td { padding: 0; text-align: center; }
+  .predikat tbody tr:first-child td { padding-top: 1pt; }
+
+  .ttd p { line-height: 17pt; }
+  .ttd .ruang { height: 44pt; }
+  .ttd .nama { font-weight: 500; text-decoration: underline; }
+</style>
+</head>
+
+<body>
+<main class="page">
+
+  <h1 class="judul">DAFTAR NILAI PRAKTIK KERJA LAPANGAN (PKL)</h1>
+
+  <section class="data-siswa" aria-label="Data siswa">
+    <div class="baris"><span class="label">NAMA SISWA</span><span>:</span><span data-isi="nama"></span></div>
+    <div class="baris"><span class="label">JURUSAN</span><span>:</span><span data-isi="jurusan"></span></div>
+    <div class="baris"><span class="label">TEMPAT PRAKERIN</span><span>:</span><span data-isi="tempat"></span></div>
+    <div class="baris"><span class="label">ALAMAT TEMPAT PRAKERIN</span><span>:</span><span data-isi="alamat"></span></div>
+    <div class="baris"><span class="label">WAKTU PELAKSANAAN</span><span>:</span><span data-isi="waktu"></span></div>
+  </section>
+
+  <table class="nilai">
+    <colgroup>
+      <col class="no"><col><col class="skor">
+      <col class="no"><col><col class="skor">
+    </colgroup>
+    <thead>
+      <tr class="judul-tabel"><th colspan="6">KOMPONEN YANG DINILAI</th></tr>
+      <tr class="aspek">
+        <th colspan="3">ASPEK NON TEKNIS</th>
+        <th colspan="3">ASPEK TEKNIS</th>
+      </tr>
+    </thead>
+    <tbody id="isi-nilai"></tbody>
+    <tfoot>
+      <tr>
+        <td class="rata" colspan="3">Nilai Rata-Rata Aspek Non Teknis = <span class="hasil" id="rata-non"></span></td>
+        <td class="rata" colspan="3">Nilai Rata-Rata Aspek Teknis = <span class="hasil" id="rata-teknis"></span></td>
+      </tr>
+      <tr>
+        <td class="kumulatif" colspan="6">
+          <div class="rumus">
+            <span>Nilai Kumulatif =</span>
+            <span class="pecahan">
+              <span class="pembilang">(Nilai Rata-Rata Non Teknis + Nilai Rata-Rata Teknis)</span>
+              <span>2</span>
+            </span>
+            <span>= <span class="hasil" id="kumulatif"></span></span>
+          </div>
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <section class="bawah">
+    <div class="ketentuan">
+      <p class="judul-ketentuan">KETENTUAN:</p>
+      <table class="predikat">
+        <colgroup><col style="width:60pt"><col style="width:60pt"><col style="width:70pt"></colgroup>
+        <thead><tr><th>Nilai</th><th>Kategori</th><th>Keterangan</th></tr></thead>
+        <tbody id="isi-ketentuan"></tbody>
+      </table>
+    </div>
+
+    <div class="ttd">
+      <p data-isi="tempatTanggal"></p>
+      <p data-isi="jabatan"></p>
+      <div class="ruang"></div>
+      <p class="nama" data-isi="penandatangan"></p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* =====================================================================
+   DATA SISWA: ubah bagian ini saja (atau panggil renderNilai(dataBaru)).
+   Kosongkan nilai ('' / []) untuk mencetak formulir kosong.
+   ===================================================================== */
+const DATA = {
+  nama: '',
+  jurusan: '',
+  tempat: '',
+  alamat: '',
+  waktu: '',
+  nilaiNonTeknis: [],   // contoh: [90, 85, 88, 92, 87, 90]
+  nilaiTeknis: [],      // contoh: [88, 90, 85, 87, 92, 89]
+  tempatTanggal: 'Banyuwangi, 31 Desember 2026',
+  jabatan: 'Founder & Director Kedayweb',
+  penandatangan: 'M. Lutfi Nur Fauzi, S.Kom.'
+};
+
+/* Daftar komponen yang dinilai (jumlah baris mengikuti yang terpanjang). */
+const KOMPONEN = {
+  nonTeknis: [
+    'Kedisiplinan',
+    'Kemauan Kerja Dan Motivasi',
+    'Kerajinan',
+    'Inisiatif Dan Kreatifitas',
+    'Kerjasama Dan Tanggung Jawab',
+    'Sikap Dan Perilaku'
+  ],
+  teknis: [
+    'Penguasaan Tools Dan Perangkat Kerja Utama',
+    'Kualitas & Ketepatan Hasil Pekerjaan',
+    'Pemahaman Brief & Penerapan Spesifikasi Tugas',
+    'Kecepatan & Ketepatan Waktu Penyelesaian Tugas',
+    'Kemampuan Penyelesaian Masalah',
+    'Laporan Hasil Kerja'
+  ]
+};
+
+/* Tabel ketentuan: [rentang nilai, kategori, keterangan] */
+const KETENTUAN = [
+  ['90-100', 'A', 'Sangat Baik'],
+  ['80-89',  'B', 'Baik'],
+  ['75-79',  'C', 'Cukup'],
+  ['<=74',   'D', 'Kurang']
+];
+
+/* ---------------------------------------------------------------------
+   Kode di bawah ini tidak perlu diubah.
+   --------------------------------------------------------------------- */
+const angka = (arr) => (arr || []).filter(v => v !== '' && v != null && !isNaN(v)).map(Number);
+const rataRata = (arr) => { const a = angka(arr); return a.length ? a.reduce((s, v) => s + v, 0) / a.length : null; };
+const format = (n) => n == null ? '' : new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(n);
+
+function el(tag, kelas, teks) {
+  const e = document.createElement(tag);
+  if (kelas) e.className = kelas;
+  if (teks != null) e.textContent = teks;
+  return e;
+}
+
+function render(d) {
+  // Data siswa + tanda tangan
+  document.querySelectorAll('[data-isi]').forEach(n => { n.textContent = d[n.dataset.isi] || ''; });
+
+  // Baris penilaian
+  const tbody = document.getElementById('isi-nilai');
+  tbody.replaceChildren();
+  const jumlah = Math.max(KOMPONEN.nonTeknis.length, KOMPONEN.teknis.length);
+  for (let i = 0; i < jumlah; i++) {
+    const tr = document.createElement('tr');
+    [['nonTeknis', 'nilaiNonTeknis'], ['teknis', 'nilaiTeknis']].forEach(([kunci, kunciNilai]) => {
+      const nama = KOMPONEN[kunci][i];
+      const nilai = (d[kunciNilai] || [])[i];
+      tr.append(
+        el('td', 'no', nama ? (i + 1) + '.' : ''),
+        el('td', 'komponen', nama || ''),
+        el('td', 'skor', nama && nilai != null ? nilai : '')
+      );
+    });
+    tbody.append(tr);
+  }
+
+  // Rata-rata + nilai kumulatif
+  const non = rataRata(d.nilaiNonTeknis);
+  const tek = rataRata(d.nilaiTeknis);
+  document.getElementById('rata-non').textContent = format(non);
+  document.getElementById('rata-teknis').textContent = format(tek);
+  document.getElementById('kumulatif').textContent = (non != null && tek != null) ? format((non + tek) / 2) : '';
+
+  // Tabel ketentuan
+  const kt = document.getElementById('isi-ketentuan');
+  kt.replaceChildren();
+  KETENTUAN.forEach(baris => {
+    const tr = document.createElement('tr');
+    baris.forEach(sel => tr.append(el('td', null, sel)));
+    kt.append(tr);
+  });
+}
+
+window.renderNilai = render;
+render(DATA);
+</script>
+</body>
+</html>
