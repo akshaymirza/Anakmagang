@@ -57,14 +57,27 @@
             padding: 4% 6%;
         }
         .cert-stamp-cover {
-            position: absolute; bottom: 8%; width: 28%; height: 22%;
-            background: rgba(245, 243, 231, 0.94); border: 2px dashed #f59e0b;
+            position: absolute; bottom: 7.5%; width: 29%; height: 23%;
+            background: rgba(245, 243, 231, 0.95); border: 0.22cqw dashed #f59e0b;
             border-radius: 0.8cqw; display: flex; flex-direction: column;
             align-items: center; justify-content: center; text-align: center;
-            padding: 2%; box-sizing: border-box;
+            padding: 0.5cqw 0.8cqw; box-sizing: border-box; overflow: hidden;
+            z-index: 25; pointer-events: none;
         }
-        .cert-stamp-cover.left { left: 8%; }
-        .cert-stamp-cover.right { right: 8%; }
+        .cert-stamp-cover.left { left: 7.5%; }
+        .cert-stamp-cover.right { right: 7.5%; }
+        .cert-stamp-cover .cover-icon {
+            font-size: 2cqw !important; line-height: 1 !important; color: #d97706; margin-bottom: 0.25cqw;
+        }
+        .cert-stamp-cover .cover-title {
+            font-size: 1.18cqw; font-weight: 700; line-height: 1.2; color: #92400e;
+            white-space: nowrap; max-width: 100%; text-overflow: ellipsis; overflow: hidden;
+        }
+        .cert-stamp-cover .cover-desc {
+            font-size: 0.88cqw; font-weight: 500; line-height: 1.2; color: #b45309;
+            white-space: nowrap; max-width: 100%; text-overflow: ellipsis; overflow: hidden;
+            margin-top: 0.15cqw;
+        }
 
         /* ── Slider ── */
         .vf-slider-outer { overflow: hidden; width: 100%; }
@@ -381,14 +394,14 @@ include 'partials/topnav-public.php';
                                     <!-- Watermark pelindung tanda tangan jika belum disetujui Super Admin -->
                                     <div id="cert-unapproved-covers" style="display:none;">
                                         <div class="cert-stamp-cover left">
-                                            <span class="material-symbols-outlined text-amber-600 text-sm md:text-lg mb-0.5">lock</span>
-                                            <span class="text-[9px] md:text-[11px] font-bold text-amber-800 leading-tight">Menunggu Approval</span>
-                                            <span class="text-[7px] md:text-[9px] text-amber-700">Tanda Tangan Belum Sah</span>
+                                            <span class="material-symbols-outlined cover-icon">lock</span>
+                                            <span class="cover-title">Menunggu Approval</span>
+                                            <span class="cover-desc">Tanda Tangan Belum Sah</span>
                                         </div>
                                         <div class="cert-stamp-cover right">
-                                            <span class="material-symbols-outlined text-amber-600 text-sm md:text-lg mb-0.5">lock</span>
-                                            <span class="text-[9px] md:text-[11px] font-bold text-amber-800 leading-tight">Menunggu Approval</span>
-                                            <span class="text-[7px] md:text-[9px] text-amber-700">Super Admin</span>
+                                            <span class="material-symbols-outlined cover-icon">lock</span>
+                                            <span class="cover-title">Menunggu Approval</span>
+                                            <span class="cover-desc">Super Admin</span>
                                         </div>
                                     </div>
                                 </div>
