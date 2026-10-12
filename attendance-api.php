@@ -96,73 +96,6 @@ function get_attendance_settings($conn)
     return $defaults;
 }
 
-// Helper: Sinkronisasi otomatis hari kerja yang belum diabsen (Tidak Masuk / Absent)
-// Jadwal kerja: Senin - Sabtu (Minggu libur). Batas waktu cutoff: 14:00 WIB.
-function sync_unmarked_attendance($conn)
-{
-    if (!$conn)
-        return;
-
-    $resUser = @mysqli_query($conn, "SELECT username FROM users WHERE role = 'intern'");
-    if (!$resUser)
-        return;
-    $interns = [];
-    while ($u = mysqli_fetch_assoc($resUser)) {
-        if (!empty($u['username'])) {
-            $interns[] = $u['username'];
-        }
-    }
-    if (empty($interns))
-        return;
-
-    // Batas minimum periode PKL mulai 2 Juli 2026
-    $startDateStr = '2026-07-02';
-    $todayStr = date('Y-m-d');
-    $nowHour = (int) date('H');
-
-    // Ambil data attendance yang sudah ada sejak $startDateStr
-    $existing = [];
-    $stmtExist = mysqli_prepare($conn, "SELECT username, date FROM attendance WHERE date >= ?");
-    if ($stmtExist) {
-        mysqli_stmt_bind_param($stmtExist, "s", $startDateStr);
-        mysqli_stmt_execute($stmtExist);
-        $resExist = mysqli_stmt_get_result($stmtExist);
-        while ($row = mysqli_fetch_assoc($resExist)) {
-            $existing[$row['username']][$row['date']] = true;
-        }
-        mysqli_stmt_close($stmtExist);
-    }
-
-    $startTs = strtotime($startDateStr);
-    $todayTs = strtotime($todayStr);
-
-    $insertStmt = mysqli_prepare($conn, "INSERT INTO attendance (username, date, status, reason) VALUES (?, ?, 'absent', 'Tidak masuk (tidak melakukan absensi)')");
-    if (!$insertStmt)
-        return;
-
-    for ($ts = $startTs; $ts <= $todayTs; $ts += 86400) {
-        $dStr = date('Y-m-d', $ts);
-        $dow = (int) date('N', $ts); // 1 = Senin, 7 = Minggu
-
-        // Hari Minggu libur
-        if ($dow === 7)
-            continue;
-
-        // Hari ini: hanya jika sudah melewati jam batas (14:00 WIB)
-        if ($dStr === $todayStr && $nowHour < 14)
-            continue;
-
-        foreach ($interns as $uname) {
-            if (empty($existing[$uname][$dStr])) {
-                mysqli_stmt_bind_param($insertStmt, "ss", $uname, $dStr);
-                @mysqli_stmt_execute($insertStmt);
-                $existing[$uname][$dStr] = true;
-            }
-        }
-    }
-    mysqli_stmt_close($insertStmt);
-}
-
 // --------------------------------------------------------------
 // GET KONFIGURASI TITIK ZONA ABSENSI (?action=get_location_config, GET)
 // --------------------------------------------------------------
@@ -180,18 +113,15 @@ if ($action === 'get_location_config' && $method === 'GET') {
 // (?action=all_summary, GET)
 // --------------------------------------------------------------
 if ($action === 'all_summary' && $method === 'GET') {
-    // Sinkronkan hari kerja masa lalu yang belum diabsen menjadi 'absent'
-    sync_unmarked_attendance($conn);
-
     // 1. Ambil semua akun intern dari database
     $interns = [];
-    $resUser = mysqli_query($conn, "SELECT id, username, intern_position FROM users WHERE role = 'intern' ORDER BY id ASC");
+    $resUser = mysqli_query($conn, "SELECT id, username FROM users WHERE role = 'intern' ORDER BY id ASC");
     if ($resUser) {
         while ($u = mysqli_fetch_assoc($resUser)) {
             $interns[] = [
                 'id' => $u['id'],
                 'name' => $u['username'],
-                'division' => !empty($u['intern_position']) ? ucwords($u['intern_position']) : 'Intern Kedayweb'
+                'division' => 'Intern Kedayweb'
             ];
         }
     }
@@ -534,7 +464,6 @@ if ($action === 'save_out' && $method === 'POST') {
 //    Dipakai oleh attendance.php (kalender + tabel riwayat milik intern sendiri)
 // --------------------------------------------------------------
 if ($action === 'history' && $method === 'GET') {
-    sync_unmarked_attendance($conn);
     $sql = "SELECT date, status, clock_in, clock_out, reason, location_in, photo_in, lat_in, lng_in, location_out, photo_out, lat_out, lng_out
             FROM attendance WHERE username = ? ORDER BY date DESC";
     $stmt = mysqli_prepare($conn, $sql);
