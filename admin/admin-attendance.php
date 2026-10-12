@@ -5,9 +5,10 @@ require_once __DIR__ . '/../Login/koneksi.php';
 
 // Ambil data intern dari database MySQL db_internspace
 $db_interns = [];
-$db_query = mysqli_query($conn, "SELECT id, username, role FROM users WHERE role = 'intern' ORDER BY id ASC");
+$db_query = mysqli_query($conn, "SELECT id, username, role, intern_position FROM users WHERE role = 'intern' ORDER BY id ASC");
 if ($db_query) {
     while ($row = mysqli_fetch_assoc($db_query)) {
+        $row['division'] = !empty($row['intern_position']) ? ucwords($row['intern_position']) : 'Intern Kedayweb';
         $db_interns[] = $row;
     }
 }
@@ -279,14 +280,14 @@ if ($db_query) {
                 <div class="flex justify-between items-center mb-5">
                     <h3 id="cal-title" class="font-headline-md font-bold text-on-surface"></h3>
                     <div class="flex items-center gap-1">
-                        <button onclick="changeMonth(-1)"
+                        <button id="cal-prev" onclick="changeMonth(-1)"
                             class="p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-primary">
                             <span class="material-symbols-outlined">chevron_left</span>
                         </button>
                         <button onclick="goToday()"
                             class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary-container text-on-primary-container hover:opacity-80 transition-opacity">Hari
                             Ini</button>
-                        <button onclick="changeMonth(1)"
+                        <button id="cal-next" onclick="changeMonth(1)"
                             class="p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-primary">
                             <span class="material-symbols-outlined">chevron_right</span>
                         </button>
@@ -307,7 +308,16 @@ if ($db_query) {
 
         <!-- Intern roster quick table -->
         <section class="glass-card p-5 rounded-2xl border border-outline-variant mt-6">
-            <h3 class="font-headline-md mb-3">Daftar Intern</h3>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div>
+                    <h3 class="font-headline-md font-bold text-on-surface text-base sm:text-lg">Daftar Intern & Rekap Kehadiran</h3>
+                    <p id="roster-period-label" class="text-xs text-on-surface-variant">Periode: Bulan Terpilih (Sesuai Kalender)</p>
+                </div>
+                <div class="inline-flex rounded-xl p-1 bg-surface-container-low border border-outline-variant self-start sm:self-auto text-xs font-semibold">
+                    <button type="button" id="roster-btn-month" onclick="setRosterView('month')" class="px-3 py-1.5 rounded-lg bg-white shadow-xs text-primary transition-all">Bulan Terpilih</button>
+                    <button type="button" id="roster-btn-all" onclick="setRosterView('all')" class="px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-primary transition-all">Semua Waktu</button>
+                </div>
+            </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
                     <thead class="bg-surface-container-lowest">
@@ -350,6 +360,11 @@ if ($db_query) {
     </div>
 
     <script>
+        // Batas periode awal PKL: 2 Juli 2026
+        const PKL_START_DATE = '2026-07-02';
+        const PKL_START_YEAR = 2026;
+        const PKL_START_MONTH = 6; // Juli (0-indexed: 6)
+
         let calYear, calMonth;
         let dbInternsList = [];
         let dbAttendanceMap = {}; // { username: { date: record } }
@@ -419,6 +434,10 @@ if ($db_query) {
         }
 
         function changeMonth(dir) {
+            // Batasi navigasi mundur: PKL baru dimulai pada Juli 2026
+            if (dir < 0 && (calYear < PKL_START_YEAR || (calYear === PKL_START_YEAR && calMonth <= PKL_START_MONTH))) {
+                return;
+            }
             calMonth += dir;
             if (calMonth > 11) { calMonth = 0; calYear++; }
             if (calMonth < 0) { calMonth = 11; calYear--; }
@@ -455,6 +474,20 @@ if ($db_query) {
             const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
             document.getElementById('cal-title').textContent = `${monthNames[calMonth]} ${calYear}`;
 
+            // Periksa apakah tombol bulan sebelumnya perlu di-disable (batas Juli 2026)
+            const isAtMinMonth = (calYear < PKL_START_YEAR || (calYear === PKL_START_YEAR && calMonth <= PKL_START_MONTH));
+            const prevBtn = document.getElementById('cal-prev');
+            if (prevBtn) {
+                prevBtn.disabled = isAtMinMonth;
+                if (isAtMinMonth) {
+                    prevBtn.classList.add('opacity-30', 'cursor-not-allowed', 'pointer-events-none');
+                    prevBtn.setAttribute('title', 'PKL dimulai pada 2 Juli 2026');
+                } else {
+                    prevBtn.classList.remove('opacity-30', 'cursor-not-allowed', 'pointer-events-none');
+                    prevBtn.removeAttribute('title');
+                }
+            }
+
             const grid = document.getElementById('cal-grid');
             grid.innerHTML = '';
 
@@ -481,6 +514,20 @@ if ($db_query) {
 
                 const cell = document.createElement('div');
                 cell.classList.add('cal-cell');
+
+                // Tanggal sebelum PKL dimulai (sebelum 2 Juli 2026): non-aktif
+                const isBeforePkl = (dateStr < PKL_START_DATE);
+                if (isBeforePkl) {
+                    cell.classList.add('weekend');
+                    cell.style.opacity = '0.35';
+                    cell.style.cursor = 'not-allowed';
+                    cell.setAttribute('title', 'Sebelum periode PKL (Mulai 2 Juli 2026)');
+                    const span = document.createElement('span');
+                    span.textContent = d;
+                    cell.appendChild(span);
+                    grid.appendChild(cell);
+                    continue;
+                }
 
                 const summary = getCombinedDaySummary(dateStr);
                 const hasRecords = summary.entries.some(e => e.record !== null);
@@ -532,6 +579,7 @@ if ($db_query) {
         }
 
         function openDetailModal(dateStr) {
+            if (dateStr < PKL_START_DATE) return;
             const summary = getCombinedDaySummary(dateStr);
             document.getElementById('detail-date-label').textContent = formatDateDisplay(dateStr);
             const list = document.getElementById('detail-list');
@@ -676,41 +724,108 @@ if ($db_query) {
             return String(str || '').replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
         }
 
+        let rosterViewMode = 'month';
+
+        function setRosterView(mode) {
+            rosterViewMode = mode;
+            const btnMonth = document.getElementById('roster-btn-month');
+            const btnAll = document.getElementById('roster-btn-all');
+            if (mode === 'month') {
+                if (btnMonth) btnMonth.className = 'px-3 py-1.5 rounded-lg bg-white shadow-xs text-primary transition-all';
+                if (btnAll) btnAll.className = 'px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-primary transition-all';
+            } else {
+                if (btnAll) btnAll.className = 'px-3 py-1.5 rounded-lg bg-white shadow-xs text-primary transition-all';
+                if (btnMonth) btnMonth.className = 'px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-primary transition-all';
+            }
+            renderRoster();
+        }
+
         function renderRoster() {
             // Gunakan HANYA data intern dari database MySQL
             let interns = dbInternsList;
             if (!interns.length && window.DB_INTERNS && window.DB_INTERNS.length) {
-                interns = window.DB_INTERNS.map(u => ({ name: u.username, division: 'Intern Kedayweb' }));
+                interns = window.DB_INTERNS.map(u => ({ name: u.username, division: u.division || 'Intern Kedayweb' }));
             }
 
             document.getElementById('stat-total-interns').textContent = interns.length;
             const tbody = document.getElementById('intern-roster-body');
             tbody.innerHTML = '';
 
+            const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            const periodLabel = document.getElementById('roster-period-label');
+            if (periodLabel) {
+                if (rosterViewMode === 'month') {
+                    periodLabel.textContent = `Periode: ${monthNames[calMonth]} ${calYear} (Sesuai Kalender)`;
+                } else {
+                    periodLabel.textContent = 'Periode: Semua Waktu (Kumulatif)';
+                }
+            }
+
             if (!interns.length) {
                 tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-6 text-center text-on-surface-variant text-sm italic">Belum ada intern terdaftar di database.</td></tr>';
                 return;
             }
 
+            const today = new Date();
+            const todayStr = fmt(today);
+            const nowHour = today.getHours();
+
             interns.forEach(i => {
-                // Hitung HANYA dari DB map
                 const dbUserAtt = dbAttendanceMap[i.name] || {};
                 let present = 0, late = 0, absent = 0;
 
-                Object.values(dbUserAtt).forEach(r => {
-                    if (r.status === 'present') present++;
-                    else if (r.status === 'late') late++;
-                    else if (r.status === 'absent') absent++;
-                });
+                if (rosterViewMode === 'month') {
+                    // Hitung secara akurat untuk bulan yang sedang dilihat di kalender (calYear, calMonth)
+                    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+                    for (let d = 1; d <= daysInMonth; d++) {
+                        const dateObj = new Date(calYear, calMonth, d);
+                        const dateStr = fmt(dateObj);
+                        const dow = dateObj.getDay();
+                        const isSunday = (dow === 0);
+                        const isFuture = (dateObj > today && dateStr !== todayStr);
+                        const isToday = (dateStr === todayStr);
+
+                        if (isFuture) continue;
+                        if (dateStr < PKL_START_DATE) continue; // Abaikan hari sebelum periode PKL dimulai (2 Juli 2026)
+
+                        const r = dbUserAtt[dateStr];
+                        if (r) {
+                            if (r.status === 'present') present++;
+                            else if (r.status === 'late') late++;
+                            else if (r.status === 'absent') absent++;
+                        } else if (!isSunday) {
+                            // Hari kerja (Senin - Sabtu) tanpa catatan kehadiran
+                            if (isToday) {
+                                // Hari ini: jika sudah lewat batas jam 14:00, dihitung Tidak Masuk
+                                if (nowHour >= 14) absent++;
+                            } else {
+                                // Hari kerja masa lalu yang dilewati tanpa absensi
+                                absent++;
+                            }
+                        }
+                    }
+                } else {
+                    // Tampilan Semua Waktu: hitung semua record yang ada di DB
+                    Object.values(dbUserAtt).forEach(r => {
+                        if (r.status === 'present') present++;
+                        else if (r.status === 'late') late++;
+                        else if (r.status === 'absent') absent++;
+                    });
+                }
 
                 const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-container-low transition-colors';
                 tr.innerHTML = `
-                    <td class="px-3 py-2 font-semibold">${escHtml(i.name)}</td>
-                    <td class="px-3 py-2 text-on-surface-variant">${escHtml(i.division || 'Intern Kedayweb')}</td>
-                    <td class="px-3 py-2 text-center text-green-700 font-bold">${present}</td>
-                    <td class="px-3 py-2 text-center text-amber-700 font-bold">${late}</td>
-                    <td class="px-3 py-2 text-center text-red-700 font-bold">${absent}</td>
-                    <td class="px-3 py-2 text-center">
+                    <td class="px-3 py-2.5 font-semibold text-slate-800">${escHtml(i.name)}</td>
+                    <td class="px-3 py-2.5 text-on-surface-variant">${escHtml(i.division || 'Intern Kedayweb')}</td>
+                    <td class="px-3 py-2.5 text-center text-green-700 font-bold">${present}</td>
+                    <td class="px-3 py-2.5 text-center text-amber-700 font-bold">${late}</td>
+                    <td class="px-3 py-2.5 text-center">
+                        <span class="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full text-xs font-bold ${absent > 0 ? 'bg-red-100 text-red-700' : 'text-slate-400'}">
+                            ${absent}
+                        </span>
+                    </td>
+                    <td class="px-3 py-2.5 text-center">
                         <a href="../attendance.php?intern=${encodeURIComponent(i.name)}" class="text-primary hover:underline text-xs font-semibold">Lihat Kalender</a>
                     </td>
                 `;

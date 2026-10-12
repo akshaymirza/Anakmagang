@@ -977,6 +977,11 @@ require_login(); ?>
         // ============================================================
         // CALENDAR STATE
         // ============================================================
+        // Batas periode awal PKL: 2 Juli 2026
+        const PKL_START_DATE = '2026-07-02';
+        const PKL_START_YEAR = 2026;
+        const PKL_START_MONTH = 6; // Juli (0-indexed: 6)
+
         let calYear, calMonth;
         let currentFilter = 'all';
         let detailDate = null;
@@ -988,6 +993,10 @@ require_login(); ?>
         }
 
         function changeMonth(dir) {
+            // Batasi navigasi mundur: PKL baru dimulai pada Juli 2026
+            if (dir < 0 && (calYear < PKL_START_YEAR || (calYear === PKL_START_YEAR && calMonth <= PKL_START_MONTH))) {
+                return;
+            }
             calMonth += dir;
             if (calMonth > 11) { calMonth = 0; calYear++; }
             if (calMonth < 0) { calMonth = 11; calYear--; }
@@ -1013,6 +1022,20 @@ require_login(); ?>
 
             const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
             document.getElementById('cal-title').textContent = `${monthNames[calMonth]} ${calYear}`;
+
+            // Periksa apakah tombol bulan sebelumnya perlu di-disable (batas Juli 2026)
+            const isAtMinMonth = (calYear < PKL_START_YEAR || (calYear === PKL_START_YEAR && calMonth <= PKL_START_MONTH));
+            const prevBtn = document.getElementById('cal-prev');
+            if (prevBtn) {
+                prevBtn.disabled = isAtMinMonth;
+                if (isAtMinMonth) {
+                    prevBtn.classList.add('opacity-30', 'cursor-not-allowed', 'pointer-events-none');
+                    prevBtn.setAttribute('title', 'PKL dimulai pada 2 Juli 2026');
+                } else {
+                    prevBtn.classList.remove('opacity-30', 'cursor-not-allowed', 'pointer-events-none');
+                    prevBtn.removeAttribute('title');
+                }
+            }
 
             const grid = document.getElementById('cal-grid');
             grid.innerHTML = '';
@@ -1040,6 +1063,18 @@ require_login(); ?>
 
                 const cell = document.createElement('div');
                 cell.classList.add('cal-cell');
+
+                // Tanggal sebelum periode PKL dimulai (sebelum 2 Juli 2026): non-aktif
+                const isBeforePkl = (dateStr < PKL_START_DATE);
+                if (isBeforePkl) {
+                    cell.classList.add('weekend');
+                    cell.style.opacity = '0.35';
+                    cell.style.cursor = 'not-allowed';
+                    cell.setAttribute('title', 'Sebelum periode PKL (Mulai 2 Juli 2026)');
+                    cell.innerHTML = `<span>${d}</span>`;
+                    grid.appendChild(cell);
+                    continue;
+                }
 
                 const now = new Date();
                 const isTodayPastCutoff = isToday && (now.getHours() >= 14);
@@ -1228,6 +1263,10 @@ require_login(); ?>
         let editingDate = null;
 
         function openInputModal(preDate = null) {
+            if (preDate && preDate < PKL_START_DATE) {
+                showToast('Tanggal sebelum periode PKL dimulai (2 Juli 2026).', 'warning');
+                return;
+            }
             editingDate = null;
             const modal = document.getElementById('input-modal');
             const form = document.getElementById('att-form');
@@ -1362,6 +1401,7 @@ require_login(); ?>
         // DETAIL MODAL
         // ============================================================
         function openDetailModal(dateStr) {
+            if (dateStr < PKL_START_DATE) return;
             let rec = getRecord(dateStr);
             if (!rec) {
                 const todayStr = formatDate(new Date());
