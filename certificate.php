@@ -297,11 +297,11 @@ include 'partials/sidebar-intern.php';
                         <span class="material-symbols-outlined text-sm">open_in_new</span>
                         <span>Verifikasi Publik</span>
                     </a>
-                    <button onclick="window.print()"
-                            class="flex-1 sm:flex-none px-4 py-2 bg-primary text-on-primary rounded-xl text-xs font-bold hover:bg-primary-container transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
+                    <a href="verification.php?id=<?php echo urlencode($cert['certificate_id']); ?>&print=1" target="_blank"
+                       class="flex-1 sm:flex-none px-4 py-2 bg-primary text-on-primary rounded-xl text-xs font-bold hover:bg-primary-container transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer">
                         <span class="material-symbols-outlined text-sm">print</span>
                         <span>Cetak / Simpan PDF</span>
-                    </button>
+                    </a>
                 </div>
             </div>
 
@@ -479,11 +479,17 @@ include 'partials/sidebar-intern.php';
                 const track  = document.getElementById('certSliderTrack');
                 const btnP   = document.getElementById('btnPrev');
                 const btnN   = document.getElementById('btnNext');
-                const labels = ['Sertifikat Depan', 'Tabel Nilai (Halaman Belakang)'];
+                const labels = [
+                    { title: 'Sertifikat Depan', extra: '' },
+                    { title: 'Tabel Nilai', extra: '(Halaman Belakang)' }
+                ];
 
                 function update() {
                     track.style.transform = 'translateX(-' + (cur * 100) + '%)';
-                    document.getElementById('slideLabel').textContent = labels[cur];
+                    const s = labels[cur];
+                    document.getElementById('slideLabel').innerHTML = s.extra
+                        ? `${s.title}<span class="hidden sm:inline normal-case text-slate-500 font-normal text-xs ml-1">${s.extra}</span>`
+                        : s.title;
                     btnP.disabled = (cur === 0);
                     btnN.disabled = (cur === TOTAL - 1);
                     for (let i = 0; i < TOTAL; i++) {

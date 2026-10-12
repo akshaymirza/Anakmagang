@@ -136,18 +136,123 @@
         .cb-ttd-ruang { height:4.2cqw; }
         .cb-ttd-nama { font-weight:500; text-decoration:underline; }
 
-        /* ── Cetak / Simpan PDF: hanya sertifikat, A4 landscape, tanpa margin ── */
-        @page { size: A4 landscape; margin: 0; }
+        /* ── Cetak / Simpan PDF: 297mm x 210mm (A4 Landscape) ── */
+        @page {
+            size: 297mm 210mm;
+            margin: 0;
+        }
+        @media screen {
+            #print-area { display: none !important; }
+        }
         @media print {
-            html, body { height: 210mm !important; overflow: hidden !important; margin: 0 !important; background: #fff !important; }
-            body * { visibility: hidden !important; }
-            #result-section { animation: none !important; transform: none !important; }
-            #cert-preview, #cert-preview * { visibility: visible !important; }
-            #cert-preview {
-                position: fixed !important; left: 0; top: 0; z-index: 9999;
-                width: 297mm !important; height: 210mm !important; max-width: none !important;
-                aspect-ratio: auto !important; margin: 0 !important; box-shadow: none !important;
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+                width: 297mm !important;
+                height: auto !important;
+                overflow: visible !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
+            body > *:not(#print-area) {
+                display: none !important;
+            }
+            #print-area {
+                display: block !important;
+                width: 297mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: transparent !important;
+                position: static !important;
+            }
+            .print-page {
+                width: 297mm !important;
+                height: 210mm !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                position: relative !important;
+                overflow: hidden !important;
+                box-sizing: border-box !important;
+                margin: 0 !important;
+                background-color: #f5f3e7 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .print-page:last-child {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+            .print-page-front {
+                position: relative !important;
+            }
+            .print-bg {
+                position: absolute; inset: 0; width: 100%; height: 100%;
+                object-fit: fill; z-index: 1; pointer-events: none;
+            }
+            .print-name {
+                position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);
+                width: 50%; text-align: center; white-space: nowrap; z-index: 10;
+                font-family: 'Montserrat', sans-serif; font-weight: 800; color: #0f172a;
+                font-size: 26pt; line-height: 1.25; text-transform: capitalize;
+            }
+            .print-qr {
+                position: absolute; left: 43.7%; bottom: 11.6%; width: 12.5%; height: 17.7%;
+                display: flex; align-items: center; justify-content: center; z-index: 20;
+                background: #fff; border-radius: 4mm; padding: 3mm; box-sizing: border-box;
+            }
+            .print-qr img {
+                width: 100%; height: 100%; object-fit: contain; display: block;
+            }
+            .print-stamp-cover {
+                position: absolute; bottom: 8%; width: 28%; height: 22%;
+                background: rgba(245, 243, 231, 0.94); border: 2px dashed #f59e0b;
+                border-radius: 3mm; display: flex; flex-direction: column;
+                align-items: center; justify-content: center; text-align: center;
+                padding: 2%; box-sizing: border-box; z-index: 25;
+            }
+            .print-stamp-cover.left { left: 8%; }
+            .print-stamp-cover.right { right: 8%; }
+
+            /* Back Page Print (Tabel Nilai) */
+            .print-page-back {
+                padding: 31pt 51pt 0 !important;
+                background: #f5f3e7 url('uploads/Certificate/Sertifikat_Belakang.png') center / 100% 100% no-repeat !important;
+                font-family: 'Poppins', sans-serif !important;
+                font-size: 11pt !important;
+                line-height: 17pt !important;
+                color: #000 !important;
+            }
+            .print-page-back .judul { font-size: 20pt; line-height: 30pt; font-weight: 700; text-align: center; }
+            .print-page-back .data-siswa { margin-top: 20pt; display: grid; row-gap: 1pt; }
+            .print-page-back .data-siswa .baris { display: grid; grid-template-columns: 220pt 20pt 1fr; min-height: 17pt; }
+            .print-page-back .data-siswa .label { font-weight: 500; }
+            .print-page-back .nilai { width: 100%; margin-top: 14pt; border-collapse: collapse; table-layout: fixed; border: 1px solid #000; }
+            .print-page-back .nilai col.no { width: 28pt; }
+            .print-page-back .nilai col.skor { width: 41pt; }
+            .print-page-back .nilai th, .print-page-back .nilai td { border: 1px solid #000; padding: 0 6pt; vertical-align: middle; }
+            .print-page-back .nilai th { font-weight: 500; text-align: center; }
+            .print-page-back .nilai td { height: 21pt; }
+            .print-page-back .nilai td.no, .print-page-back .nilai td.skor { text-align: center; padding: 0; }
+            .print-page-back .nilai thead tr.judul-tabel th { height: 23pt; }
+            .print-page-back .nilai thead tr.aspek th { height: 22pt; }
+            .print-page-back .nilai tfoot td.rata { height: 22pt; text-align: center; }
+            .print-page-back .nilai tfoot td.kumulatif { height: 71pt; padding: 0; }
+            .print-page-back .hasil { font-weight: 500; }
+            .print-page-back .rumus { display: flex; justify-content: center; align-items: flex-start; gap: 4pt; font-weight: 500; }
+            .print-page-back .pecahan { display: flex; flex-direction: column; align-items: center; font-weight: 400; }
+            .print-page-back .pembilang { border-bottom: 1px solid #000; padding: 0 2pt; }
+            .print-page-back .bawah { margin-top: 14pt; padding-right: 24pt; display: flex; justify-content: space-between; align-items: flex-start; }
+            .print-page-back .judul-ketentuan { font-weight: 500; margin-bottom: 4pt; }
+            .print-page-back .predikat { width: 190pt; border-collapse: collapse; table-layout: fixed; font-size: 9pt; line-height: 12pt; }
+            .print-page-back .predikat th { font-weight: 500; padding: 1pt 0; border-top: 1px solid #000; border-bottom: 1px solid #000; }
+            .print-page-back .predikat td { padding: 0; text-align: center; }
+            .print-page-back .predikat tbody tr:first-child td { padding-top: 1pt; }
+            .print-page-back .ttd p { line-height: 17pt; }
+            .print-page-back .ttd .ruang { height: 44pt; }
+            .print-page-back .ttd .nama { font-weight: 500; text-decoration: underline; }
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet"/>
@@ -233,29 +338,29 @@ include 'partials/topnav-public.php';
             <!-- Certificate Preview (Left) - Slider -->
             <div class="lg:col-span-7 bg-surface-container-lowest rounded-2xl border border-outline-variant overflow-hidden hover:soft-shadow transition-shadow duration-300 self-start">
                 <!-- Card Header -->
-                <div class="p-4 bg-surface-container-low border-b border-outline-variant flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <span id="vf-slide-label" class="font-label-md text-on-surface-variant uppercase tracking-wider">Preview Sertifikat</span>
+                <div class="px-3 sm:px-4 py-2.5 sm:py-3 bg-surface-container-low border-b border-outline-variant flex justify-between items-center gap-2">
+                    <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                        <span id="vf-slide-label" class="text-xs sm:text-sm font-bold text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Preview Sertifikat</span>
                         <!-- Dot navigation -->
-                        <div class="vf-slider-dots" style="padding:0;margin-left:6px">
+                        <div class="vf-slider-dots shrink-0" style="padding:0;margin-left:4px">
                             <span class="vf-dot active" id="vf-dot0" onclick="vfGoTo(0)" title="Sertifikat Depan"></span>
                             <span class="vf-dot" id="vf-dot1" onclick="vfGoTo(1)" title="Tabel Nilai"></span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-1.5">
+                    <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
                         <button onclick="vfSlide(-1)" id="vf-btn-prev" disabled
-                                class="p-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-primary hover:text-on-primary hover:border-primary transition-all disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer"
+                                class="p-1 sm:p-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-primary hover:text-on-primary hover:border-primary transition-all disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer"
                                 title="Sertifikat Depan">
-                            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                            <span class="material-symbols-outlined text-[16px] sm:text-[18px]">chevron_left</span>
                         </button>
                         <button onclick="vfSlide(1)" id="vf-btn-next"
-                                class="p-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-primary hover:text-on-primary hover:border-primary transition-all disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer"
-                                title="Tabel Nilai / Halaman Belakang">
-                            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                                class="p-1 sm:p-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-primary hover:text-on-primary hover:border-primary transition-all disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer"
+                                title="Tabel Nilai">
+                            <span class="material-symbols-outlined text-[16px] sm:text-[18px]">chevron_right</span>
                         </button>
-                        <button onclick="downloadCertificate()"
-                                class="text-primary hover:bg-primary-container hover:text-on-primary-container px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-semibold ml-1" title="Cetak / Simpan PDF">
-                            <span class="material-symbols-outlined text-[20px]">download</span> Unduh PDF
+                        <button onclick="openDownloadModal()"
+                                class="text-primary hover:bg-primary-container hover:text-on-primary-container px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs sm:text-sm font-semibold ml-0.5 sm:ml-1 whitespace-nowrap cursor-pointer" title="Cetak / Simpan PDF">
+                            <span class="material-symbols-outlined text-[18px] sm:text-[20px]">download</span> <span class="hidden sm:inline">Unduh </span><span>PDF</span>
                         </button>
                     </div>
                 </div>
@@ -517,6 +622,9 @@ function showResult(d) {
 
     // ── Render slide 2: Tabel Nilai / Halaman Belakang ──
     renderCertBack(d);
+
+    // ── Siapkan data cetak / PDF (2 Halaman) ──
+    populatePrintArea(d);
 }
 
 /* Perkecil font nama otomatis jika terlalu panjang (maks. 50% lebar sertifikat) */
@@ -586,26 +694,118 @@ document.getElementById('cert-id-input').addEventListener('keydown', e => {
     if (id) {
         document.getElementById('cert-id-input').value = id;
         verifyCertificate();
+        if (params.get('print') === '1') {
+            setTimeout(() => { if (typeof openDownloadModal === 'function') openDownloadModal(); }, 800);
+        }
     }
 })();
 
-// Download / Print certificate → gunakan dialog cetak browser (pilih "Simpan sebagai PDF")
-let _titleBackup = null;
-function downloadCertificate() {
+// ── Modal Unduh & Cetak PDF ──
+function openDownloadModal() {
     if (!activeCert) return;
-    _titleBackup = document.title;
-    document.title = 'Sertifikat_' + activeCert.certificate_id;   // jadi nama file PDF default
-    window.print();
+    document.getElementById('download-modal').classList.remove('hidden');
 }
-window.addEventListener('afterprint', () => {
-    if (_titleBackup !== null) { document.title = _titleBackup; _titleBackup = null; }
-});
+function closeDownloadModal() {
+    document.getElementById('download-modal').classList.add('hidden');
+}
+window.downloadCertificate = openDownloadModal;
+
+function executePrint(mode) {
+    if (!activeCert) return;
+    closeDownloadModal();
+    const pFront = document.getElementById('print-page-front');
+    const pBack  = document.getElementById('print-page-back');
+    if (!pFront || !pBack) return;
+
+    if (mode === 'front') {
+        pFront.style.display = 'block';
+        pBack.style.display  = 'none';
+        document.title = 'Sertifikat_Depan_' + activeCert.certificate_id;
+    } else if (mode === 'back') {
+        pFront.style.display = 'none';
+        pBack.style.display  = 'block';
+        document.title = 'Tabel_Nilai_' + activeCert.certificate_id;
+    } else {
+        pFront.style.display = 'block';
+        pBack.style.display  = 'block';
+        document.title = 'Sertifikat_Lengkap_' + activeCert.certificate_id;
+    }
+
+    setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+            pFront.style.display = '';
+            pBack.style.display  = '';
+            document.title = 'Sertifikat_' + activeCert.certificate_id;
+        }, 500);
+    }, 150);
+}
+
+// Mengisi template cetak dengan data sertifikat
+function populatePrintArea(d) {
+    if (!d) return;
+
+    // Halaman Depan
+    const pName = document.getElementById('print-cert-name');
+    if (pName) {
+        pName.textContent = d.intern_name;
+        let fs = 26;
+        if (d.intern_name.length > 25) fs = 20;
+        if (d.intern_name.length > 35) fs = 16;
+        pName.style.fontSize = fs + 'pt';
+    }
+
+    // QR Code
+    const pQrImg = document.getElementById('print-cert-qr-img');
+    const scQrImg = document.getElementById('cert-qr-img');
+    if (pQrImg && scQrImg) {
+        pQrImg.src = scQrImg.src;
+    }
+
+    // Covers
+    const pCovers = document.getElementById('print-cert-covers');
+    if (pCovers) {
+        pCovers.style.display = d.is_approved ? 'none' : 'block';
+    }
+
+    // Halaman Belakang (Tabel Nilai)
+    document.getElementById('p-nama').textContent       = d.intern_name || '';
+    document.getElementById('p-jurusan').textContent    = d.major || '-';
+    document.getElementById('p-waktu').textContent      = (d.start_date || '') + ' sampai ' + (d.end_date || '');
+    document.getElementById('p-tgl-bwi').textContent    = 'Banyuwangi, ' + (d.issue_date || '');
+    document.getElementById('p-supervisor').textContent = d.supervisor_name || 'M. Lutfi Nur Fauzi, S.Kom.';
+
+    const nt = [d.score_discipline, d.score_discipline, d.score_discipline, d.score_attitude, d.score_attitude, d.score_attitude];
+    const tek = [d.score_technical, d.score_technical, d.score_technical, d.score_technical, d.score_technical, d.score_technical];
+    const labelNT = ['Kedisiplinan','Kemauan Kerja Dan Motivasi','Kerajinan','Inisiatif Dan Kreatifitas','Kerjasama Dan Tanggung Jawab','Sikap Dan Perilaku'];
+    const labelT = ['Penguasaan Tools Dan Perangkat Kerja Utama','Kualitas & Ketepatan Hasil Pekerjaan','Pemahaman Brief & Penerapan Spesifikasi Tugas','Kecepatan & Ketepatan Waktu Penyelesaian Tugas','Kemampuan Penyelesaian Masalah','Laporan Hasil Kerja'];
+
+    const fmt = n => n == null ? '' : new Intl.NumberFormat('id-ID', {maximumFractionDigits:2}).format(n);
+    const rataNT = nt.reduce((a,b)=>a+b,0) / nt.length;
+    const rataTek = tek.reduce((a,b)=>a+b,0) / tek.length;
+    const kumul = (rataNT + rataTek) / 2;
+
+    let rowsHtml = '';
+    for (let i = 0; i < 6; i++) {
+        rowsHtml += `<tr>
+            <td class="no">${i+1}.</td><td>${labelNT[i]}</td><td class="skor">${nt[i]}</td>
+            <td class="no">${i+1}.</td><td>${labelT[i]}</td><td class="skor">${tek[i]}</td>
+        </tr>`;
+    }
+    document.getElementById('p-isi-nilai').innerHTML = rowsHtml;
+    document.getElementById('p-rata-non').textContent = fmt(rataNT);
+    document.getElementById('p-rata-tek').textContent = fmt(rataTek);
+    document.getElementById('p-kumulatif').textContent = fmt(kumul);
+}
 
 /* ── Slider ── */
 (function() {
     const TOTAL = 2;
     let cur = 0;
-    const LABELS = ['Preview Sertifikat', 'Tabel Nilai (Halaman Belakang)'];
+    const SLIDES = [
+        { title: 'Preview Sertifikat', extra: '' },
+        { title: 'Tabel Nilai', extra: '(Halaman Belakang)' }
+    ];
 
     function vfUpdate() {
         const track = document.getElementById('vfSliderTrack');
@@ -614,7 +814,12 @@ window.addEventListener('afterprint', () => {
         const bn    = document.getElementById('vf-btn-next');
         if (!track) return;
         track.style.transform = 'translateX(-' + (cur * 100) + '%)';
-        if (lbl) lbl.textContent = LABELS[cur];
+        if (lbl) {
+            const s = SLIDES[cur];
+            lbl.innerHTML = s.extra
+                ? `${s.title}<span class="hidden sm:inline normal-case text-slate-500 font-normal text-xs ml-1">${s.extra}</span>`
+                : s.title;
+        }
         if (bp) bp.disabled = cur === 0;
         if (bn) bn.disabled = cur === TOTAL - 1;
         for (let i = 0; i < TOTAL; i++) {
@@ -636,5 +841,164 @@ function renderCertBack(d) {
     }
 }
 </script>
+
+<!-- Modal Pilihan Unduh/Cetak -->
+<div id="download-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs hidden no-print" onclick="if(event.target===this)closeDownloadModal()">
+    <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant max-w-md w-full p-6 shadow-2xl relative animate-in fade-in duration-200">
+        <button onclick="closeDownloadModal()" class="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface p-1 rounded-lg cursor-pointer">
+            <span class="material-symbols-outlined text-xl">close</span>
+        </button>
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-primary-container text-primary flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-2xl">picture_as_pdf</span>
+            </div>
+            <div>
+                <h3 class="font-headline-sm font-bold text-on-surface text-base md:text-lg">Unduh / Cetak Sertifikat</h3>
+                <p class="text-xs text-on-surface-variant">Pilih format halaman yang ingin dicetak atau disimpan ke PDF</p>
+            </div>
+        </div>
+
+        <div class="space-y-2.5 my-4">
+            <button onclick="executePrint('all')"
+                    class="w-full text-left p-3.5 rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-all flex items-center justify-between group cursor-pointer">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary text-2xl">auto_stories</span>
+                    <div>
+                        <div class="font-bold text-sm text-primary flex items-center gap-1.5">
+                            <span>Lengkap (2 Halaman)</span>
+                            <span class="text-[10px] bg-primary text-white px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">Rekomendasi</span>
+                        </div>
+                        <p class="text-xs text-on-surface-variant">Halaman Depan (Sertifikat) + Halaman Belakang (Tabel Nilai)</p>
+                    </div>
+                </div>
+                <span class="material-symbols-outlined text-primary text-lg group-hover:translate-x-1 transition-transform">chevron_right</span>
+            </button>
+
+            <button onclick="executePrint('front')"
+                    class="w-full text-left p-3.5 rounded-xl border border-outline-variant hover:bg-surface-container-high transition-all flex items-center justify-between group cursor-pointer">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-on-surface-variant text-2xl">badge</span>
+                    <div>
+                        <div class="font-bold text-sm text-on-surface">Halaman Depan Saja</div>
+                        <p class="text-xs text-on-surface-variant">Hanya lembar utama sertifikat magang (1 halaman)</p>
+                    </div>
+                </div>
+                <span class="material-symbols-outlined text-on-surface-variant text-lg group-hover:translate-x-1 transition-transform">chevron_right</span>
+            </button>
+
+            <button onclick="executePrint('back')"
+                    class="w-full text-left p-3.5 rounded-xl border border-outline-variant hover:bg-surface-container-high transition-all flex items-center justify-between group cursor-pointer">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-on-surface-variant text-2xl">table_chart</span>
+                    <div>
+                        <div class="font-bold text-sm text-on-surface">Halaman Belakang Saja (Tabel Nilai)</div>
+                        <p class="text-xs text-on-surface-variant">Hanya lembar daftar nilai PKL lengkap (1 halaman)</p>
+                    </div>
+                </div>
+                <span class="material-symbols-outlined text-on-surface-variant text-lg group-hover:translate-x-1 transition-transform">chevron_right</span>
+            </button>
+        </div>
+
+        <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2">
+            <span class="material-symbols-outlined text-amber-600 text-base shrink-0 mt-0.5">info</span>
+            <div>
+                <strong>Tips Cetak PDF:</strong> Pada jendela print browser, pilih <em>Destination / Printer: <strong>Save as PDF</strong></em> dan <em>Layout: <strong>Landscape</strong></em>.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ ELEMEN CETAK A4 LANDSCAPE (HANYA TAMPIL SAAT PRINT) ═══ -->
+<div id="print-area">
+    <!-- Halaman 1: Sertifikat Depan -->
+    <div class="print-page print-page-front" id="print-page-front">
+        <img class="print-bg" src="uploads/Certificate/SertifikatNew.png" alt="" />
+        <div id="print-cert-name" class="print-name">—</div>
+        <div class="print-qr">
+            <img id="print-cert-qr-img" alt="QR Code" />
+        </div>
+        <div id="print-cert-covers" style="display:none;">
+            <div class="print-stamp-cover left">
+                <span class="material-symbols-outlined" style="font-size:24pt;color:#d97706">lock</span>
+                <span style="font-size:12pt;font-weight:bold;color:#92400e">Menunggu Approval</span>
+                <span style="font-size:9pt;color:#b45309">Tanda Tangan Belum Sah</span>
+            </div>
+            <div class="print-stamp-cover right">
+                <span class="material-symbols-outlined" style="font-size:24pt;color:#d97706">lock</span>
+                <span style="font-size:12pt;font-weight:bold;color:#92400e">Menunggu Approval</span>
+                <span style="font-size:9pt;color:#b45309">Super Admin</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Halaman 2: Tabel Nilai PKL -->
+    <div class="print-page print-page-back" id="print-page-back">
+        <h1 class="judul">DAFTAR NILAI PRAKTIK KERJA LAPANGAN (PKL)</h1>
+
+        <section class="data-siswa">
+            <div class="baris"><span class="label">NAMA SISWA</span><span>:</span><span id="p-nama"></span></div>
+            <div class="baris"><span class="label">JURUSAN</span><span>:</span><span id="p-jurusan"></span></div>
+            <div class="baris"><span class="label">TEMPAT PRAKERIN</span><span>:</span><span>CV. Kedayweb (IT &amp; Multimedia Agency)</span></div>
+            <div class="baris"><span class="label">ALAMAT TEMPAT PRAKERIN</span><span>:</span><span>Banyuwangi, Jawa Timur</span></div>
+            <div class="baris"><span class="label">WAKTU PELAKSANAAN</span><span>:</span><span id="p-waktu"></span></div>
+        </section>
+
+        <table class="nilai">
+            <colgroup>
+                <col class="no"><col><col class="skor">
+                <col class="no"><col><col class="skor">
+            </colgroup>
+            <thead>
+                <tr class="judul-tabel"><th colspan="6">KOMPONEN YANG DINILAI</th></tr>
+                <tr class="aspek">
+                    <th colspan="3">ASPEK NON TEKNIS</th>
+                    <th colspan="3">ASPEK TEKNIS</th>
+                </tr>
+            </thead>
+            <tbody id="p-isi-nilai"></tbody>
+            <tfoot>
+                <tr>
+                    <td class="rata" colspan="3">Nilai Rata-Rata Aspek Non Teknis = <span class="hasil" id="p-rata-non"></span></td>
+                    <td class="rata" colspan="3">Nilai Rata-Rata Aspek Teknis = <span class="hasil" id="p-rata-tek"></span></td>
+                </tr>
+                <tr>
+                    <td class="kumulatif" colspan="6">
+                        <div class="rumus">
+                            <span>Nilai Kumulatif =</span>
+                            <span class="pecahan">
+                                <span class="pembilang">(Nilai Rata-Rata Non Teknis + Nilai Rata-Rata Teknis)</span>
+                                <span>2</span>
+                            </span>
+                            <span>= <span class="hasil" id="p-kumulatif"></span></span>
+                        </div>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <section class="bawah">
+            <div>
+                <p class="judul-ketentuan">KETENTUAN:</p>
+                <table class="predikat">
+                    <colgroup><col style="width:60pt"><col style="width:60pt"><col style="width:70pt"></colgroup>
+                    <thead><tr><th>Nilai</th><th>Kategori</th><th>Keterangan</th></tr></thead>
+                    <tbody>
+                        <tr><td>90-100</td><td>A</td><td>Sangat Baik</td></tr>
+                        <tr><td>80-89</td><td>B</td><td>Baik</td></tr>
+                        <tr><td>75-79</td><td>C</td><td>Cukup</td></tr>
+                        <tr><td>&lt;=74</td><td>D</td><td>Kurang</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="ttd">
+                <p id="p-tgl-bwi"></p>
+                <p>Founder &amp; Director Kedayweb</p>
+                <div class="ruang"></div>
+                <p class="nama" id="p-supervisor"></p>
+            </div>
+        </section>
+    </div>
+</div>
 </body>
 </html>
