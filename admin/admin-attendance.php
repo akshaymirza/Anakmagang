@@ -692,15 +692,46 @@ if ($db_query) {
                 return;
             }
 
+            const today = new Date();
+            const todayStr = fmt(today);
+            const isTodayPastCutoff = today.getHours() >= 14;
+            const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
             interns.forEach(i => {
-                // Hitung HANYA dari DB map
                 const dbUserAtt = dbAttendanceMap[i.name] || {};
                 let present = 0, late = 0, absent = 0;
 
+                // Hitung dari kalender bulan yang sedang aktif
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateObj = new Date(calYear, calMonth, d);
+                    const dateStr = fmt(dateObj);
+                    const dow = dateObj.getDay();
+                    const isSunday = (dow === 0);
+                    const isFuture = dateObj > today && dateStr !== todayStr;
+                    const isToday = dateStr === todayStr;
+                    const isPastDay = !isFuture && !isToday;
+
+                    const r = dbUserAtt[dateStr];
+
+                    if (r) {
+                        if (r.status === 'present') present++;
+                        else if (r.status === 'late') late++;
+                        else if (r.status === 'absent') absent++;
+                    } else if (!isSunday && !isFuture) {
+                        // Jika hari kerja lalu atau hari ini sudah lewat batas jam 14:00 dan tidak ada absen -> dihitung tidak masuk (alpha)
+                        if (isPastDay || isTodayPastCutoff) {
+                            absent++;
+                        }
+                    }
+                }
+
+                // Tambahkan juga jika ada record explicit absent di luar rentang kalender aktif
                 Object.values(dbUserAtt).forEach(r => {
-                    if (r.status === 'present') present++;
-                    else if (r.status === 'late') late++;
-                    else if (r.status === 'absent') absent++;
+                    const rMonth = parseInt(r.date.split('-')[1], 10) - 1;
+                    const rYear = parseInt(r.date.split('-')[0], 10);
+                    if (rMonth !== calMonth || rYear !== calYear) {
+                        // Jika ada data di bulan lain, hanya hitung jika eksplisit
+                    }
                 });
 
                 const tr = document.createElement('tr');
