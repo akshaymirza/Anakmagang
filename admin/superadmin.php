@@ -288,11 +288,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $users = [];
 $cohort_years = [];
 if ($conn) {
-    // Auto migration: Ensure intern_position, university, major columns exist in users table
+    // Auto migration: Ensure intern_position, university, major, intern_start_date columns exist in users table
     $cols_to_check = [
-        'intern_position' => 'VARCHAR(150) DEFAULT NULL',
-        'university'      => 'VARCHAR(150) DEFAULT NULL',
-        'major'           => 'VARCHAR(150) DEFAULT NULL'
+        'intern_position'  => 'VARCHAR(150) DEFAULT NULL',
+        'university'       => 'VARCHAR(150) DEFAULT NULL',
+        'major'            => 'VARCHAR(150) DEFAULT NULL',
+        'intern_start_date'=> 'DATE DEFAULT NULL COMMENT \'Tanggal mulai wajib absen intern\''
     ];
     foreach ($cols_to_check as $col_name => $col_def) {
         $chk_col = @mysqli_query($conn, "SHOW COLUMNS FROM users LIKE '$col_name'");
@@ -313,6 +314,7 @@ if ($conn) {
     }
 
     $sql_users = "SELECT u.id, u.username, u.password, u.role, u.intern_position, u.university, u.major,
+                         u.intern_start_date,
                          COALESCE(
                              (SELECT CAST(COALESCE(
                                  NULLIF(REGEXP_SUBSTR(c.certificate_id, '[0-9]{4}'), ''),
@@ -853,6 +855,7 @@ if ($conn) {
                                 <th class="py-3 px-4 font-semibold">Password</th>
                                 <th class="py-3 px-4 font-semibold">Role</th>
                                 <th class="py-3 px-4 font-semibold">Angkatan</th>
+                                <th class="py-3 px-4 font-semibold">Tgl Mulai Absen</th>
                                 <th class="py-3 px-4 font-semibold">Posisi Magang</th>
                                 <th class="py-3 px-4 font-semibold">Instansi / Universitas</th>
                                 <th class="py-3 px-4 font-semibold">Jurusan</th>
@@ -892,6 +895,28 @@ if ($conn) {
                                                 <span>Angkatan <?php echo (int)($u['entry_year'] ?? date('Y')); ?></span>
                                             </span>
                                         </td>
+                                        <td class="py-3 px-4">
+                                            <?php if ($u['role'] === 'intern'): ?>
+                                                <div class="flex items-center gap-1.5">
+                                                    <?php if (!empty($u['intern_start_date'])): ?>
+                                                        <span class="px-2 py-0.5 text-xs rounded-full font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                                                            <span class="material-symbols-outlined text-[12px] text-emerald-600">event_available</span>
+                                                            <?php echo date('d M Y', strtotime($u['intern_start_date'])); ?>
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <span class="px-2 py-0.5 text-xs rounded-full font-semibold bg-slate-100 text-slate-500 border border-slate-200 italic">Belum diset</span>
+                                                    <?php endif; ?>
+                                                    <button type="button"
+                                                        onclick="openStartDateModal(<?php echo (int)$u['id']; ?>, '<?php echo htmlspecialchars($u['username'], ENT_QUOTES, 'UTF-8'); ?>', '<?php echo htmlspecialchars($u['intern_start_date'] ?? '', ENT_QUOTES, 'UTF-8'); ?>')"
+                                                        class="text-primary hover:text-primary/80 p-1 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer"
+                                                        title="Set Tanggal Mulai Absen">
+                                                        <span class="material-symbols-outlined text-[16px]">edit_calendar</span>
+                                                    </button>
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="text-slate-400 italic text-xs">N/A</span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td class="py-3 px-4 font-medium text-on-surface">
                                             <?php echo !empty($u['intern_position']) ? htmlspecialchars($u['intern_position'], ENT_QUOTES, 'UTF-8') : '<span class="text-slate-400 italic text-xs">-</span>'; ?>
                                         </td>
@@ -919,6 +944,7 @@ if ($conn) {
                                             </div>
                                         </td>
                                     </tr>
+
                                 <?php endforeach; ?>
                                 <tr id="no-superadmin-users-msg" class="hidden">
                                     <td colspan="9" class="text-center py-6 text-on-surface-variant font-medium">Tidak ada data user yang sesuai dengan filter angkatan/search.</td>
@@ -1049,6 +1075,58 @@ if ($conn) {
             <?php include '../partials/footer.php'; ?>
         </div>
     </main>
+
+    <!-- Modal Set Tanggal Mulai Absen Intern -->
+    <div id="start-date-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
+        <div class="bg-surface-container-lowest rounded-2xl max-w-md w-full p-6 shadow-2xl border border-outline-variant">
+            <div class="flex justify-between items-center pb-3 border-b border-outline-variant mb-5">
+                <h3 class="font-headline-md font-bold text-primary flex items-center gap-2">
+                    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">edit_calendar</span>
+                    <span>Set Tanggal Mulai Absen</span>
+                </h3>
+                <button onclick="closeStartDateModal()" class="text-on-surface-variant hover:text-on-surface p-1 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="mb-5 p-3.5 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-2.5">
+                <span class="material-symbols-outlined text-blue-600 text-lg shrink-0 mt-0.5">info</span>
+                <div class="text-xs text-blue-900">
+                    <p class="font-bold mb-0.5">Informasi</p>
+                    <p>Tanggal mulai absen menentukan kapan sistem mulai menghitung kehadiran intern. Hari sebelum tanggal ini <strong>tidak</strong> akan dihitung sebagai "tidak masuk".</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <p class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">Intern</p>
+                    <p id="start-date-intern-name" class="font-bold text-on-surface text-base"></p>
+                </div>
+
+                <div>
+                    <label for="start-date-input" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                        Tanggal Mulai Wajib Absen <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" id="start-date-input"
+                        class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary focus:outline-none cursor-pointer"/>
+                    <p class="text-[11px] text-slate-400 mt-1">Kosongkan untuk menghapus tanggal mulai (semua hari akan dihitung).</p>
+                </div>
+
+                <div id="start-date-result-msg" class="hidden text-xs font-semibold p-3 rounded-xl"></div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeStartDateModal()" class="flex-1 py-2.5 px-4 bg-surface-container-low hover:bg-surface-container-high text-on-surface border border-outline-variant rounded-xl font-bold text-sm transition-all cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="button" id="start-date-save-btn" onclick="saveStartDate()"
+                        class="flex-1 py-2.5 px-4 bg-primary text-on-primary rounded-xl font-bold text-sm hover:bg-primary/90 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                        <span class="material-symbols-outlined text-lg">save</span>
+                        <span>Simpan</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal Tambah User Baru -->
     <div id="add-user-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
@@ -1662,6 +1740,69 @@ if ($conn) {
                 defaultTab = 'account';
             }
             switchSuperadminTab(defaultTab);
+        });
+
+        // ===== SET TANGGAL MULAI ABSEN INTERN =====
+        let _startDateUserId = null;
+
+        function openStartDateModal(userId, username, currentDate) {
+            _startDateUserId = userId;
+            document.getElementById('start-date-intern-name').textContent = username;
+            document.getElementById('start-date-input').value = currentDate || '';
+            document.getElementById('start-date-result-msg').className = 'hidden text-xs font-semibold p-3 rounded-xl';
+            document.getElementById('start-date-result-msg').textContent = '';
+            document.getElementById('start-date-save-btn').disabled = false;
+            document.getElementById('start-date-save-btn').style.opacity = '';
+            document.getElementById('start-date-modal').classList.remove('hidden');
+        }
+
+        function closeStartDateModal() {
+            document.getElementById('start-date-modal').classList.add('hidden');
+            _startDateUserId = null;
+        }
+
+        async function saveStartDate() {
+            if (!_startDateUserId) return;
+            const startDate = document.getElementById('start-date-input').value.trim();
+            const btn = document.getElementById('start-date-save-btn');
+            const msgEl = document.getElementById('start-date-result-msg');
+
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            msgEl.className = 'text-xs font-semibold p-3 rounded-xl bg-blue-50 text-blue-800 border border-blue-200';
+            msgEl.textContent = 'Menyimpan...';
+
+            try {
+                const res = await fetch('../attendance-api.php?action=update_start_date', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: _startDateUserId, start_date: startDate })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    msgEl.className = 'text-xs font-semibold p-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200';
+                    msgEl.textContent = '✓ ' + (data.message || 'Berhasil disimpan!');
+                    setTimeout(() => location.reload(), 900);
+                } else {
+                    msgEl.className = 'text-xs font-semibold p-3 rounded-xl bg-red-50 text-red-800 border border-red-200';
+                    msgEl.textContent = '✗ ' + (data.error || 'Gagal menyimpan.');
+                    btn.disabled = false;
+                    btn.style.opacity = '';
+                }
+            } catch(e) {
+                msgEl.className = 'text-xs font-semibold p-3 rounded-xl bg-red-50 text-red-800 border border-red-200';
+                msgEl.textContent = '✗ Gagal terhubung ke server.';
+                btn.disabled = false;
+                btn.style.opacity = '';
+            }
+        }
+
+        // Tutup modal start-date jika klik di backdrop
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('start-date-modal')?.addEventListener('click', function(e) {
+                if (e.target === this) closeStartDateModal();
+            });
         });
     </script>
 </body>

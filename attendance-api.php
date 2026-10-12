@@ -56,6 +56,14 @@ ensure_attendance_column($conn, 'photo_out', 'VARCHAR(255) DEFAULT NULL');
 ensure_attendance_column($conn, 'lat_out', 'DECIMAL(11,8) DEFAULT NULL');
 ensure_attendance_column($conn, 'lng_out', 'DECIMAL(11,8) DEFAULT NULL');
 
+// Auto-migrate kolom intern_start_date di tabel users jika belum ada
+if ($conn) {
+    $chk_isd = @mysqli_query($conn, "SHOW COLUMNS FROM `users` LIKE 'intern_start_date'");
+    if ($chk_isd && mysqli_num_rows($chk_isd) === 0) {
+        @mysqli_query($conn, "ALTER TABLE `users` ADD COLUMN `intern_start_date` DATE DEFAULT NULL COMMENT 'Tanggal mulai wajib absen intern'");
+    }
+}
+
 // Helper: Hitung jarak GPS (Haversine formula dalam meter)
 function calculate_haversine_distance($lat1, $lon1, $lat2, $lon2)
 {
@@ -113,15 +121,16 @@ if ($action === 'get_location_config' && $method === 'GET') {
 // (?action=all_summary, GET)
 // --------------------------------------------------------------
 if ($action === 'all_summary' && $method === 'GET') {
-    // 1. Ambil semua akun intern dari database
+    // 1. Ambil semua akun intern dari database (termasuk intern_start_date)
     $interns = [];
-    $resUser = mysqli_query($conn, "SELECT id, username FROM users WHERE role = 'intern' ORDER BY id ASC");
+    $resUser = mysqli_query($conn, "SELECT id, username, intern_start_date FROM users WHERE role = 'intern' ORDER BY id ASC");
     if ($resUser) {
         while ($u = mysqli_fetch_assoc($resUser)) {
             $interns[] = [
-                'id' => $u['id'],
-                'name' => $u['username'],
-                'division' => 'Intern Kedayweb'
+                'id'             => $u['id'],
+                'name'           => $u['username'],
+                'division'       => 'Intern Kedayweb',
+                'intern_start_date' => $u['intern_start_date'] ?? null
             ];
         }
     }
@@ -137,26 +146,82 @@ if ($action === 'all_summary' && $method === 'GET') {
                 $attendanceMap[$uName] = [];
             }
             $attendanceMap[$uName][$dStr] = [
-                'date' => $dStr,
-                'status' => $row['status'],
-                'clockIn' => $row['clock_in'],
-                'clockOut' => $row['clock_out'],
-                'reason' => $row['reason'],
-                'location' => $row['location_in'],
-                'photo' => $row['photo_in'],
-                'lat' => isset($row['lat_in']) ? (float) $row['lat_in'] : null,
-                'lng' => isset($row['lng_in']) ? (float) $row['lng_in'] : null,
+                'date'        => $dStr,
+                'status'      => $row['status'],
+                'clockIn'     => $row['clock_in'],
+                'clockOut'    => $row['clock_out'],
+                'reason'      => $row['reason'],
+                'location'    => $row['location_in'],
+                'photo'       => $row['photo_in'],
+                'lat'         => isset($row['lat_in']) ? (float) $row['lat_in'] : null,
+                'lng'         => isset($row['lng_in']) ? (float) $row['lng_in'] : null,
                 'locationOut' => $row['location_out'] ?? null,
-                'photoOut' => $row['photo_out'] ?? null,
-                'latOut' => isset($row['lat_out']) ? (float) $row['lat_out'] : null,
-                'lngOut' => isset($row['lng_out']) ? (float) $row['lng_out'] : null,
+                'photoOut'    => $row['photo_out'] ?? null,
+                'latOut'      => isset($row['lat_out']) ? (float) $row['lat_out'] : null,
+                'lngOut'      => isset($row['lng_out']) ? (float) $row['lng_out'] : null,
             ];
         }
     }
 
     echo json_encode([
-        'interns' => $interns,
+        'interns'       => $interns,
         'attendanceMap' => $attendanceMap
+    ]);
+    exit;
+}
+
+// --------------------------------------------------------------
+// UPDATE TANGGAL MULAI WAJIB ABSEN INTERN (?action=update_start_date, POST)
+// Hanya admin/superadmin yang boleh mengakses
+// --------------------------------------------------------------
+if ($action === 'update_start_date' && $method === 'POST') {
+    // Hanya admin atau superadmin yang boleh
+    $allowedRoles = ['admin', 'superadmin'];
+    $currentRole  = $_SESSION['role'] ?? '';
+    if (!in_array($currentRole, $allowedRoles, true)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Akses ditolak']);
+        exit;
+    }
+
+    $input      = json_decode(file_get_contents('php://input'), true);
+    $user_id    = intval($input['user_id'] ?? 0);
+    $start_date = trim($input['start_date'] ?? '');
+
+    if ($user_id <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'user_id tidak valid']);
+        exit;
+    }
+
+    // Validasi format tanggal (YYYY-MM-DD) atau kosong (hapus tanggal)
+    if (!empty($start_date) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $start_date)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Format tanggal tidak valid (harus YYYY-MM-DD)']);
+        exit;
+    }
+
+    $setVal = !empty($start_date) ? $start_date : null;
+    $stmt = mysqli_prepare($conn, "UPDATE users SET intern_start_date = ? WHERE id = ? AND role = 'intern'");
+    if (!$stmt) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Gagal menyiapkan query: ' . mysqli_error($conn)]);
+        exit;
+    }
+    mysqli_stmt_bind_param($stmt, "si", $setVal, $user_id);
+    if (!mysqli_stmt_execute($stmt)) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Gagal menyimpan: ' . mysqli_error($conn)]);
+        exit;
+    }
+    $affected = mysqli_stmt_affected_rows($stmt);
+    mysqli_stmt_close($stmt);
+
+    echo json_encode([
+        'success'    => true,
+        'message'    => $affected > 0 ? 'Tanggal mulai absen berhasil disimpan' : 'User tidak ditemukan atau bukan intern',
+        'user_id'    => $user_id,
+        'start_date' => $setVal
     ]);
     exit;
 }

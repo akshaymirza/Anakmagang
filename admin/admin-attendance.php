@@ -701,15 +701,24 @@ if ($db_query) {
                 const dbUserAtt = dbAttendanceMap[i.name] || {};
                 let present = 0, late = 0, absent = 0;
 
+                // Tanggal mulai wajib absen intern (null = belum diset, semua hari dihitung)
+                const startDateStr = i.intern_start_date || null;
+
                 // Hitung dari kalender bulan yang sedang aktif
                 for (let d = 1; d <= daysInMonth; d++) {
                     const dateObj = new Date(calYear, calMonth, d);
                     const dateStr = fmt(dateObj);
                     const dow = dateObj.getDay();
-                    const isSunday = (dow === 0);
+                    const isSunday = (dow === 0); // Hanya Minggu yang libur
                     const isFuture = dateObj > today && dateStr !== todayStr;
                     const isToday = dateStr === todayStr;
                     const isPastDay = !isFuture && !isToday;
+
+                    // Skip hari Minggu saja (Sabtu tetap hari kerja)
+                    if (isSunday) continue;
+
+                    // Skip hari sebelum tanggal mulai magang intern
+                    if (startDateStr && dateStr < startDateStr) continue;
 
                     const r = dbUserAtt[dateStr];
 
@@ -717,7 +726,7 @@ if ($db_query) {
                         if (r.status === 'present') present++;
                         else if (r.status === 'late') late++;
                         else if (r.status === 'absent') absent++;
-                    } else if (!isSunday && !isFuture) {
+                    } else if (!isFuture) {
                         // Jika hari kerja lalu atau hari ini sudah lewat batas jam 14:00 dan tidak ada absen -> dihitung tidak masuk (alpha)
                         if (isPastDay || isTodayPastCutoff) {
                             absent++;
