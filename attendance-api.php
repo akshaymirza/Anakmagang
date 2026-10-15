@@ -48,13 +48,27 @@ if (!function_exists('ensure_attendance_column')) {
 ensure_attendance_column($conn, 'reason', 'TEXT DEFAULT NULL');
 ensure_attendance_column($conn, 'clock_out', 'VARCHAR(5) DEFAULT NULL');
 ensure_attendance_column($conn, 'location_in', 'TEXT DEFAULT NULL');
-ensure_attendance_column($conn, 'photo_in', 'VARCHAR(255) DEFAULT NULL');
+ensure_attendance_column($conn, 'photo_in', 'LONGTEXT DEFAULT NULL');
 ensure_attendance_column($conn, 'lat_in', 'DECIMAL(11,8) DEFAULT NULL');
 ensure_attendance_column($conn, 'lng_in', 'DECIMAL(11,8) DEFAULT NULL');
 ensure_attendance_column($conn, 'location_out', 'TEXT DEFAULT NULL');
-ensure_attendance_column($conn, 'photo_out', 'VARCHAR(255) DEFAULT NULL');
+ensure_attendance_column($conn, 'photo_out', 'LONGTEXT DEFAULT NULL');
 ensure_attendance_column($conn, 'lat_out', 'DECIMAL(11,8) DEFAULT NULL');
 ensure_attendance_column($conn, 'lng_out', 'DECIMAL(11,8) DEFAULT NULL');
+
+// Auto-migrate kolom photo_in & photo_out dari VARCHAR(255) ke LONGTEXT jika masih kecil
+// Railway ephemeral filesystem: simpan base64 langsung di DB agar tidak hilang saat container restart
+if ($conn) {
+    $cols = @mysqli_query($conn, "SHOW COLUMNS FROM `attendance` WHERE Field IN ('photo_in','photo_out')");
+    if ($cols) {
+        while ($col = mysqli_fetch_assoc($cols)) {
+            $colType = strtolower($col['Type'] ?? '');
+            if (strpos($colType, 'longtext') === false) {
+                @mysqli_query($conn, "ALTER TABLE `attendance` MODIFY COLUMN `{$col['Field']}` LONGTEXT DEFAULT NULL");
+            }
+        }
+    }
+}
 
 // Auto-migrate kolom intern_start_date di tabel users jika belum ada
 if ($conn) {
@@ -335,35 +349,15 @@ if ($action === 'save' && $method === 'POST') {
         }
     }
 
-    // -------- Simpan foto base64 ke file --------
-    if (!preg_match('/^data:image\/(\w+);base64,/', $photoData, $m)) {
+    // -------- Validasi format foto --------
+    if (!preg_match('/^data:image\/(\w+);base64,/', $photoData)) {
         http_response_code(400);
         echo json_encode(['error' => 'Format foto tidak valid']);
         exit;
     }
-    $ext = $m[1] === 'jpeg' ? 'jpg' : $m[1];
-    $base64Raw = substr($photoData, strpos($photoData, ',') + 1);
-    $binary = base64_decode($base64Raw);
-    if ($binary === false) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Gagal decode foto']);
-        exit;
-    }
-
-    $uploadDir = __DIR__ . '/uploads/attendance/';
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
-    }
-    $safeUsername = preg_replace('/[^A-Za-z0-9_\-]/', '_', $username);
-    $fileName = $safeUsername . '_' . $today . '_in_' . time() . '.' . $ext;
-    $filePath = $uploadDir . $fileName;
-    $relativePath = 'uploads/attendance/' . $fileName;
-
-    if (file_put_contents($filePath, $binary) === false) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Gagal menyimpan file foto']);
-        exit;
-    }
+    // Simpan base64 langsung ke database (tidak ke filesystem)
+    // Solusi Railway ephemeral storage: file di filesystem hilang saat container restart
+    $photoBase64 = $photoData; // simpan string data:image/... utuh
 
     // -------- Cek record hari ini sudah ada atau belum --------
     $sqlCheck = "SELECT id FROM attendance WHERE username = ? AND date = ? LIMIT 1";
@@ -375,11 +369,11 @@ if ($action === 'save' && $method === 'POST') {
     if ($existing) {
         $sql = "UPDATE attendance SET status=?, clock_in=?, photo_in=?, location_in=?, lat_in=?, lng_in=? WHERE id=?";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssssddi", $status, $time, $relativePath, $location, $lat, $lng, $existing['id']);
+        mysqli_stmt_bind_param($stmt, "ssssddi", $status, $time, $photoBase64, $location, $lat, $lng, $existing['id']);
     } else {
         $sql = "INSERT INTO attendance (username, date, status, clock_in, photo_in, location_in, lat_in, lng_in) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssssssdd", $username, $today, $status, $time, $relativePath, $location, $lat, $lng);
+        mysqli_stmt_bind_param($stmt, "ssssssdd", $username, $today, $status, $time, $photoBase64, $location, $lat, $lng);
     }
 
     if (!mysqli_stmt_execute($stmt)) {
@@ -390,12 +384,12 @@ if ($action === 'save' && $method === 'POST') {
 
     echo json_encode([
         'message' => 'Clock In berhasil disimpan',
-        'photo' => $relativePath,
-        'time' => $time,
-        'location' => $location,
-        'lat' => $lat,
-        'lng' => $lng,
-        'distance' => $internDist,
+        'photo'   => $photoBase64,
+        'time'    => $time,
+        'location'=> $location,
+        'lat'     => $lat,
+        'lng'     => $lng,
+        'distance'=> $internDist,
         'in_radius' => ($internDist === null || $internDist <= $zoneSettings['radius_meters']),
     ]);
     exit;
@@ -450,35 +444,14 @@ if ($action === 'save_out' && $method === 'POST') {
         }
     }
 
-    // Decode foto
-    if (!preg_match('/^data:image\/(\w+);base64,/', $photoData, $m)) {
+    // Validasi format foto
+    if (!preg_match('/^data:image\/(\w+);base64,/', $photoData)) {
         http_response_code(400);
         echo json_encode(['error' => 'Format foto tidak valid']);
         exit;
     }
-    $ext = $m[1] === 'jpeg' ? 'jpg' : $m[1];
-    $base64Raw = substr($photoData, strpos($photoData, ',') + 1);
-    $binary = base64_decode($base64Raw);
-    if ($binary === false) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Gagal decode foto']);
-        exit;
-    }
-
-    $uploadDir = __DIR__ . '/uploads/attendance/';
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
-    }
-    $safeUsername = preg_replace('/[^A-Za-z0-9_\-]/', '_', $username);
-    $fileName = $safeUsername . '_' . $today . '_out_' . time() . '.' . $ext;
-    $filePath = $uploadDir . $fileName;
-    $relativePath = 'uploads/attendance/' . $fileName;
-
-    if (file_put_contents($filePath, $binary) === false) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Gagal menyimpan file foto']);
-        exit;
-    }
+    // Simpan base64 langsung ke database (tidak ke filesystem)
+    $photoBase64 = $photoData;
 
     // Cek record hari ini sudah ada atau belum
     $sqlCheck = "SELECT id, clock_in, clock_out FROM attendance WHERE username = ? AND date = ? LIMIT 1";
@@ -503,7 +476,7 @@ if ($action === 'save_out' && $method === 'POST') {
 
     $sql = "UPDATE attendance SET clock_out=?, photo_out=?, location_out=?, lat_out=?, lng_out=? WHERE id=?";
     $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "sssddi", $time, $relativePath, $location, $lat, $lng, $existing['id']);
+    mysqli_stmt_bind_param($stmt, "sssddi", $time, $photoBase64, $location, $lat, $lng, $existing['id']);
 
     if (!mysqli_stmt_execute($stmt)) {
         http_response_code(500);
@@ -512,13 +485,13 @@ if ($action === 'save_out' && $method === 'POST') {
     }
 
     echo json_encode([
-        'message' => 'Clock Out berhasil disimpan',
-        'photo' => $relativePath,
-        'time' => $time,
-        'location' => $location,
-        'lat' => $lat,
-        'lng' => $lng,
-        'distance' => $internDist,
+        'message'   => 'Clock Out berhasil disimpan',
+        'photo'     => $photoBase64,
+        'time'      => $time,
+        'location'  => $location,
+        'lat'       => $lat,
+        'lng'       => $lng,
+        'distance'  => $internDist,
         'in_radius' => ($internDist === null || $internDist <= $zoneSettings['radius_meters']),
     ]);
     exit;

@@ -1476,7 +1476,7 @@ require_login(); ?>
                 }
                 if (hasInPhoto) {
                     inPhotoWrap.classList.remove('hidden');
-                    inPhoto.src = rec.photoIn || rec.photo;
+                    inPhoto.src = resolvePhotoSrc(rec.photoIn || rec.photo);
                 } else {
                     inPhotoWrap.classList.add('hidden');
                 }
@@ -1503,7 +1503,7 @@ require_login(); ?>
                 outBlock.classList.remove('hidden');
                 if (hasOutPhoto) {
                     outPhotoWrap.classList.remove('hidden');
-                    outPhoto.src = rec.photoOut;
+                    outPhoto.src = resolvePhotoSrc(rec.photoOut);
                 } else {
                     outPhotoWrap.classList.add('hidden');
                 }
@@ -1673,6 +1673,14 @@ require_login(); ?>
 
         function escHtml(str) {
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // Resolve photo URL: base64 langsung dipakai, path lama (data sebelum migrasi) perlu prefix absolut
+        function resolvePhotoSrc(val) {
+            if (!val) return '';
+            if (val.startsWith('data:')) return val;  // base64 baru
+            // Path lama seperti 'uploads/attendance/...' — buat absolute dari root
+            return '/' + val.replace(/^\/+/, '');
         }
 
         // Close modals on backdrop click
