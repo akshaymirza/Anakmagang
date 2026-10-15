@@ -48,7 +48,7 @@ if (!empty($conn) && !empty($_SESSION['user_id'])) {
     }
 }
 
-$is_tugas_active = in_array($active, ['tasks', 'internspace']);
+$is_tugas_active = in_array($active, ['projects', 'tasks', 'internspace']);
 $is_media_active = in_array($active, ['galeri', 'events', 'article', 'gallery', 'events_history']);
 ?>
 <!-- Mobile Sidebar Backdrop Overlay -->
@@ -76,12 +76,6 @@ $is_media_active = in_array($active, ['galeri', 'events', 'article', 'gallery', 
             <span data-i18n="nav_dashboard">Dashboard</span>
         </a>
 
-        <!-- Projects -->
-        <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'projects') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>projects.php">
-            <span class="material-symbols-outlined"<?php echo ($active === 'projects') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>folder_open</span>
-            <span data-i18n="nav_projects">Projects</span>
-        </a>
-
         <!-- Attendance -->
         <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'attendance') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>attendance.php">
             <span class="material-symbols-outlined"<?php echo ($active === 'attendance') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>event_available</span>
@@ -98,6 +92,10 @@ $is_media_active = in_array($active, ['galeri', 'events', 'article', 'gallery', 
                 <span id="arrow-dropdown-tugas-intern" class="material-symbols-outlined text-[18px] transition-transform duration-200 <?php echo $is_tugas_active ? 'rotate-180' : ''; ?>">expand_more</span>
             </button>
             <div id="dropdown-tugas-intern" class="<?php echo $is_tugas_active ? '' : 'hidden'; ?> pl-sm space-y-xs pt-xs border-l-2 border-outline-variant/40 ml-md my-xs">
+                <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'projects') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>projects.php">
+                    <span class="material-symbols-outlined text-[20px]"<?php echo ($active === 'projects') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>folder_open</span>
+                    <span data-i18n="nav_projects">Projects</span>
+                </a>
                 <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'tasks') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>tasks.php">
                     <span class="material-symbols-outlined text-[20px]"<?php echo ($active === 'tasks') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>view_kanban</span>
                     <span data-i18n="nav_tasks">Kanban Board</span>

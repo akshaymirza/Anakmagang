@@ -50,36 +50,36 @@ $wa_digits = preg_replace('/[^0-9]/', '', $footer_settings['whatsapp'] ?? '');
                 <ul class="space-y-2.5 text-xs">
                     <li>
                         <a href="<?php echo $footer_root; ?>index.php"
-                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-1 text-slate-600">
-                            <span class="material-symbols-outlined text-[14px] text-slate-400">chevron_right</span>
+                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 text-slate-600">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-blue-600"></span>
                             Beranda
                         </a>
                     </li>
                     <li>
                         <a href="<?php echo $footer_root; ?>dashboard.php"
-                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-1 text-slate-600">
-                            <span class="material-symbols-outlined text-[14px] text-slate-400">chevron_right</span>
+                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 text-slate-600">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-blue-600"></span>
                             Dashboard
                         </a>
                     </li>
                     <li>
                         <a href="<?php echo $footer_root; ?>tasks.php"
-                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-1 text-slate-600">
-                            <span class="material-symbols-outlined text-[14px] text-slate-400">chevron_right</span>
+                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 text-slate-600">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-blue-600"></span>
                             Kanban Board
                         </a>
                     </li>
                     <li>
                         <a href="<?php echo $footer_root; ?>projects.php"
-                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-1 text-slate-600">
-                            <span class="material-symbols-outlined text-[14px] text-slate-400">chevron_right</span>
+                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 text-slate-600">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-blue-600"></span>
                             Project Intern
                         </a>
                     </li>
                     <li>
                         <a href="<?php echo $footer_root; ?>galeryanakmagang.php"
-                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-1 text-slate-600">
-                            <span class="material-symbols-outlined text-[14px] text-slate-400">chevron_right</span>
+                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 text-slate-600">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-blue-600"></span>
                             Galeri Foto
                         </a>
                     </li>
@@ -93,22 +93,22 @@ $wa_digits = preg_replace('/[^0-9]/', '', $footer_settings['whatsapp'] ?? '');
                 <ul class="space-y-2.5 text-xs">
                     <li>
                         <a href="<?php echo $footer_root; ?>sop.php"
-                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-1 text-slate-600">
-                            <span class="material-symbols-outlined text-[14px] text-slate-400">chevron_right</span> SOP
-                            & Rules
+                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 text-slate-600">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-blue-600"></span>
+                            SOP & Rules
                         </a>
                     </li>
                     <li>
                         <a href="<?php echo $footer_root; ?>attendance.php"
-                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-1 text-slate-600">
-                            <span class="material-symbols-outlined text-[14px] text-slate-400">chevron_right</span>
+                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 text-slate-600">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-blue-600"></span>
                             Absensi Harian
                         </a>
                     </li>
                     <li>
                         <a href="<?php echo $footer_root; ?>event_history.php"
-                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-1 text-slate-600">
-                            <span class="material-symbols-outlined text-[14px] text-slate-400">chevron_right</span>
+                            class="hover:text-blue-600 hover:translate-x-1 transition-all duration-200 inline-flex items-center gap-2 text-slate-600">
+                            <span class="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-blue-600"></span>
                             Histori Event
                         </a>
                     </li>

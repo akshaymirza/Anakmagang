@@ -20,8 +20,8 @@ $admin_prefix = $is_in_admin_dir ? '' : 'admin/';
 $root_prefix = $is_in_admin_dir ? '../' : '';
 
 // Cek status aktif untuk masing-masing grup dropdown
-$is_tugas_active = in_array($active, ['tasks', 'internspace']);
-$is_admin_menu_active = in_array($active, ['applications', 'users', 'superadmin']);
+$is_tugas_active = in_array($active, ['projects', 'tasks', 'internspace']);
+$is_admin_menu_active = in_array($active, ['applications', 'users', 'certificates', 'certificate', 'superadmin']);
 $is_media_active = in_array($active, ['galeri', 'events', 'article', 'gallery', 'events_history']);
 ?>
 <!-- Mobile Sidebar Backdrop Overlay -->
@@ -63,6 +63,10 @@ $is_media_active = in_array($active, ['galeri', 'events', 'article', 'gallery', 
                 <span id="arrow-dropdown-tugas" class="material-symbols-outlined text-[18px] transition-transform duration-200 <?php echo $is_tugas_active ? 'rotate-180' : ''; ?>">expand_more</span>
             </button>
             <div id="dropdown-tugas" class="<?php echo $is_tugas_active ? '' : 'hidden'; ?> pl-sm space-y-xs pt-xs border-l-2 border-outline-variant/40 ml-md my-xs">
+                <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md transition-all duration-200 <?php echo ($active === 'projects') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>projects.php">
+                    <span class="material-symbols-outlined text-[20px]">folder_open</span>
+                    <span>Projects</span>
+                </a>
                 <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md transition-all duration-200 <?php echo ($active === 'tasks') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>tasks.php">
                     <span class="material-symbols-outlined text-[20px]">view_kanban</span>
                     <span>Kanban Board</span>
@@ -92,6 +96,10 @@ $is_media_active = in_array($active, ['galeri', 'events', 'article', 'gallery', 
                     <span class="material-symbols-outlined text-[20px]">people</span>
                     <span>Users</span>
                 </a>
+                <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md transition-all duration-200 <?php echo ($active === 'certificates' || $active === 'certificate') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $admin_prefix; ?>admin-certificates.php">
+                    <span class="material-symbols-outlined text-[20px]">workspace_premium</span>
+                    <span>Sertifikat</span>
+                </a>
                 <?php if (function_exists('is_superadmin') && is_superadmin()): ?>
                     <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md transition-all duration-200 <?php echo ($active === 'superadmin') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $admin_prefix; ?>superadmin.php">
                         <span class="material-symbols-outlined text-[20px]">verified_user</span>
@@ -105,12 +113,6 @@ $is_media_active = in_array($active, ['galeri', 'events', 'article', 'gallery', 
         <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md transition-all duration-200 <?php echo ($active === 'attendance') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $admin_prefix; ?>admin-attendance.php">
             <span class="material-symbols-outlined">event_available</span>
             <span>Kehadiran Intern</span>
-        </a>
-
-        <!-- Projects -->
-        <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md transition-all duration-200 <?php echo ($active === 'projects') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>projects.php">
-            <span class="material-symbols-outlined">folder_open</span>
-            <span>Projects</span>
         </a>
 
         <!-- Dropdown 3: Media & Artikel (Galeri, Event, Artikel) -->
@@ -137,12 +139,6 @@ $is_media_active = in_array($active, ['galeri', 'events', 'article', 'gallery', 
                 </a>
             </div>
         </div>
-
-        <!-- Sertifikat -->
-        <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md transition-all duration-200 <?php echo ($active === 'certificates') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $admin_prefix; ?>admin-certificates.php">
-            <span class="material-symbols-outlined">workspace_premium</span>
-            <span>Sertifikat</span>
-        </a>
 
         <!-- SOP -->
         <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md transition-all duration-200 <?php echo ($active === 'sop') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>sop.php">
