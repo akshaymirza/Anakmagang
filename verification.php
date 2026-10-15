@@ -392,7 +392,7 @@ include 'partials/topnav-public.php';
                                         <img id="cert-qr-img" alt="QR verifikasi sertifikat"/>
                                     </div>
                                     <!-- Watermark pelindung tanda tangan jika belum disetujui Super Admin -->
-                                    
+                                    <div id="cert-unapproved-covers" style="display:none;">
                                         <div class="cert-stamp-cover right">
                                             <span class="material-symbols-outlined cover-icon">lock</span>
                                             <span class="cover-title">Menunggu Approval</span>
