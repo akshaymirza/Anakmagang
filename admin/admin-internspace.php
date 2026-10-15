@@ -541,7 +541,7 @@ $userName = current_user_name();
                             ${escapeHtml(task.assignee || 'Belum Ditugaskan')}
                         </span>
                         <a href="../tasks.php?project=${encodeURIComponent(task.projectId)}" class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5 no-print">
-                            Kanban <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                            Cek<span class="material-symbols-outlined text-[14px]">open_in_new</span>
                         </a>
                     </div>
                 </div>
