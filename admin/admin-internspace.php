@@ -182,9 +182,10 @@ $userName = current_user_name();
                                 style="font-variation-settings: 'FILL' 1;">check_circle</span>
                         </div>
                     </div>
-                    <div class="flex items-baseline gap-2">
+                    <div class="flex items-baseline gap-1.5 flex-wrap">
                         <span id="stat-done-count" class="text-3xl font-bold font-geist text-slate-900">0</span>
-                        <span class="text-xs font-semibold text-green-600">Task Done</span>
+                        <span id="stat-total-tasks" class="text-lg font-bold font-geist text-slate-400">/ 0</span>
+                        <span class="text-xs font-semibold text-green-600 ml-1">Task Done</span>
                     </div>
                 </div>
 
@@ -477,6 +478,10 @@ $userName = current_user_name();
             const completionRate = totalFiltered > 0 ? Math.round((countDone / totalFiltered) * 100) : 0;
 
             document.getElementById('stat-done-count').textContent = countDone;
+            const totalTasksEl = document.getElementById('stat-total-tasks');
+            if (totalTasksEl) {
+                totalTasksEl.textContent = `/ ${totalFiltered}`;
+            }
             document.getElementById('stat-progress-count').textContent = countProgress;
             document.getElementById('stat-todo-count').textContent = countTodo;
             document.getElementById('stat-rate').textContent = `${completionRate}%`;
