@@ -240,15 +240,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $longitude        = (float) ($_POST['longitude'] ?? 114.369458);
         $radius_meters    = max(10, intval($_POST['radius_meters'] ?? 100));
         $is_strict        = isset($_POST['is_strict']) && $_POST['is_strict'] == '1' ? 1 : 0;
-        $check_in_time    = trim($_POST['check_in_time'] ?? '08:00');
-        $attendance_days_arr = $_POST['attendance_days'] ?? [];
-        $attendance_days  = implode(',', array_map('trim', (array)$attendance_days_arr));
+        $check_in_time          = trim($_POST['check_in_time']       ?? '08:00');
+        $late_threshold_time    = trim($_POST['late_threshold_time'] ?? '09:00');
+        $cutoff_time            = trim($_POST['cutoff_time']         ?? '14:00');
+        $check_out_time         = trim($_POST['check_out_time']      ?? '16:00');
+        $attendance_days_arr    = $_POST['attendance_days'] ?? [];
+        $attendance_days        = implode(',', array_map('trim', (array)$attendance_days_arr));
 
         if ($conn) {
             // Auto-migrate kolom baru jika belum ada
             $att_cols = [
-                'check_in_time'   => "VARCHAR(10) NOT NULL DEFAULT '08:00'",
-                'attendance_days' => "VARCHAR(100) NOT NULL DEFAULT 'Senin,Selasa,Rabu,Kamis,Jumat,Sabtu'"
+                'check_in_time'       => "VARCHAR(10) NOT NULL DEFAULT '08:00'",
+                'late_threshold_time' => "VARCHAR(10) NOT NULL DEFAULT '09:00'",
+                'cutoff_time'         => "VARCHAR(10) NOT NULL DEFAULT '14:00'",
+                'check_out_time'      => "VARCHAR(10) NOT NULL DEFAULT '16:00'",
+                'attendance_days'     => "VARCHAR(100) NOT NULL DEFAULT 'Senin,Selasa,Rabu,Kamis,Jumat,Sabtu'"
             ];
             foreach ($att_cols as $col_name => $col_def) {
                 $chk_col = @mysqli_query($conn, "SHOW COLUMNS FROM attendance_settings LIKE '$col_name'");
@@ -259,13 +265,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $chk = mysqli_query($conn, "SELECT id FROM attendance_settings WHERE id = 1 LIMIT 1");
             if ($chk && mysqli_num_rows($chk) > 0) {
-                $stmt = mysqli_prepare($conn, "UPDATE attendance_settings SET office_name=?, address=?, latitude=?, longitude=?, radius_meters=?, is_strict=?, check_in_time=?, attendance_days=? WHERE id = 1");
-                mysqli_stmt_bind_param($stmt, "ssddiiss", $office_name, $address, $latitude, $longitude, $radius_meters, $is_strict, $check_in_time, $attendance_days);
+                $stmt = mysqli_prepare($conn, "UPDATE attendance_settings SET office_name=?, address=?, latitude=?, longitude=?, radius_meters=?, is_strict=?, check_in_time=?, late_threshold_time=?, cutoff_time=?, check_out_time=?, attendance_days=? WHERE id = 1");
+                mysqli_stmt_bind_param($stmt, "ssddiisssss", $office_name, $address, $latitude, $longitude, $radius_meters, $is_strict, $check_in_time, $late_threshold_time, $cutoff_time, $check_out_time, $attendance_days);
                 mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
             } else {
-                $stmt = mysqli_prepare($conn, "INSERT INTO attendance_settings (id, office_name, address, latitude, longitude, radius_meters, is_strict, check_in_time, attendance_days) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)");
-                mysqli_stmt_bind_param($stmt, "ssddiiss", $office_name, $address, $latitude, $longitude, $radius_meters, $is_strict, $check_in_time, $attendance_days);
+                $stmt = mysqli_prepare($conn, "INSERT INTO attendance_settings (id, office_name, address, latitude, longitude, radius_meters, is_strict, check_in_time, late_threshold_time, cutoff_time, check_out_time, attendance_days) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                mysqli_stmt_bind_param($stmt, "ssddiisssss", $office_name, $address, $latitude, $longitude, $radius_meters, $is_strict, $check_in_time, $late_threshold_time, $cutoff_time, $check_out_time, $attendance_days);
                 mysqli_stmt_execute($stmt);
                 mysqli_stmt_close($stmt);
             }
@@ -273,7 +279,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Sync work_hours ke footer_settings.json secara otomatis
             $days_label = !empty($attendance_days) ? $attendance_days : 'Senin - Sabtu';
             $time_label = date('H:i', strtotime($check_in_time));
-            $new_work_hours = $days_label . ' (Masuk: ' . $time_label . ' WIB)';
+            $out_label  = !empty($check_out_time) ? date('H:i', strtotime($check_out_time)) : null;
+            $hours_text = $out_label ? "$time_label - $out_label WIB" : "Masuk: $time_label WIB";
+            $new_work_hours = $days_label . ' (' . $hours_text . ')';
             $curr_footer = get_superadmin_footer_settings($footer_settings_file);
             $curr_footer['work_hours'] = $new_work_hours;
             file_put_contents($footer_settings_file, json_encode($curr_footer, JSON_PRETTY_PRINT));
@@ -341,20 +349,26 @@ rsort($cohort_years);
 
 // Fetch Attendance Zone Settings
 $att_settings = [
-    'office_name'     => 'Kantor Kedayweb Banyuwangi',
-    'address'         => 'Jl. Tamansari, Tukangkayu, Banyuwangi, Jawa Timur',
-    'latitude'        => -8.21932100,
-    'longitude'       => 114.36945800,
-    'radius_meters'   => 100,
-    'is_strict'       => 1,
-    'check_in_time'   => '08:00',
-    'attendance_days' => 'Senin,Selasa,Rabu,Kamis,Jumat,Sabtu'
+    'office_name'           => 'Kantor Kedayweb Banyuwangi',
+    'address'               => 'Jl. Tamansari, Tukangkayu, Banyuwangi, Jawa Timur',
+    'latitude'              => -8.21932100,
+    'longitude'             => 114.36945800,
+    'radius_meters'         => 100,
+    'is_strict'             => 1,
+    'check_in_time'         => '08:00',
+    'late_threshold_time'   => '09:00',
+    'cutoff_time'           => '14:00',
+    'check_out_time'        => '16:00',
+    'attendance_days'       => 'Senin,Selasa,Rabu,Kamis,Jumat,Sabtu'
 ];
 if ($conn) {
     // Auto-migrate kolom baru jika belum ada (saat pertama load halaman)
     $att_cols_migrate = [
-        'check_in_time'   => "VARCHAR(10) NOT NULL DEFAULT '08:00'",
-        'attendance_days' => "VARCHAR(100) NOT NULL DEFAULT 'Senin,Selasa,Rabu,Kamis,Jumat,Sabtu'"
+        'check_in_time'       => "VARCHAR(10) NOT NULL DEFAULT '08:00'",
+        'late_threshold_time' => "VARCHAR(10) NOT NULL DEFAULT '09:00'",
+        'cutoff_time'         => "VARCHAR(10) NOT NULL DEFAULT '14:00'",
+        'check_out_time'      => "VARCHAR(10) NOT NULL DEFAULT '16:00'",
+        'attendance_days'     => "VARCHAR(100) NOT NULL DEFAULT 'Senin,Selasa,Rabu,Kamis,Jumat,Sabtu'"
     ];
     foreach ($att_cols_migrate as $col_name => $col_def) {
         $chk_col = @mysqli_query($conn, "SHOW COLUMNS FROM attendance_settings LIKE '$col_name'");
@@ -364,14 +378,17 @@ if ($conn) {
     }
     $resAtt = @mysqli_query($conn, "SELECT * FROM attendance_settings WHERE id = 1 LIMIT 1");
     if ($resAtt && $rAtt = mysqli_fetch_assoc($resAtt)) {
-        $att_settings['office_name']     = $rAtt['office_name'] ?? $att_settings['office_name'];
-        $att_settings['address']         = $rAtt['address'] ?? $att_settings['address'];
-        $att_settings['latitude']        = (float) ($rAtt['latitude'] ?? $att_settings['latitude']);
-        $att_settings['longitude']       = (float) ($rAtt['longitude'] ?? $att_settings['longitude']);
-        $att_settings['radius_meters']   = (int) ($rAtt['radius_meters'] ?? $att_settings['radius_meters']);
-        $att_settings['is_strict']       = (int) ($rAtt['is_strict'] ?? $att_settings['is_strict']);
-        $att_settings['check_in_time']   = $rAtt['check_in_time'] ?? $att_settings['check_in_time'];
-        $att_settings['attendance_days'] = $rAtt['attendance_days'] ?? $att_settings['attendance_days'];
+        $att_settings['office_name']           = $rAtt['office_name']           ?? $att_settings['office_name'];
+        $att_settings['address']               = $rAtt['address']               ?? $att_settings['address'];
+        $att_settings['latitude']              = (float) ($rAtt['latitude']        ?? $att_settings['latitude']);
+        $att_settings['longitude']             = (float) ($rAtt['longitude']       ?? $att_settings['longitude']);
+        $att_settings['radius_meters']         = (int)   ($rAtt['radius_meters']   ?? $att_settings['radius_meters']);
+        $att_settings['is_strict']             = (int)   ($rAtt['is_strict']       ?? $att_settings['is_strict']);
+        $att_settings['check_in_time']         = $rAtt['check_in_time']         ?? $att_settings['check_in_time'];
+        $att_settings['late_threshold_time']   = $rAtt['late_threshold_time']   ?? $att_settings['late_threshold_time'];
+        $att_settings['cutoff_time']           = $rAtt['cutoff_time']           ?? $att_settings['cutoff_time'];
+        $att_settings['check_out_time']        = $rAtt['check_out_time']        ?? $att_settings['check_out_time'];
+        $att_settings['attendance_days']       = $rAtt['attendance_days']       ?? $att_settings['attendance_days'];
     }
 }
 // Parse attendance_days ke array untuk tampilan checkbox
@@ -528,9 +545,21 @@ if ($conn) {
                             <span class="material-symbols-outlined text-sm text-indigo-600">radar</span>
                             Radius: <span id="badge-radius"><?php echo (int) $att_settings['radius_meters']; ?></span> m
                         </span>
-                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-violet-50 text-violet-800 border border-violet-200 flex items-center gap-1">
-                            <span class="material-symbols-outlined text-sm text-violet-600">schedule</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm text-emerald-600">schedule</span>
                             Masuk: <?php echo htmlspecialchars($att_settings['check_in_time'], ENT_QUOTES, 'UTF-8'); ?> WIB
+                        </span>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm text-amber-600">timer_off</span>
+                            Telat: <?php echo htmlspecialchars($att_settings['late_threshold_time'], ENT_QUOTES, 'UTF-8'); ?> WIB
+                        </span>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm text-rose-600">do_not_disturb_on</span>
+                            Batas Absen: <?php echo htmlspecialchars($att_settings['cutoff_time'], ENT_QUOTES, 'UTF-8'); ?> WIB
+                        </span>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-800 border border-red-200 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm text-red-600">logout</span>
+                            Pulang: <?php echo htmlspecialchars($att_settings['check_out_time'], ENT_QUOTES, 'UTF-8'); ?> WIB
                         </span>
                         <span class="px-3 py-1 rounded-full text-xs font-bold <?php echo $att_settings['is_strict'] ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'; ?> flex items-center gap-1">
                             <span class="material-symbols-outlined text-sm <?php echo $att_settings['is_strict'] ? 'text-emerald-600' : 'text-amber-600'; ?>">
@@ -612,20 +641,59 @@ if ($conn) {
                             </div>
                         </div>
 
-                        <!-- Jam Masuk & Hari Hadir -->
+                        <!-- Jam Masuk, Batas Telat & Hari Hadir -->
                         <div class="p-3.5 bg-surface-container-low rounded-xl border border-outline-variant">
-                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Jam Masuk &amp; Hari Wajib Hadir</label>
+                            <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Jam Kerja, Batas Telat &amp; Hari Wajib Hadir</label>
 
-                            <!-- Jam Masuk -->
-                            <div class="mb-4">
-                                <label class="block text-xs font-semibold text-on-surface mb-1.5 flex items-center gap-1.5">
-                                    <span class="material-symbols-outlined text-sm text-primary">schedule</span>
-                                    Jam Masuk
-                                </label>
-                                <input type="time" name="check_in_time" id="att-check-in-time"
-                                    value="<?php echo htmlspecialchars($att_settings['check_in_time'], ENT_QUOTES, 'UTF-8'); ?>"
-                                    class="w-40 px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary focus:outline-none"/>
-                                <p class="text-[11px] text-slate-400 mt-1">Jam ini akan tampil di footer website secara otomatis.</p>
+                            <!-- Grid 4 Kolom untuk Jam & Batas Absen -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
+                                <!-- 1. Jam Masuk (Hijau) -->
+                                <div class="bg-surface-container-lowest p-2.5 rounded-xl border border-emerald-300">
+                                    <label class="block text-xs font-semibold text-emerald-900 mb-1 flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-sm text-emerald-600">schedule</span>
+                                        Jam Masuk
+                                    </label>
+                                    <input type="time" name="check_in_time" id="att-check-in-time"
+                                        value="<?php echo htmlspecialchars($att_settings['check_in_time'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        class="w-full px-2.5 py-1.5 bg-emerald-50/50 border border-emerald-300 rounded-lg text-sm font-bold text-emerald-950 focus:ring-2 focus:ring-emerald-400 focus:outline-none"/>
+                                    <p class="text-[10px] text-emerald-700/80 mt-1">Mulai jam kerja normal.</p>
+                                </div>
+
+                                <!-- 2. Batas Jam Telat (Kuning) -->
+                                <div class="bg-surface-container-lowest p-2.5 rounded-xl border border-amber-300">
+                                    <label class="block text-xs font-semibold text-amber-900 mb-1 flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-sm text-amber-500">timer_off</span>
+                                        Batas Telat
+                                    </label>
+                                    <input type="time" name="late_threshold_time" id="att-late-threshold-time"
+                                        value="<?php echo htmlspecialchars($att_settings['late_threshold_time'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        class="w-full px-2.5 py-1.5 bg-amber-50/60 border border-amber-300 rounded-lg text-sm font-bold text-amber-950 focus:ring-2 focus:ring-amber-400 focus:outline-none"/>
+                                    <p class="text-[10px] text-amber-700 mt-1">Lewat jam ini = <strong>Terlambat</strong>.</p>
+                                </div>
+
+                                <!-- 3. Batas Akhir Absen (Merah ke Pink / Rose) -->
+                                <div class="bg-surface-container-lowest p-2.5 rounded-xl border border-rose-300">
+                                    <label class="block text-xs font-semibold text-rose-900 mb-1 flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-sm text-rose-500">do_not_disturb_on</span>
+                                        Batas Akhir Absen
+                                    </label>
+                                    <input type="time" name="cutoff_time" id="att-cutoff-time"
+                                        value="<?php echo htmlspecialchars($att_settings['cutoff_time'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        class="w-full px-2.5 py-1.5 bg-rose-50/60 border border-rose-300 rounded-lg text-sm font-bold text-rose-950 focus:ring-2 focus:ring-rose-400 focus:outline-none"/>
+                                    <p class="text-[10px] text-rose-700 mt-1">Lewat jam ini = <strong>Terkunci &amp; Tidak Masuk</strong>.</p>
+                                </div>
+
+                                <!-- 4. Jam Clock Out (Merah) -->
+                                <div class="bg-surface-container-lowest p-2.5 rounded-xl border border-red-300">
+                                    <label class="block text-xs font-semibold text-red-900 mb-1 flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-sm text-red-600">logout</span>
+                                        Jam Clock Out
+                                    </label>
+                                    <input type="time" name="check_out_time" id="att-check-out-time"
+                                        value="<?php echo htmlspecialchars($att_settings['check_out_time'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        class="w-full px-2.5 py-1.5 bg-red-50/60 border border-red-300 rounded-lg text-sm font-bold text-red-950 focus:ring-2 focus:ring-red-400 focus:outline-none"/>
+                                    <p class="text-[10px] text-red-700 mt-1">Target jam pulang intern.</p>
+                                </div>
                             </div>
 
                             <!-- Hari Hadir -->

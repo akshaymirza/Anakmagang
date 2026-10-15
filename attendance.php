@@ -415,7 +415,7 @@ require_login(); ?>
                                     <div class="text-xs sm:text-sm font-semibold text-on-surface">Hadir Tepat Waktu
                                     </div>
                                     <div class="text-[11px] sm:text-xs text-on-surface-variant">Masuk sebelum pukul
-                                        09:00</div>
+                                        <span id="label-ontime-threshold">09:00</span></div>
                                 </div>
                             </div>
                             <div class="flex items-center gap-3">
@@ -425,7 +425,7 @@ require_login(); ?>
                                 <div>
                                     <div class="text-xs sm:text-sm font-semibold text-on-surface">Terlambat</div>
                                     <div class="text-[11px] sm:text-xs text-on-surface-variant">Masuk setelah pukul
-                                        09:00</div>
+                                        <span id="label-late-threshold">09:00</span></div>
                                 </div>
                             </div>
                             <div class="flex items-center gap-3">
@@ -885,10 +885,18 @@ require_login(); ?>
     </div>
 
     <script>
-        // ============================================================
-        // DATA STORE
-        // ============================================================
-        const CUTOFF_HOUR = 9; // 09:00 = batas tepat waktu
+        function attPad(n) { return String(n).padStart(2, '0'); }
+        const CUTOFF_HOUR = 9; // 09:00 = batas tepat waktu (fallback)
+        function getCutoffTime() {
+            return (typeof officeGeofenceConfig !== 'undefined' && officeGeofenceConfig && officeGeofenceConfig.cutoff_time)
+                ? officeGeofenceConfig.cutoff_time
+                : '14:00';
+        }
+        function isPastCutoff() {
+            const now = new Date();
+            const nowTimeStr = `${attPad(now.getHours())}:${attPad(now.getMinutes())}`;
+            return nowTimeStr >= getCutoffTime();
+        }
 
         // Tentukan intern mana yang sedang dilihat: kalau ada ?intern= (dibuka Admin dari
         // admin-dashboard/admin-attendance), tampilkan punya intern itu dalam mode baca-saja.
@@ -1057,8 +1065,7 @@ require_login(); ?>
                 const cell = document.createElement('div');
                 cell.classList.add('cal-cell');
 
-                const now = new Date();
-                const isTodayPastCutoff = isToday && (now.getHours() >= 14);
+                const isTodayPastCutoff = isToday && isPastCutoff();
                 const isPastDay = !isFuture && !isToday;
 
                 if (isWeekend) {
@@ -1381,11 +1388,10 @@ require_login(); ?>
             let rec = getRecord(dateStr);
             if (!rec) {
                 const todayStr = formatDate(new Date());
-                const now = new Date();
-                const isTodayPastCutoff = (dateStr === todayStr) && (now.getHours() >= 14);
+                const isTodayPastCutoff = (dateStr === todayStr) && isPastCutoff();
                 const isPastDay = dateStr < todayStr;
                 if (isPastDay || isTodayPastCutoff) {
-                    rec = { date: dateStr, status: 'absent', clockIn: '', clockOut: '', reason: 'Tidak melakukan absensi hingga batas waktu (14:00)' };
+                    rec = { date: dateStr, status: 'absent', clockIn: '', clockOut: '', reason: `Tidak melakukan absensi hingga batas waktu (${getCutoffTime()} WIB)` };
                 } else {
                     return;
                 }
@@ -1870,6 +1876,18 @@ require_login(); ?>
                     const data = await res.json();
                     if (data && data.config) {
                         officeGeofenceConfig = data.config;
+                        if (officeGeofenceConfig.late_threshold_time) {
+                            const onTimeEl = document.getElementById('label-ontime-threshold');
+                            const lateEl = document.getElementById('label-late-threshold');
+                            if (onTimeEl) onTimeEl.textContent = officeGeofenceConfig.late_threshold_time;
+                            if (lateEl) lateEl.textContent = officeGeofenceConfig.late_threshold_time;
+                        }
+                        if (typeof updateAttendanceButtonsUI === 'function') {
+                            updateAttendanceButtonsUI();
+                        }
+                        if (typeof renderCalendar === 'function') {
+                            renderCalendar();
+                        }
                     }
                 }
             } catch (e) {
@@ -1913,8 +1931,8 @@ require_login(); ?>
                     showToast(`Anda sudah Clock In hari ini pada pukul ${formatTime12(todayRecord.clockIn)}.`, 'warning');
                     return;
                 }
-                if (now.getHours() >= 14) {
-                    showToast('Batas waktu Clock In (14:00) telah lewat. Anda dianggap Tidak Masuk.', 'warning');
+                if (isPastCutoff()) {
+                    showToast(`Batas waktu Clock In (${getCutoffTime()} WIB) telah lewat. Anda dianggap Tidak Masuk hari ini.`, 'warning');
                     return;
                 }
             }
@@ -2328,8 +2346,10 @@ require_login(); ?>
             const statusEl = document.getElementById('att-modal-status');
             const now = new Date();
             const timeStr = `${attPad(now.getHours())}:${attPad(now.getMinutes())}`;
-            const isClockOut = (currentAttType === 'out');
-            const status = now.getHours() >= CUTOFF_HOUR ? 'late' : 'present';
+            const lateThresh = (typeof officeGeofenceConfig !== 'undefined' && officeGeofenceConfig && officeGeofenceConfig.late_threshold_time)
+                ? officeGeofenceConfig.late_threshold_time
+                : `${attPad(CUTOFF_HOUR)}:00`;
+            const status = (timeStr > lateThresh) ? 'late' : 'present';
 
             if (confirmBtn) confirmBtn.disabled = true;
             if (statusEl) statusEl.textContent = 'Menyimpan ke database...';
@@ -2416,8 +2436,35 @@ require_login(); ?>
                 leaveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">event_busy</span>Ajukan Izin`;
             }
 
+            // Jika tercatat absent (misal karena melewati batas cutoff)
+            if (rec && rec.status === 'absent' && !rec.leaveType) {
+                inBtn.disabled = true;
+                inBtn.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 bg-red-50 text-red-700 border border-red-300 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold cursor-not-allowed transition-all opacity-90';
+                inBtn.title = rec.reason || `Batas akhir absen telah lewat (${getCutoffTime()} WIB). Anda tercatat Tidak Masuk.`;
+                inBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">block</span>Tidak Masuk (Lewat Batas)`;
+
+                outBtn.disabled = true;
+                outBtn.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-100 text-slate-400 border border-slate-200 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold cursor-not-allowed transition-all opacity-70';
+                outBtn.title = 'Tidak dapat Clock Out karena tidak hadir';
+                outBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">lock</span>Clock Out`;
+                return;
+            }
+
             if (!rec || !rec.clockIn) {
                 // Belum Clock In
+                if (isPastCutoff()) {
+                    inBtn.disabled = true;
+                    inBtn.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 bg-red-50 text-red-700 border border-red-300 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold cursor-not-allowed transition-all opacity-90';
+                    inBtn.title = `Batas akhir absen telah lewat (${getCutoffTime()} WIB). Anda tidak dapat Clock In dan dianggap Tidak Masuk.`;
+                    inBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">block</span>Tutup Absen (${getCutoffTime()})`;
+
+                    outBtn.disabled = true;
+                    outBtn.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-100 text-slate-400 border border-slate-200 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold cursor-not-allowed transition-all opacity-70';
+                    outBtn.title = 'Tidak dapat Clock Out karena tidak hadir';
+                    outBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">lock</span>Clock Out`;
+                    return;
+                }
+
                 inBtn.disabled = false;
                 inBtn.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold hover:opacity-90 transition-all shadow-sm active:scale-95';
                 inBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">login</span>Clock In`;

@@ -95,24 +95,50 @@ function calculate_haversine_distance($lat1, $lon1, $lat2, $lon2)
 function get_attendance_settings($conn)
 {
     $defaults = [
-        'office_name' => 'Kantor Kedayweb Banyuwangi',
-        'address' => 'Jl. Tamansari, Tukangkayu, Banyuwangi, Jawa Timur',
-        'latitude' => -8.21932100,
-        'longitude' => 114.36945800,
-        'radius_meters' => 100,
-        'is_strict' => 1
+        'office_name'         => 'Kantor Kedayweb Banyuwangi',
+        'address'             => 'Jl. Tamansari, Tukangkayu, Banyuwangi, Jawa Timur',
+        'latitude'            => -8.21932100,
+        'longitude'           => 114.36945800,
+        'radius_meters'       => 100,
+        'is_strict'           => 1,
+        'check_in_time'       => '08:00',
+        'late_threshold_time' => '09:00',
+        'cutoff_time'         => '14:00',
+        'check_out_time'      => '16:00',
+        'attendance_days'     => 'Senin,Selasa,Rabu,Kamis,Jumat,Sabtu'
     ];
     if (!$conn)
         return $defaults;
+
+    // Auto-migrate kolom baru jika belum ada
+    $cols = [
+        'check_in_time'       => "VARCHAR(10) NOT NULL DEFAULT '08:00'",
+        'late_threshold_time' => "VARCHAR(10) NOT NULL DEFAULT '09:00'",
+        'cutoff_time'         => "VARCHAR(10) NOT NULL DEFAULT '14:00'",
+        'check_out_time'      => "VARCHAR(10) NOT NULL DEFAULT '16:00'",
+        'attendance_days'     => "VARCHAR(100) NOT NULL DEFAULT 'Senin,Selasa,Rabu,Kamis,Jumat,Sabtu'"
+    ];
+    foreach ($cols as $col_name => $col_def) {
+        $chk = @mysqli_query($conn, "SHOW COLUMNS FROM `attendance_settings` LIKE '$col_name'");
+        if ($chk && mysqli_num_rows($chk) === 0) {
+            @mysqli_query($conn, "ALTER TABLE `attendance_settings` ADD COLUMN `$col_name` $col_def");
+        }
+    }
+
     $res = @mysqli_query($conn, "SELECT * FROM attendance_settings WHERE id = 1 LIMIT 1");
     if ($res && $row = mysqli_fetch_assoc($res)) {
         return [
-            'office_name' => $row['office_name'] ?? $defaults['office_name'],
-            'address' => $row['address'] ?? $defaults['address'],
-            'latitude' => (float) ($row['latitude'] ?? $defaults['latitude']),
-            'longitude' => (float) ($row['longitude'] ?? $defaults['longitude']),
-            'radius_meters' => (int) ($row['radius_meters'] ?? $defaults['radius_meters']),
-            'is_strict' => (int) ($row['is_strict'] ?? $defaults['is_strict'])
+            'office_name'         => $row['office_name']         ?? $defaults['office_name'],
+            'address'             => $row['address']             ?? $defaults['address'],
+            'latitude'            => (float) ($row['latitude']        ?? $defaults['latitude']),
+            'longitude'           => (float) ($row['longitude']       ?? $defaults['longitude']),
+            'radius_meters'       => (int)   ($row['radius_meters']   ?? $defaults['radius_meters']),
+            'is_strict'           => (int)   ($row['is_strict']       ?? $defaults['is_strict']),
+            'check_in_time'       => $row['check_in_time']         ?? $defaults['check_in_time'],
+            'late_threshold_time' => $row['late_threshold_time']   ?? $defaults['late_threshold_time'],
+            'cutoff_time'         => $row['cutoff_time']           ?? $defaults['cutoff_time'],
+            'check_out_time'      => $row['check_out_time']        ?? $defaults['check_out_time'],
+            'attendance_days'     => $row['attendance_days']       ?? $defaults['attendance_days']
         ];
     }
     return $defaults;
@@ -292,14 +318,16 @@ if ($action === 'save' && $method === 'POST') {
         exit;
     }
 
-    // -------- Aturan: lewat jam 14:00 dianggap tidak masuk --------
-    $nowHour = (int) date('H'); // Jam server saat ini
-    $CUTOFF_HOUR = 14;           // 14:00 = batas akhir absen
+    // Ambil pengaturan absensi & geofence dari database
+    $zoneSettings = get_attendance_settings($conn);
 
-    if ($nowHour >= $CUTOFF_HOUR) {
-        // Sudah lewat batas — catat sebagai absent otomatis (tanpa foto)
+    // -------- Aturan: lewat batas cutoff_time dianggap tidak masuk --------
+    $cutoffTime = !empty($zoneSettings['cutoff_time']) ? $zoneSettings['cutoff_time'] : '14:00';
+    $nowTime = date('H:i'); // Jam server saat ini (format HH:MM)
+
+    if (strcmp($nowTime, $cutoffTime) >= 0) {
+        // Sudah lewat batas akhir — catat sebagai absent otomatis (tanpa foto)
         $status = 'absent';
-        // Cek apakah sudah ada record hari ini
         $sqlChk = "SELECT id FROM attendance WHERE username = ? AND date = ? LIMIT 1";
         $stmChk = mysqli_prepare($conn, $sqlChk);
         mysqli_stmt_bind_param($stmChk, "ss", $username, $today);
@@ -307,14 +335,19 @@ if ($action === 'save' && $method === 'POST') {
         $existRec = mysqli_fetch_assoc(mysqli_stmt_get_result($stmChk));
 
         if (!$existRec) {
-            $sqlAbs = "INSERT INTO attendance (username, date, status, reason) VALUES (?, ?, 'absent', 'Tidak melakukan absensi sebelum pukul 14:00')";
+            $sqlAbs = "INSERT INTO attendance (username, date, status, reason) VALUES (?, ?, 'absent', ?)";
+            $reason = "Tidak melakukan absensi sebelum batas akhir (pukul {$cutoffTime} WIB)";
             $stmAbs = mysqli_prepare($conn, $sqlAbs);
-            mysqli_stmt_bind_param($stmAbs, "ss", $username, $today);
+            mysqli_stmt_bind_param($stmAbs, "sss", $username, $today, $reason);
             mysqli_stmt_execute($stmAbs);
         }
 
         http_response_code(403);
-        echo json_encode(['error' => 'Sudah melewati batas absen (14:00). Anda tercatat tidak masuk hari ini.', 'status' => 'absent']);
+        echo json_encode([
+            'error'       => "Sudah melewati batas akhir absen ({$cutoffTime} WIB). Anda tidak dapat melakukan Clock In dan otomatis tercatat Tidak Masuk hari ini.",
+            'status'      => 'absent',
+            'cutoff_time' => $cutoffTime
+        ]);
         exit;
     }
     if (empty($photoData)) {
@@ -324,8 +357,17 @@ if ($action === 'save' && $method === 'POST') {
     }
 
     // -------- Geofence Check (Validasi Titik Zona Koordinat Kantor) --------
-    $zoneSettings = get_attendance_settings($conn);
     $internDist = null;
+
+    // Evaluasi status terlambat secara otomatis berdasarkan batas waktu yang diatur Super Admin
+    if ($status !== 'absent' && $status !== 'permit') {
+        $lateThreshold = !empty($zoneSettings['late_threshold_time']) ? $zoneSettings['late_threshold_time'] : '09:00';
+        if (!empty($time) && strcmp($time, $lateThreshold) > 0) {
+            $status = 'late';
+        } else {
+            $status = 'present';
+        }
+    }
 
     if ($lat !== null && $lng !== null) {
         $internDist = calculate_haversine_distance($lat, $lng, $zoneSettings['latitude'], $zoneSettings['longitude']);
