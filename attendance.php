@@ -923,9 +923,25 @@ require_login(); ?>
 
                 if (isAdminPreview) {
                     const map = (json.attendanceMap && json.attendanceMap[activeInternName]) || {};
+                    // Normalisasi field dari all_summary: API mengembalikan 'photo', 'location', 'lat', 'lng'
+                    // tetapi popup mengharapkan 'photoIn', 'locationIn', 'latIn', 'lngIn'
                     attendanceData = Object.values(map).map(r => ({
-                        ...r,
-                        leaveType: r.leaveType || r.leave_type || null
+                        date:        r.date,
+                        status:      r.status,
+                        clockIn:     r.clockIn  || r.clock_in  || '',
+                        clockOut:    r.clockOut || r.clock_out || '',
+                        reason:      r.reason   || '',
+                        leaveType:   r.leaveType || r.leave_type || null,
+                        // Clock In proof – API mengirim 'photo' & 'location' untuk in
+                        photoIn:     r.photoIn   || r.photo        || '',
+                        locationIn:  r.locationIn || r.location    || '',
+                        latIn:       r.latIn  ?? r.lat  ?? null,
+                        lngIn:       r.lngIn  ?? r.lng  ?? null,
+                        // Clock Out proof
+                        photoOut:    r.photoOut    || '',
+                        locationOut: r.locationOut || '',
+                        latOut:      r.latOut ?? null,
+                        lngOut:      r.lngOut ?? null,
                     }));
                 } else {
                     const rows = Array.isArray(json) ? json : [];
@@ -1460,7 +1476,7 @@ require_login(); ?>
                 }
                 if (hasInPhoto) {
                     inPhotoWrap.classList.remove('hidden');
-                    inPhoto.src = rec.photoIn || rec.photo;
+                    inPhoto.src = resolvePhotoSrc(rec.photoIn || rec.photo);
                 } else {
                     inPhotoWrap.classList.add('hidden');
                 }
@@ -1487,7 +1503,7 @@ require_login(); ?>
                 outBlock.classList.remove('hidden');
                 if (hasOutPhoto) {
                     outPhotoWrap.classList.remove('hidden');
-                    outPhoto.src = rec.photoOut;
+                    outPhoto.src = resolvePhotoSrc(rec.photoOut);
                 } else {
                     outPhotoWrap.classList.add('hidden');
                 }
@@ -1657,6 +1673,14 @@ require_login(); ?>
 
         function escHtml(str) {
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // Resolve photo URL: base64 langsung dipakai, path lama (data sebelum migrasi) perlu prefix absolut
+        function resolvePhotoSrc(val) {
+            if (!val) return '';
+            if (val.startsWith('data:')) return val;  // base64 baru
+            // Path lama seperti 'uploads/attendance/...' — buat absolute dari root
+            return '/' + val.replace(/^\/+/, '');
         }
 
         // Close modals on backdrop click

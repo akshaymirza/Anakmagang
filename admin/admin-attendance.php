@@ -611,7 +611,7 @@ if ($db_query) {
                                 </div>
                                 ${record.photo ? `
                                 <div class="rounded-lg overflow-hidden border border-outline-variant/60 mb-2">
-                                    <img src="../${escHtml(record.photo)}" class="w-full h-32 object-cover cursor-pointer hover:opacity-95" alt="Foto Clock In" onclick="window.open(this.src, '_blank')">
+                                    <img src="${resolvePhotoSrc(record.photo)}" class="w-full h-32 object-cover cursor-pointer hover:opacity-95" alt="Foto Clock In" onclick="window.open(this.src, '_blank')">
                                 </div>` : ''}
                                 ${record.location ? `
                                 <div class="text-xs text-slate-600 flex items-start gap-1">
@@ -634,7 +634,7 @@ if ($db_query) {
                                 </div>
                                 ${record.photoOut ? `
                                 <div class="rounded-lg overflow-hidden border border-outline-variant/60 mb-2">
-                                    <img src="../${escHtml(record.photoOut)}" class="w-full h-32 object-cover cursor-pointer hover:opacity-95" alt="Foto Clock Out" onclick="window.open(this.src, '_blank')">
+                                    <img src="${resolvePhotoSrc(record.photoOut)}" class="w-full h-32 object-cover cursor-pointer hover:opacity-95" alt="Foto Clock Out" onclick="window.open(this.src, '_blank')">
                                 </div>` : ''}
                                 ${record.locationOut ? `
                                 <div class="text-xs text-slate-600 flex items-start gap-1">
@@ -674,6 +674,13 @@ if ($db_query) {
 
         function escHtml(str) {
             return String(str || '').replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
+        }
+
+        // Resolve photo URL: base64 baru bisa langsung dipakai, path lama perlu prefix '../'
+        function resolvePhotoSrc(val) {
+            if (!val) return '';
+            if (val.startsWith('data:')) return val;          // base64 langsung
+            return '../' + val;                               // path lama (backward compat)
         }
 
         function renderRoster() {
