@@ -2350,6 +2350,7 @@ require_login(); ?>
                 ? officeGeofenceConfig.late_threshold_time
                 : `${attPad(CUTOFF_HOUR)}:00`;
             const status = (timeStr > lateThresh) ? 'late' : 'present';
+            const isClockOut = (currentAttType === 'out');
 
             if (confirmBtn) confirmBtn.disabled = true;
             if (statusEl) statusEl.textContent = 'Menyimpan ke database...';
