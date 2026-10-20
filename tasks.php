@@ -76,12 +76,23 @@ if (is_admin()) {
                 </button>
                 <div class="flex flex-col sm:flex-row sm:items-center gap-md flex-wrap max-w-full">
                     <div>
-                        <div class="flex items-center gap-sm">
+                        <div class="flex items-center gap-sm flex-wrap">
                             <h2 id="project-title-display" data-no-i18n="true" class="font-headline-lg text-headline-lg text-on-surface font-bold">Memuat...</h2>
                             <span id="project-task-pill" class="bg-primary-fixed text-primary px-2.5 py-0.5 rounded-full text-xs font-bold">0 tasks</span>
+                            <span id="project-progress-pill" class="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center gap-1 border border-slate-200">
+                                <span class="material-symbols-outlined text-[13px]">analytics</span>
+                                <span id="project-progress-text">0% Selesai</span>
+                            </span>
                         </div>
-                    <p id="project-desc-display" data-no-i18n="true" class="font-body-sm text-body-sm text-on-surface-variant max-w-md truncate">Sprint Kanban Project Management</p>
-                </div>
+                        <div class="flex items-center gap-3">
+                            <p id="project-desc-display" data-no-i18n="true" class="font-body-sm text-body-sm text-on-surface-variant max-w-md truncate">Sprint Kanban Project Management</p>
+                            <div class="hidden sm:flex items-center gap-1.5 min-w-[120px] max-w-[160px]" title="Progress Project">
+                                <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                    <div id="project-progress-bar" class="bg-primary h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 <!-- Project Dropdown Switcher -->
                 <div class="flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm max-w-full overflow-hidden">
                     <label for="project-selector" class="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Project:</label>
@@ -386,6 +397,29 @@ if (is_admin()) {
             }
             if (pillElem) {
                 pillElem.textContent = `${(project.tasks || []).length} tasks`;
+            }
+
+            if (window.ProjectStore && ProjectStore.getProgress) {
+                const prog = ProjectStore.getProgress(project);
+                const progressText = document.getElementById('project-progress-text');
+                const progressPill = document.getElementById('project-progress-pill');
+                const progressBar = document.getElementById('project-progress-bar');
+                if (progressText) progressText.textContent = `${prog.percent}% Selesai`;
+                if (progressBar) {
+                    progressBar.style.width = `${prog.percent}%`;
+                    progressBar.className = prog.percent === 100 
+                        ? 'bg-emerald-500 h-full rounded-full transition-all duration-500' 
+                        : 'bg-primary h-full rounded-full transition-all duration-500';
+                }
+                if (progressPill) {
+                    if (prog.percent === 100) {
+                        progressPill.className = 'bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center gap-1 border border-emerald-200';
+                    } else if (prog.percent > 0) {
+                        progressPill.className = 'bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center gap-1 border border-blue-200';
+                    } else {
+                        progressPill.className = 'bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center gap-1 border border-slate-200';
+                    }
+                }
             }
 
             ['todo', 'inprogress', 'underreview', 'done'].forEach(col => {

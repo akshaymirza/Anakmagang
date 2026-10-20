@@ -154,6 +154,30 @@ const ProjectStore = {
     if (lower.includes('review')) return 'underreview';
     if (lower.includes('done')) return 'done';
     return 'todo';
+  },
+
+  // Hitung persentase dan statistik progress project
+  getProgress(projectOrId) {
+    const project = typeof projectOrId === 'object' && projectOrId !== null
+      ? projectOrId
+      : this.get(projectOrId);
+    if (!project) return { percent: 0, done: 0, total: 0, inprogress: 0, todo: 0 };
+    const tasks = project.tasks || [];
+    const total = tasks.length;
+    if (total === 0) return { percent: 0, done: 0, total: 0, inprogress: 0, todo: 0 };
+
+    let done = 0;
+    let inprogress = 0;
+    let todo = 0;
+    tasks.forEach(t => {
+      const s = this.normalizeStatus(t.status);
+      if (s === 'done') done++;
+      else if (s === 'inprogress' || s === 'underreview') inprogress++;
+      else todo++;
+    });
+
+    const percent = Math.round((done / total) * 100);
+    return { percent, done, total, inprogress, todo };
   }
 };
 

@@ -277,9 +277,11 @@ $userName = current_user_name();
                 `;
             } else {
                 projectsContainer.innerHTML = displayProjects.map(p => {
+                    const prog = window.ProjectStore && ProjectStore.getProgress ? ProjectStore.getProgress(p) : null;
                     const tasks = p.tasks || [];
-                    const doneCount = tasks.filter(t => (ProjectStore.normalizeStatus ? ProjectStore.normalizeStatus(t.status) : t.status) === 'done').length;
-                    const percent = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0;
+                    const doneCount = prog ? prog.done : tasks.filter(t => (ProjectStore.normalizeStatus ? ProjectStore.normalizeStatus(t.status) : t.status) === 'done').length;
+                    const percent = prog ? prog.percent : (tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0);
+                    const barColor = percent === 100 ? 'bg-emerald-500' : 'bg-primary';
 
                     return `
                         <div class="bg-surface-container-lowest border border-outline-variant rounded-2xl p-4 shadow-xs hover:border-primary transition-colors">
@@ -288,16 +290,19 @@ $userName = current_user_name();
                                     <span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">folder</span>
                                     <h4 class="font-bold text-slate-900 text-sm">${escapeHtml(p.name)}</h4>
                                 </div>
-                                <span class="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">${tasks.length} tasks</span>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs font-bold ${percent === 100 ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-slate-600 bg-slate-100'} px-2 py-0.5 rounded-full">${percent}%</span>
+                                    <span class="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">${tasks.length} tasks</span>
+                                </div>
                             </div>
                             <p class="text-xs text-slate-500 mb-3 line-clamp-2">${escapeHtml(p.description || 'Proyek aktif Kanban')}</p>
                             <div class="space-y-1">
                                 <div class="flex justify-between text-[11px] font-semibold text-slate-600">
                                     <span>Progress Selesai</span>
-                                    <span>${percent}% (${doneCount}/${tasks.length})</span>
+                                    <span class="${percent === 100 ? 'text-emerald-700 font-bold' : ''}">${percent}% (${doneCount}/${tasks.length})</span>
                                 </div>
                                 <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                                    <div class="bg-primary h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                                    <div class="${barColor} h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
                                 </div>
                             </div>
                         </div>

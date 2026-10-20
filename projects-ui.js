@@ -106,19 +106,50 @@ function renderProjects(filterQuery) {
     <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
       ${projects.length ? projects.map(p => {
         const title = p.title || p.name || 'Untitled';
-        const completedTasks = (p.tasks || []).filter(t => t.status === 'done').length;
+        const prog = ProjectStore.getProgress ? ProjectStore.getProgress(p) : { percent: 0, done: 0, total: (p.tasks || []).length };
+        const percent = prog.percent;
+        const completedTasks = prog.done;
+        const totalTasks = prog.total;
+
+        let badgeColor = 'bg-slate-100 text-slate-700 border-slate-200';
+        let barColor = 'bg-primary';
+        if (percent === 100) {
+          badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+          barColor = 'bg-emerald-500';
+        } else if (percent > 0) {
+          badgeColor = 'bg-blue-50 text-blue-700 border-blue-200';
+        }
+
         return `
           <article class="card rounded-2xl border border-line bg-white p-5 hover-card-shadow flex flex-col justify-between">
             <div>
               <div class="flex items-start justify-between">
                 <span class="material-symbols-outlined rounded-xl bg-blue-100 p-3 text-primary">folder</span>
                 <div class="flex items-center gap-2">
-                  <span class="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">${completedTasks}/${p.tasks ? p.tasks.length : 0} done</span>
+                  <span class="rounded-full border px-2.5 py-1 text-xs font-bold ${badgeColor} flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">${percent === 100 ? 'check_circle' : 'timelapse'}</span>
+                    <span>${percent}%</span>
+                  </span>
                 </div>
               </div>
               <h3 class="mt-4 font-geist text-xl font-bold text-on-surface">${escape(title)}</h3>
               <p class="mt-2 min-h-12 text-sm text-slate-600">${escape(p.description || 'Belum ada deskripsi project.')}</p>
-              <p class="mt-3 text-xs text-slate-500">Dibuat tanggal ${new Date(p.created_at || Date.now()).toLocaleDateString('id-ID')}</p>
+
+              <!-- Progress Bar & Persentase -->
+              <div class="mt-4 pt-3 border-t border-slate-100 space-y-1.5">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                  <span class="text-slate-500 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[15px] text-primary">analytics</span>
+                    Progress Selesai
+                  </span>
+                  <span class="${percent === 100 ? 'text-emerald-700 font-extrabold' : 'text-slate-800 font-bold'}">${percent}% (${completedTasks}/${totalTasks} selesai)</span>
+                </div>
+                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden p-0.5">
+                  <div class="${barColor} h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                </div>
+              </div>
+
+              <p class="mt-3 text-xs text-slate-400">Dibuat tanggal ${new Date(p.created_at || Date.now()).toLocaleDateString('id-ID')}</p>
             </div>
             <div class="mt-5 flex items-center gap-2 border-t border-line pt-4">
               <a href="tasks.php?project=${encodeURIComponent(p.id)}" onclick="ProjectStore.setActiveProjectId('${p.id}')" class="flex-1 h-9 rounded-lg bg-primary px-3 text-sm font-bold text-white hover:bg-primary-container transition-colors flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap">
@@ -176,7 +207,12 @@ function renderBoard(filterQuery) {
     String(t.status || '').toLowerCase().includes(q)
   ) : allTasks;
 
-  const completedTasks = allTasks.filter(t => t.status === 'done').length;
+  const prog = ProjectStore.getProgress ? ProjectStore.getProgress(project) : { percent: 0, done: 0, total: allTasks.length, inprogress: 0, todo: 0 };
+  const percent = prog.percent;
+  const completedTasks = prog.done;
+  const inProgressTasks = prog.inprogress;
+  const todoTasks = prog.todo;
+  const totalTasks = prog.total;
 
   app.innerHTML = `
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -196,6 +232,41 @@ function renderBoard(filterQuery) {
       </div>
     </div>
 
+    <!-- Project Progress Summary Card -->
+    <div class="mb-6 rounded-2xl border border-line bg-white p-5 shadow-xs">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
+        <div>
+          <div class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+            <span class="material-symbols-outlined text-primary text-[18px]">trending_up</span>
+            <span>Persentase Progress Proyek</span>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="font-geist text-3xl font-extrabold ${percent === 100 ? 'text-emerald-600' : 'text-slate-900'}">${percent}%</span>
+            <span class="text-xs text-slate-500 font-medium">(${completedTasks} dari ${totalTasks} tugas telah selesai)</span>
+          </div>
+        </div>
+        <!-- Mini Stats Grid -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <div class="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-center min-w-[70px]">
+            <span class="block text-[10px] font-bold text-slate-400 uppercase">To Do</span>
+            <span class="text-sm font-bold text-slate-700">${todoTasks}</span>
+          </div>
+          <div class="px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-center min-w-[70px]">
+            <span class="block text-[10px] font-bold text-blue-500 uppercase">Proses</span>
+            <span class="text-sm font-bold text-blue-700">${inProgressTasks}</span>
+          </div>
+          <div class="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-center min-w-[70px]">
+            <span class="block text-[10px] font-bold text-emerald-500 uppercase">Selesai</span>
+            <span class="text-sm font-bold text-emerald-700">${completedTasks}</span>
+          </div>
+        </div>
+      </div>
+      <!-- Progress Bar -->
+      <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden p-0.5">
+        <div class="${percent === 100 ? 'bg-emerald-500' : 'bg-primary'} h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+      </div>
+    </div>
+
     <!-- Task List for this Project -->
     <div class="rounded-2xl border border-line bg-white p-6 shadow-xs">
       <div class="flex items-center justify-between mb-4 border-b border-line pb-3">
@@ -203,7 +274,7 @@ function renderBoard(filterQuery) {
           <span class="material-symbols-outlined text-primary">task</span>
           Daftar Tugas Project (${tasks.length}/${allTasks.length})
         </h3>
-        <span class="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">${completedTasks} Selesai</span>
+        <span class="rounded-full ${percent === 100 ? 'bg-emerald-100 text-emerald-700' : 'bg-green-100 text-green-700'} px-3 py-1 text-xs font-bold">${percent}% Selesai (${completedTasks}/${totalTasks})</span>
       </div>
 
       ${tasks.length ? `
