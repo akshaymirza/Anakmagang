@@ -302,7 +302,7 @@ if (is_admin()) {
   <div id="modal" class="modal fixed inset-0 z-50 hidden items-center justify-center p-4"></div>
   <div id="toast" class="fixed bottom-5 right-5 z-[60] hidden rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white"></div>
   <?php include 'partials/confirm-modal.php'; ?>
-  <script src="project-store.js"></script>
-  <script src="projects-ui.js"></script>
+  <script src="project-store.js?v=<?php echo time(); ?>"></script>
+  <script src="projects-ui.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

@@ -17,9 +17,9 @@ $userName = current_user_name();
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="shared-config.js"></script>
-    <script src="project-store.js"></script>
-    <script src="intern-store.js"></script>
+    <script src="shared-config.js?v=<?php echo time(); ?>"></script>
+    <script src="project-store.js?v=<?php echo time(); ?>"></script>
+    <script src="intern-store.js?v=<?php echo time(); ?>"></script>
     <link rel="stylesheet" href="style.css">
     <style>
         body { font-family: Inter, sans-serif; }
@@ -290,10 +290,9 @@ $userName = current_user_name();
                                     <span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">folder</span>
                                     <h4 class="font-bold text-slate-900 text-sm">${escapeHtml(p.name)}</h4>
                                 </div>
-                                <div class="flex items-center gap-1.5">
-                                    <span class="text-xs font-bold ${percent === 100 ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-slate-600 bg-slate-100'} px-2 py-0.5 rounded-full">${percent}%</span>
-                                    <span class="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">${tasks.length} tasks</span>
-                                </div>
+                                <span class="text-xs font-bold ${percent === 100 ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-slate-600 bg-slate-100'} px-2.5 py-0.5 rounded-full">
+                                    ${percent === 100 ? 'Selesai' : `${tasks.length} tasks`}
+                                </span>
                             </div>
                             <p class="text-xs text-slate-500 mb-3 line-clamp-2">${escapeHtml(p.description || 'Proyek aktif Kanban')}</p>
                             <div class="space-y-1">

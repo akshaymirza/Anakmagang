@@ -126,9 +126,8 @@ function renderProjects(filterQuery) {
               <div class="flex items-start justify-between">
                 <span class="material-symbols-outlined rounded-xl bg-blue-100 p-3 text-primary">folder</span>
                 <div class="flex items-center gap-2">
-                  <span class="rounded-full border px-2.5 py-1 text-xs font-bold ${badgeColor} flex items-center gap-1">
-                    <span class="material-symbols-outlined text-[14px]">${percent === 100 ? 'check_circle' : 'timelapse'}</span>
-                    <span>${percent}%</span>
+                  <span class="rounded-full ${percent === 100 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600'} px-2.5 py-1 text-xs font-bold">
+                    ${percent === 100 ? 'Selesai' : `${totalTasks} tasks`}
                   </span>
                 </div>
               </div>

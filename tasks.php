@@ -562,6 +562,9 @@ if (is_admin()) {
 
         function filterKanban() {
             const query = (document.getElementById('kanban-search')?.value || '').toLowerCase().trim();
+            const cols = ['todo', 'inprogress', 'underreview', 'done'];
+            const visibleCounts = { todo: 0, inprogress: 0, underreview: 0, done: 0 };
+
             document.querySelectorAll('.task-card').forEach(card => {
                 const title = (card.querySelector('.task-title')?.textContent || '').toLowerCase();
                 const desc = (card.querySelector('.task-desc')?.textContent || '').toLowerCase();
@@ -570,7 +573,50 @@ if (is_admin()) {
                 const matchesQuery = !query || title.includes(query) || desc.includes(query);
                 const matchesPriority = currentPriorityFilter === 'All' || priority === currentPriorityFilter;
 
-                card.style.display = (matchesQuery && matchesPriority) ? 'flex' : 'none';
+                const isVisible = Boolean(matchesQuery && matchesPriority);
+                card.style.display = isVisible ? 'flex' : 'none';
+
+                if (isVisible) {
+                    const parentCol = card.parentElement;
+                    if (parentCol && parentCol.id) {
+                        const colKey = parentCol.id.replace('-col', '');
+                        if (visibleCounts[colKey] !== undefined) {
+                            visibleCounts[colKey]++;
+                        }
+                    }
+                }
+            });
+
+            // Update badge hitungan per kolom dan empty state sesuai filter aktif
+            cols.forEach(col => {
+                const countElem = document.getElementById(col + '-count');
+                if (countElem) {
+                    countElem.textContent = visibleCounts[col];
+                }
+
+                const colElem = document.getElementById(col + '-col');
+                if (colElem) {
+                    const existingEmptyState = colElem.querySelector('.empty-state');
+                    if (visibleCounts[col] === 0) {
+                        const label = col === 'todo' ? 'To Do' : col === 'inprogress' ? 'In Progress' : col === 'underreview' ? 'Under Review' : 'Done';
+                        const filterText = currentPriorityFilter !== 'All' ? `${currentPriorityFilter} ` : '';
+                        const msg = (currentPriorityFilter !== 'All' || query)
+                            ? `No ${filterText}tasks in ${label}`
+                            : `No tasks in ${label}`;
+
+                        if (!existingEmptyState) {
+                            const emptyDiv = document.createElement('div');
+                            emptyDiv.className = 'rounded-xl border border-dashed border-outline-variant p-6 text-center text-xs text-on-surface-variant/60 empty-state';
+                            emptyDiv.textContent = msg;
+                            colElem.appendChild(emptyDiv);
+                        } else {
+                            existingEmptyState.textContent = msg;
+                            existingEmptyState.style.display = 'block';
+                        }
+                    } else if (existingEmptyState) {
+                        existingEmptyState.remove();
+                    }
+                }
             });
         }
 
