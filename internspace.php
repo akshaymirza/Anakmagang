@@ -318,8 +318,9 @@ $userRole = current_user_role();
                             <span class="material-symbols-outlined text-[16px]">print</span> Cetak PDF
                         </button>
                         <a href="tasks.php"
-                            class="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline whitespace-nowrap">
-                            Buka Papan Kanban <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+                            class="group inline-flex items-center gap-1.5 text-xs font-bold text-primary whitespace-nowrap">
+                            <span class="group-hover:underline underline-offset-4 decoration-2 decoration-primary/80">Buka Papan Kanban</span>
+                            <span class="material-symbols-outlined text-[15px] no-underline transition-transform duration-200 group-hover:translate-x-1 select-none">arrow_forward</span>
                         </a>
                     </div>
                 </div>
@@ -518,8 +519,9 @@ $userRole = current_user_role();
                             <span class="material-symbols-outlined text-[15px] text-slate-400">person</span>
                             ${escapeHtml(task.assignee || CURRENT_USER)}
                         </span>
-                        <a href="tasks.php?project=${encodeURIComponent(task.projectId)}" class="text-xs font-bold text-primary hover:underline flex items-center gap-0.5 no-print">
-                            Kanban <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                        <a href="tasks.php?project=${encodeURIComponent(task.projectId)}" class="group text-xs font-bold text-primary flex items-center gap-1 no-print">
+                            <span class="group-hover:underline underline-offset-2">Kanban</span>
+                            <span class="material-symbols-outlined text-[14px] no-underline transition-transform duration-200 group-hover:translate-x-0.5 select-none">open_in_new</span>
                         </a>
                     </div>
                 </div>

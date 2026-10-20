@@ -216,9 +216,9 @@ function renderBoard(filterQuery) {
   app.innerHTML = `
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <a href="projects.php" class="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline mb-2">
-          <span class="material-symbols-outlined text-lg">arrow_back</span>
-          Semua Project
+        <a href="projects.php" class="group inline-flex items-center gap-1.5 text-sm font-semibold text-primary mb-2">
+          <span class="material-symbols-outlined text-lg no-underline transition-transform duration-200 group-hover:-translate-x-1 select-none">arrow_back</span>
+          <span class="group-hover:underline underline-offset-4 decoration-2 decoration-primary/80">Semua Project</span>
         </a>
         <h2 class="font-geist text-3xl font-bold text-on-surface">${escape(title)}</h2>
         <p class="mt-1 text-slate-600">${escape(project.description || 'Project terhubung ke MySQL.')}</p>
@@ -303,8 +303,9 @@ function renderBoard(filterQuery) {
                 </div>
                 <div class="pt-2 border-t border-line flex items-center justify-between text-xs text-slate-500">
                   <span>Assignee: <strong class="text-slate-700">${escape(t.assignee || 'Belum diassign')}</strong></span>
-                  <a href="tasks.php?project=${encodeURIComponent(project.id)}" class="text-primary font-bold hover:underline flex items-center gap-1">
-                    Buka di Kanban <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                  <a href="tasks.php?project=${encodeURIComponent(project.id)}" class="group text-primary font-bold flex items-center gap-1">
+                    <span class="group-hover:underline underline-offset-2">Buka di Kanban</span>
+                    <span class="material-symbols-outlined text-[14px] no-underline transition-transform duration-200 group-hover:translate-x-0.5 select-none">open_in_new</span>
                   </a>
                 </div>
               </div>

@@ -20,11 +20,43 @@ $userName = current_user_name();
     <script src="shared-config.js?v=<?php echo time(); ?>"></script>
     <script src="project-store.js?v=<?php echo time(); ?>"></script>
     <script src="intern-store.js?v=<?php echo time(); ?>"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
     <style>
         body { font-family: Inter, sans-serif; }
         .font-geist { font-family: Geist, sans-serif; }
         .glass-card { background: rgba(255, 255, 255, 0.95); }
+
+        /* Action Links with Arrow (Fix mencong / uneven underline) */
+        .link-with-arrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            text-decoration: none !important;
+            cursor: pointer;
+            transition: color 0.15s ease;
+        }
+        .link-with-arrow .link-text {
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .link-with-arrow:hover .link-text,
+        .link-with-arrow:focus .link-text {
+            text-decoration: underline;
+            text-underline-offset: 4px;
+            text-decoration-thickness: 1.5px;
+        }
+        .link-with-arrow .material-symbols-outlined {
+            text-decoration: none !important;
+            display: inline-block;
+            line-height: 1;
+            vertical-align: middle;
+            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .link-with-arrow:hover .material-symbols-outlined,
+        .link-with-arrow:focus .material-symbols-outlined {
+            text-decoration: none !important;
+            transform: translateX(4px);
+        }
     </style>
 </head>
 <body class="bg-background text-on-surface font-body-md flex h-screen overflow-hidden">
@@ -153,8 +185,9 @@ $userName = current_user_name();
                         <span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">folder</span>
                         Daftar Proyek Aktif
                     </h3>
-                    <a href="projects.php" class="text-xs font-bold text-primary hover:underline flex items-center gap-1">
-                        Kelola Proyek <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+                    <a href="projects.php" class="link-with-arrow text-xs font-bold text-primary">
+                        <span class="link-text">Kelola Proyek</span>
+                        <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
                     </a>
                 </div>
                 <div id="dash-projects-list" class="space-y-3">
@@ -169,8 +202,9 @@ $userName = current_user_name();
                         <span class="material-symbols-outlined text-primary text-[20px]">view_kanban</span>
                         Tugas Terkini Anda
                     </h3>
-                    <a href="tasks.php" class="text-xs font-bold text-primary hover:underline flex items-center gap-1">
-                        Buka Kanban <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+                    <a href="tasks.php" class="link-with-arrow text-xs font-bold text-primary">
+                        <span class="link-text">Buka Kanban</span>
+                        <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
                     </a>
                 </div>
                 <div id="dash-tasks-list" class="space-y-3">
@@ -351,8 +385,9 @@ $userName = current_user_name();
                             </div>
                             <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
                                 <span>Assignee: <strong>${escapeHtml(t.assignee || CURRENT_USERNAME)}</strong></span>
-                                <a href="tasks.php?project=${encodeURIComponent(t.projectId)}" class="font-bold text-primary hover:underline flex items-center gap-0.5">
-                                    Buka <span class="material-symbols-outlined text-[12px]">open_in_new</span>
+                                <a href="tasks.php?project=${encodeURIComponent(t.projectId)}" class="group font-bold text-primary flex items-center gap-1">
+                                    <span class="group-hover:underline underline-offset-2">Buka</span>
+                                    <span class="material-symbols-outlined text-[13px] no-underline transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 select-none">open_in_new</span>
                                 </a>
                             </div>
                         </div>

@@ -107,3 +107,34 @@ body {
   letter-spacing: 0.02em;
   color: #1e3a8a;
 }
+
+/* ---------- Clean Action Links with Arrow (Fix mencong underline) ---------- */
+.link-with-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  text-decoration: none !important;
+  cursor: pointer;
+}
+.link-with-arrow .link-text {
+  text-decoration: none;
+  transition: text-decoration-color 0.2s ease;
+}
+.link-with-arrow:hover .link-text,
+.link-with-arrow.is-hovered .link-text {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1.5px;
+}
+.link-with-arrow .material-symbols-outlined {
+  text-decoration: none !important;
+  display: inline-block;
+  line-height: 1;
+  vertical-align: middle;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.link-with-arrow:hover .material-symbols-outlined,
+.link-with-arrow.is-hovered .material-symbols-outlined {
+  text-decoration: none !important;
+  transform: translateX(4px);
+}
