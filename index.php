@@ -1,5 +1,17 @@
 <?php
 require_once __DIR__ . '/session.php';
+
+// Jika user sudah login (termasuk auto-login dari remember-me cookie),
+// langsung arahkan ke dashboard sesuai role
+if (is_logged_in()) {
+    $role = current_user_role();
+    if ($role === 'admin' || $role === 'superadmin') {
+        header('Location: admin/admin-dashboard.php');
+    } else {
+        header('Location: dashboard.php');
+    }
+    exit;
+}
 $positions_file = __DIR__ . '/uploads/positions.json';
 $positions = [];
 if (file_exists($positions_file)) {

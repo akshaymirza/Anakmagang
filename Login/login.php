@@ -2,6 +2,17 @@
 require_once __DIR__ . '/../session.php';
 require_once __DIR__ . '/koneksi.php'; // Memanggil koneksi database
 
+// Jika sudah login, redirect langsung ke dashboard
+if (is_logged_in()) {
+    $role = current_user_role();
+    if ($role === 'admin' || $role === 'superadmin') {
+        header('Location: ../admin/admin-dashboard.php');
+    } else {
+        header('Location: ../dashboard.php');
+    }
+    exit;
+}
+
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
