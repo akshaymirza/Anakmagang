@@ -131,7 +131,7 @@ if (is_admin()) {
                 <div class="w-72 md:w-80 flex flex-col gap-md md:h-full flex-shrink-0">
                     <div class="flex items-center justify-between bg-surface-container-low px-md py-sm rounded-lg border border-outline-variant">
                         <h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-sm font-semibold">
-                            <span class="w-3 h-3 rounded-full bg-outline"></span>
+                            <span class="w-3 h-3 rounded-full bg-slate-400"></span>
                             <span data-i18n="col_todo">To Do</span>
                         </h3>
                         <div class="flex items-center gap-1.5">
@@ -150,14 +150,14 @@ if (is_admin()) {
 
                 <!-- Column: In Progress -->
                 <div class="w-72 md:w-80 flex flex-col gap-md md:h-full flex-shrink-0">
-                    <div class="flex items-center justify-between bg-primary-fixed border border-primary-fixed-dim px-md py-sm rounded-lg shadow-sm">
-                        <h3 class="font-headline-md text-headline-md text-on-primary-fixed flex items-center gap-sm font-semibold">
-                            <span class="w-3 h-3 rounded-full bg-primary animate-pulse"></span>
+                    <div class="flex items-center justify-between bg-blue-50 border border-blue-200 px-md py-sm rounded-lg shadow-xs">
+                        <h3 class="font-headline-md text-headline-md text-blue-900 flex items-center gap-sm font-semibold">
+                            <span class="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></span>
                             <span data-i18n="col_progress">In Progress</span>
                         </h3>
                         <div class="flex items-center gap-1.5">
-                            <span id="inprogress-count" class="bg-primary text-on-primary px-sm py-xs rounded-full font-label-sm text-label-sm shadow-sm font-bold">0</span>
-                            <button type="button" onclick="openTaskModal(null, 'inprogress')" title="Tambah Task di In Progress" class="p-0.5 rounded text-on-primary-fixed hover:text-white hover:bg-primary transition-colors cursor-pointer">
+                            <span id="inprogress-count" class="bg-blue-100 text-blue-700 px-sm py-xs rounded-full font-label-sm text-label-sm font-bold">0</span>
+                            <button type="button" onclick="openTaskModal(null, 'inprogress')" title="Tambah Task di In Progress" class="p-0.5 rounded text-blue-600 hover:text-blue-900 hover:bg-white transition-colors cursor-pointer">
                                 <span class="material-symbols-outlined text-[18px]">add</span>
                             </button>
                         </div>
@@ -171,14 +171,14 @@ if (is_admin()) {
 
                 <!-- Column: Under Review -->
                 <div class="w-72 md:w-80 flex flex-col gap-md md:h-full flex-shrink-0">
-                    <div class="flex items-center justify-between bg-secondary-fixed border border-secondary-fixed-dim px-md py-sm rounded-lg">
-                        <h3 class="font-headline-md text-headline-md text-on-secondary-fixed flex items-center gap-sm font-semibold">
-                            <span class="material-symbols-outlined text-[18px]">visibility</span>
+                    <div class="flex items-center justify-between bg-purple-50 border border-purple-200 px-md py-sm rounded-lg shadow-xs">
+                        <h3 class="font-headline-md text-headline-md text-purple-900 flex items-center gap-sm font-semibold">
+                            <span class="material-symbols-outlined text-[18px] text-purple-600">visibility</span>
                             <span data-i18n="col_review">Under Review</span>
                         </h3>
                         <div class="flex items-center gap-1.5">
-                            <span id="underreview-count" class="bg-secondary-fixed-dim text-on-secondary-fixed px-sm py-xs rounded-full font-label-sm text-label-sm font-bold">0</span>
-                            <button type="button" onclick="openTaskModal(null, 'underreview')" title="Tambah Task di Under Review" class="p-0.5 rounded text-on-secondary-fixed hover:text-primary hover:bg-white transition-colors cursor-pointer">
+                            <span id="underreview-count" class="bg-purple-100 text-purple-700 px-sm py-xs rounded-full font-label-sm text-label-sm font-bold">0</span>
+                            <button type="button" onclick="openTaskModal(null, 'underreview')" title="Tambah Task di Under Review" class="p-0.5 rounded text-purple-600 hover:text-purple-900 hover:bg-white transition-colors cursor-pointer">
                                 <span class="material-symbols-outlined text-[18px]">add</span>
                             </button>
                         </div>
@@ -192,15 +192,14 @@ if (is_admin()) {
 
                 <!-- Column: Done -->
                 <div class="w-72 md:w-80 flex flex-col gap-md md:h-full flex-shrink-0">
-                    <div class="flex items-center justify-between bg-surface-container-lowest border border-outline-variant px-md py-sm rounded-lg shadow-sm relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-r from-surface-container-lowest to-secondary-fixed opacity-50 z-0"></div>
-                        <h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-sm relative z-10 font-semibold">
-                            <span class="material-symbols-outlined text-green-700" style="font-variation-settings: 'FILL' 1;">task_alt</span>
+                    <div class="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-md py-sm rounded-lg shadow-xs">
+                        <h3 class="font-headline-md text-headline-md text-emerald-900 flex items-center gap-sm font-semibold">
+                            <span class="material-symbols-outlined text-emerald-600" style="font-variation-settings: 'FILL' 1;">task_alt</span>
                             <span data-i18n="col_done">Done</span>
                         </h3>
-                        <div class="flex items-center gap-1.5 relative z-10">
-                            <span id="done-count" class="bg-slate-200 text-on-surface px-sm py-xs rounded-full font-label-sm text-label-sm font-bold">0</span>
-                            <button type="button" onclick="openTaskModal(null, 'done')" title="Tambah Task di Done" class="p-0.5 rounded text-on-surface-variant hover:text-primary hover:bg-white transition-colors cursor-pointer">
+                        <div class="flex items-center gap-1.5">
+                            <span id="done-count" class="bg-emerald-100 text-emerald-700 px-sm py-xs rounded-full font-label-sm text-label-sm font-bold">0</span>
+                            <button type="button" onclick="openTaskModal(null, 'done')" title="Tambah Task di Done" class="p-0.5 rounded text-emerald-600 hover:text-emerald-900 hover:bg-white transition-colors cursor-pointer">
                                 <span class="material-symbols-outlined text-[18px]">add</span>
                             </button>
                         </div>
