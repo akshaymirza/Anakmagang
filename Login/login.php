@@ -29,6 +29,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = $user_data['id'];
             $_SESSION['username'] = $user_data['username'];
             $_SESSION['role'] = $user_data['role'];
+
+            // ── Remember-Me: buat token persistent login ──
+            // Auto-migration: buat tabel jika belum ada
+            @mysqli_query($conn, "CREATE TABLE IF NOT EXISTS `remember_tokens` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT NOT NULL,
+                `token_hash` VARCHAR(255) NOT NULL,
+                `expires_at` DATETIME NOT NULL,
+                `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                INDEX `idx_token_hash` (`token_hash`),
+                INDEX `idx_user_id` (`user_id`),
+                INDEX `idx_expires` (`expires_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            // Hapus token lama user ini (opsional: biar ga numpuk)
+            $del_old = mysqli_prepare($conn, "DELETE FROM remember_tokens WHERE user_id = ?");
+            if ($del_old) {
+                mysqli_stmt_bind_param($del_old, "i", $user_data['id']);
+                mysqli_stmt_execute($del_old);
+                mysqli_stmt_close($del_old);
+            }
+
+            // Buat token baru
+            $rm_token   = bin2hex(random_bytes(32));
+            $rm_hash    = hash('sha256', $rm_token);
+            $rm_expires = date('Y-m-d H:i:s', time() + 30 * 24 * 3600); // 30 hari
+
+            $ins_token = mysqli_prepare($conn, "INSERT INTO remember_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)");
+            if ($ins_token) {
+                mysqli_stmt_bind_param($ins_token, "iss", $user_data['id'], $rm_hash, $rm_expires);
+                mysqli_stmt_execute($ins_token);
+                mysqli_stmt_close($ins_token);
+            }
+
+            // Set cookie 30 hari
+            setcookie('remember_me', $rm_token, [
+                'expires'  => time() + 30 * 24 * 3600,
+                'path'     => '/',
+                'httponly' => true,
+                'samesite' => 'Lax',
+                'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+            ]);
+            // ── End Remember-Me ──
             
             // Arahkan ke halaman utama/dashboard
             $redirect = '../dashboard.php';

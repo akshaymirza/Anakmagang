@@ -3,6 +3,107 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 	session_start();
 }
 
+// ── Remember-Me: auto-login dari cookie token ──────────────────────────
+if (empty($_SESSION['user_logged_in']) && !empty($_COOKIE['remember_me'])) {
+	// Lazy-load koneksi database untuk validasi token
+	$_rm_conn_file = __DIR__ . '/Login/koneksi.php';
+	if (file_exists($_rm_conn_file)) {
+		// Simpan $conn lama jika sudah ada, supaya tidak bentrok
+		$_rm_conn_backup = isset($conn) ? $conn : null;
+		if (!isset($conn) || !$conn) {
+			require_once $_rm_conn_file;
+		}
+
+		if (isset($conn) && $conn) {
+			// Auto-migration: buat tabel remember_tokens jika belum ada
+			@mysqli_query($conn, "CREATE TABLE IF NOT EXISTS `remember_tokens` (
+				`id` INT AUTO_INCREMENT PRIMARY KEY,
+				`user_id` INT NOT NULL,
+				`token_hash` VARCHAR(255) NOT NULL,
+				`expires_at` DATETIME NOT NULL,
+				`created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+				INDEX `idx_token_hash` (`token_hash`),
+				INDEX `idx_user_id` (`user_id`),
+				INDEX `idx_expires` (`expires_at`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+			$_rm_token = $_COOKIE['remember_me'];
+			$_rm_hash  = hash('sha256', $_rm_token);
+
+			// Cari token yang masih valid (belum expired)
+			$_rm_stmt = mysqli_prepare($conn, "SELECT rt.id AS token_id, u.id, u.username, u.role
+				FROM remember_tokens rt
+				JOIN users u ON u.id = rt.user_id
+				WHERE rt.token_hash = ? AND rt.expires_at > NOW()
+				LIMIT 1");
+			if ($_rm_stmt) {
+				mysqli_stmt_bind_param($_rm_stmt, "s", $_rm_hash);
+				mysqli_stmt_execute($_rm_stmt);
+				$_rm_result = mysqli_stmt_get_result($_rm_stmt);
+				$_rm_user   = mysqli_fetch_assoc($_rm_result);
+				mysqli_stmt_close($_rm_stmt);
+
+				if ($_rm_user) {
+					// Restore session
+					session_regenerate_id(true);
+					$_SESSION['user_logged_in'] = true;
+					$_SESSION['user_id']        = $_rm_user['id'];
+					$_SESSION['username']       = $_rm_user['username'];
+					$_SESSION['role']           = $_rm_user['role'];
+
+					// Token rotation: hapus token lama, buat token baru (keamanan)
+					$_rm_del = mysqli_prepare($conn, "DELETE FROM remember_tokens WHERE id = ?");
+					if ($_rm_del) {
+						mysqli_stmt_bind_param($_rm_del, "i", $_rm_user['token_id']);
+						mysqli_stmt_execute($_rm_del);
+						mysqli_stmt_close($_rm_del);
+					}
+
+					// Buat token baru
+					$_rm_new_token = bin2hex(random_bytes(32));
+					$_rm_new_hash  = hash('sha256', $_rm_new_token);
+					$_rm_expires   = date('Y-m-d H:i:s', time() + 30 * 24 * 3600); // 30 hari
+					$_rm_ins = mysqli_prepare($conn, "INSERT INTO remember_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)");
+					if ($_rm_ins) {
+						mysqli_stmt_bind_param($_rm_ins, "iss", $_rm_user['id'], $_rm_new_hash, $_rm_expires);
+						mysqli_stmt_execute($_rm_ins);
+						mysqli_stmt_close($_rm_ins);
+					}
+
+					// Set cookie baru
+					$_rm_cookie_path = '/';
+					setcookie('remember_me', $_rm_new_token, [
+						'expires'  => time() + 30 * 24 * 3600,
+						'path'     => $_rm_cookie_path,
+						'httponly' => true,
+						'samesite' => 'Lax',
+						'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+					]);
+				} else {
+					// Token tidak valid / expired → hapus cookie
+					setcookie('remember_me', '', [
+						'expires'  => time() - 3600,
+						'path'     => '/',
+						'httponly' => true,
+						'samesite' => 'Lax',
+					]);
+				}
+			}
+
+			// Bersihkan token yang sudah expired (house-keeping, 1% chance)
+			if (rand(1, 100) === 1) {
+				@mysqli_query($conn, "DELETE FROM remember_tokens WHERE expires_at < NOW()");
+			}
+		}
+
+		// Restore $conn jika sebelumnya null
+		if ($_rm_conn_backup === null && isset($conn)) {
+			// Biarkan $conn tetap ada untuk penggunaan selanjutnya
+		}
+	}
+}
+// ── End Remember-Me ─────────────────────────────────────────────────────
+
 if (!function_exists('is_logged_in')) {
 	function is_logged_in(): bool
 	{
