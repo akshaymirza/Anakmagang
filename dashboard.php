@@ -284,15 +284,18 @@ $userName = current_user_name();
                     const barColor = percent === 100 ? 'bg-emerald-500' : 'bg-primary';
 
                     return `
-                        <div class="bg-surface-container-lowest border border-outline-variant rounded-2xl p-4 shadow-xs hover:border-primary transition-colors">
+                        <a href="projects.php?project=${encodeURIComponent(p.id)}" onclick="if(window.ProjectStore) ProjectStore.setActiveProjectId('${p.id}')" class="block bg-surface-container-lowest border border-outline-variant rounded-2xl p-4 shadow-xs hover:border-primary hover:shadow-md transition-all group cursor-pointer">
                             <div class="flex items-center justify-between mb-2">
                                 <div class="flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">folder</span>
-                                    <h4 class="font-bold text-slate-900 text-sm">${escapeHtml(p.name)}</h4>
+                                    <span class="material-symbols-outlined text-primary text-[20px] group-hover:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1;">folder</span>
+                                    <h4 class="font-bold text-slate-900 text-sm group-hover:text-primary transition-colors">${escapeHtml(p.name)}</h4>
                                 </div>
-                                <span class="text-xs font-bold ${percent === 100 ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-slate-600 bg-slate-100'} px-2.5 py-0.5 rounded-full">
-                                    ${percent === 100 ? 'Selesai' : `${tasks.length} tasks`}
-                                </span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold ${percent === 100 ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-slate-600 bg-slate-100'} px-2.5 py-0.5 rounded-full">
+                                        ${percent === 100 ? 'Selesai' : `${tasks.length} tasks`}
+                                    </span>
+                                    <span class="material-symbols-outlined text-[16px] text-slate-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all">chevron_right</span>
+                                </div>
                             </div>
                             <p class="text-xs text-slate-500 mb-3 line-clamp-2">${escapeHtml(p.description || 'Proyek aktif Kanban')}</p>
                             <div class="space-y-1">
@@ -304,7 +307,7 @@ $userName = current_user_name();
                                     <div class="${barColor} h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     `;
                 }).join('');
             }
