@@ -677,38 +677,51 @@ if (is_admin()) {
 
         async function saveTaskModal(e) {
             e.preventDefault();
-            if (!window.ProjectStore) {
-                alert('ProjectStore belum dimuat.');
-                return;
+
+            // Anti-spam: cegah klik ganda
+            const submitBtn = document.getElementById('modal-submit-btn');
+            if (submitBtn.disabled) return;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Menyimpan...';
+
+            try {
+                if (!window.ProjectStore) {
+                    alert('ProjectStore belum dimuat.');
+                    return;
+                }
+
+                if (!currentProjectId) {
+                    currentProjectId = ProjectStore.getActiveProjectId();
+                }
+
+                const id = document.getElementById('modal-task-id').value;
+                const title = document.getElementById('modal-task-title').value.trim();
+                const desc = document.getElementById('modal-task-desc').value.trim();
+                const priority = document.getElementById('modal-task-priority').value;
+                const status = document.getElementById('modal-task-status').value;
+                const assignee = document.getElementById('modal-task-assignee').value.trim() || '';
+                const due_date = document.getElementById('modal-task-due-date').value;
+
+                if (!title) {
+                    document.getElementById('modal-task-title').focus();
+                    return;
+                }
+
+                const payload = { title, description: desc, priority, status, assignee, due_date };
+
+                if (id) {
+                    await ProjectStore.updateTask(currentProjectId, id, payload);
+                } else {
+                    await ProjectStore.createTask(currentProjectId, payload);
+                }
+
+                closeTaskModal();
+                renderKanban();
+            } finally {
+                // Selalu re-enable tombol (untuk kasus modal dibuka lagi)
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save Task';
             }
-
-            if (!currentProjectId) {
-                currentProjectId = ProjectStore.getActiveProjectId();
-            }
-
-            const id = document.getElementById('modal-task-id').value;
-            const title = document.getElementById('modal-task-title').value.trim();
-            const desc = document.getElementById('modal-task-desc').value.trim();
-            const priority = document.getElementById('modal-task-priority').value;
-            const status = document.getElementById('modal-task-status').value;
-            const assignee = document.getElementById('modal-task-assignee').value.trim() || '';
-            const due_date = document.getElementById('modal-task-due-date').value;
-
-            if (!title) {
-                document.getElementById('modal-task-title').focus();
-                return;
-            }
-
-            const payload = { title, description: desc, priority, status, assignee, due_date };
-
-            if (id) {
-                await ProjectStore.updateTask(currentProjectId, id, payload);
-            } else {
-                await ProjectStore.createTask(currentProjectId, payload);
-            }
-
-            closeTaskModal();
-            renderKanban();
         }
 
         async function deleteTaskFromModal() {
