@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../session.php';
 require_superadmin();
+require_once __DIR__ . '/../sop_helper.php';
+$sop_data = get_sop_data();
 
 // Database connection attempt
 $conn = null;
@@ -87,6 +89,102 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         file_put_contents($footer_settings_file, json_encode($footer_data, JSON_PRETTY_PRINT));
         $msg = "Pengaturan Footer berhasil disimpan dan diperbarui!";
         $msg_type = "success";
+    } elseif ($action === 'save_sop_header') {
+        $sop_data = get_sop_data();
+        $sop_data['badge']    = trim($_POST['sop_badge'] ?? 'Standar Operasional Prosedur');
+        $sop_data['title']    = trim($_POST['sop_title'] ?? 'SOP Peserta Magang Kedayweb');
+        $sop_data['subtitle'] = trim($_POST['sop_subtitle'] ?? 'Kedayweb × Kulino House — wajib dibaca dan dipahami oleh seluruh peserta magang.');
+        save_sop_data($sop_data);
+        $msg = "Header halaman SOP berhasil diperbarui!";
+        $msg_type = "success";
+    } elseif ($action === 'add_sop_section') {
+        $sop_data = get_sop_data();
+        $title = trim($_POST['title'] ?? '');
+        $nav_title = trim($_POST['nav_title'] ?? '') ?: $title;
+        $style = trim($_POST['style'] ?? 'default');
+        $content = trim($_POST['content'] ?? '');
+
+        if (empty($title)) {
+            $msg = "Judul pasal SOP tidak boleh kosong!";
+            $msg_type = "danger";
+        } else {
+            $new_sec = [
+                'id'        => 'sop-' . time(),
+                'title'     => $title,
+                'nav_title' => $nav_title,
+                'style'     => $style,
+                'content'   => $content
+            ];
+            $sop_data['sections'][] = $new_sec;
+            save_sop_data($sop_data);
+            $msg = "Pasal baru '" . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . "' berhasil ditambahkan!";
+            $msg_type = "success";
+        }
+    } elseif ($action === 'edit_sop_section') {
+        $sop_data = get_sop_data();
+        $idx = isset($_POST['section_index']) ? (int)$_POST['section_index'] : -1;
+        $title = trim($_POST['title'] ?? '');
+        $nav_title = trim($_POST['nav_title'] ?? '') ?: $title;
+        $style = trim($_POST['style'] ?? 'default');
+        $content = trim($_POST['content'] ?? '');
+
+        if ($idx >= 0 && isset($sop_data['sections'][$idx])) {
+            $sop_data['sections'][$idx]['title']     = $title;
+            $sop_data['sections'][$idx]['nav_title'] = $nav_title;
+            $sop_data['sections'][$idx]['style']     = $style;
+            $sop_data['sections'][$idx]['content']   = $content;
+            save_sop_data($sop_data);
+            $msg = "Perubahan pasal '" . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . "' berhasil disimpan!";
+            $msg_type = "success";
+        } else {
+            $msg = "Gagal memperbarui pasal: data tidak ditemukan.";
+            $msg_type = "danger";
+        }
+    } elseif ($action === 'delete_sop_section') {
+        $sop_data = get_sop_data();
+        $idx = isset($_POST['section_index']) ? (int)$_POST['section_index'] : -1;
+        if ($idx >= 0 && isset($sop_data['sections'][$idx])) {
+            $deleted_title = $sop_data['sections'][$idx]['title'] ?? 'Pasal';
+            array_splice($sop_data['sections'], $idx, 1);
+            save_sop_data($sop_data);
+            $msg = "Pasal '" . htmlspecialchars($deleted_title, ENT_QUOTES, 'UTF-8') . "' berhasil dihapus dari SOP!";
+            $msg_type = "success";
+        } else {
+            $msg = "Gagal menghapus pasal: data tidak ditemukan.";
+            $msg_type = "danger";
+        }
+    } elseif ($action === 'move_sop_section') {
+        $sop_data = get_sop_data();
+        $idx = (int)($_POST['section_index'] ?? -1);
+        $dir = (int)($_POST['direction'] ?? 0);
+        $target = $idx + $dir;
+        if (isset($sop_data['sections'][$idx]) && isset($sop_data['sections'][$target])) {
+            $temp = $sop_data['sections'][$idx];
+            $sop_data['sections'][$idx] = $sop_data['sections'][$target];
+            $sop_data['sections'][$target] = $temp;
+            save_sop_data($sop_data);
+            $msg = "Urutan pasal SOP berhasil diubah!";
+            $msg_type = "success";
+        }
+    } elseif ($action === 'reset_sop_data') {
+        reset_sop_data();
+        $sop_data = get_sop_data();
+        $msg = "Standar Operasional Prosedur (SOP) berhasil dikembalikan ke standar awal!";
+        $msg_type = "success";
+    } elseif ($action === 'save_sop_data') {
+        $raw_sections = $_POST['sections_json'] ?? '';
+        $sections = json_decode($raw_sections, true);
+        if (is_array($sections)) {
+            $sop_data = [
+                'badge'    => trim($_POST['sop_badge'] ?? 'Standar Operasional Prosedur'),
+                'title'    => trim($_POST['sop_title'] ?? 'SOP Peserta Magang Kedayweb'),
+                'subtitle' => trim($_POST['sop_subtitle'] ?? 'Kedayweb × Kulino House — wajib dibaca dan dipahami oleh seluruh peserta magang.'),
+                'sections' => $sections
+            ];
+            save_sop_data($sop_data);
+            $msg = "Pengaturan dan isi Standar Operasional Prosedur (SOP) berhasil disimpan!";
+            $msg_type = "success";
+        }
     } elseif ($action === 'add_user') {
         $username        = trim($_POST['username'] ?? '');
         $password        = trim($_POST['password'] ?? '');
@@ -420,6 +518,7 @@ if ($conn) {
     }
 }
 
+$sop_data = get_sop_data();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -440,11 +539,39 @@ if ($conn) {
     <!-- Leaflet Map CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Quill.js WYSIWYG Editor -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet"/>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <style>
         .glass-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); }
         #geofence-map { height: 380px; width: 100%; border-radius: 1rem; z-index: 1; }
         .leaflet-pane { z-index: 10 !important; }
         .leaflet-top, .leaflet-bottom { z-index: 11 !important; }
+        /* Quill theme refinement */
+        .ql-toolbar.ql-snow {
+            border-top-left-radius: 0.75rem;
+            border-top-right-radius: 0.75rem;
+            border-color: #cbd5e1;
+            background: #f8fafc;
+            padding: 8px 12px;
+        }
+        .ql-container.ql-snow {
+            border-bottom-left-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
+            border-color: #cbd5e1;
+            font-family: inherit;
+            font-size: 0.875rem;
+            background: #ffffff;
+        }
+        .ql-editor {
+            min-height: 180px;
+            line-height: 1.6;
+            color: #1e293b;
+        }
+        .ql-editor.ql-blank::before {
+            color: #94a3b8;
+            font-style: normal;
+        }
     </style>
 </head>
 <body class="bg-background text-on-surface font-body-md flex h-screen overflow-hidden">
@@ -506,6 +633,10 @@ if ($conn) {
                     <button type="button" id="nav-btn-footer" onclick="switchSuperadminTab('footer')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high">
                         <span class="material-symbols-outlined text-lg">table_rows</span>
                         <span>Set Footer</span>
+                    </button>
+                    <button type="button" id="nav-btn-sop" onclick="switchSuperadminTab('sop')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high">
+                        <span class="material-symbols-outlined text-lg">gavel</span>
+                        <span>Set SOP</span>
                     </button>
                     <button type="button" id="nav-btn-approval" onclick="switchSuperadminTab('approval')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high relative">
                         <span class="material-symbols-outlined text-lg">workspace_premium</span>
@@ -816,6 +947,210 @@ if ($conn) {
                             <span>Simpan Pengaturan Footer</span>
                         </button>
                     </div>
+                </form>
+            </div>
+
+            <!-- Section SOP: Manage SOP Content & Rules -->
+            <div class="glass-card rounded-2xl border border-outline-variant p-6 shadow-sm hidden" id="section-sop">
+                <!-- Section Header -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-outline-variant mb-6">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">gavel</span>
+                            <h3 class="font-headline-md font-bold text-on-surface">Manajemen Standar Operasional Prosedur (SOP)</h3>
+                        </div>
+                        <p class="text-sm text-on-surface-variant mt-1">Atur judul, pasal-pasal, etika kerja, larangan, serta seluruh isi peraturan magang yang tampil pada halaman <a href="../sop.php" target="_blank" class="text-primary font-bold hover:underline inline-flex items-center gap-0.5">sop.php <span class="material-symbols-outlined text-[13px]">open_in_new</span></a>.</p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button type="button" onclick="openAddSopModal()" class="px-4 py-2 bg-primary text-on-primary font-bold text-xs rounded-xl shadow-xs hover:bg-primary-container transition-all flex items-center gap-1.5 cursor-pointer">
+                            <span class="material-symbols-outlined text-[18px]">add_circle</span>
+                            <span>Tambah Pasal Baru</span>
+                        </button>
+                        <a href="../sop.php" target="_blank" class="px-3.5 py-2 bg-surface-container-high hover:bg-white border border-outline-variant text-on-surface text-xs font-bold rounded-xl shadow-2xs transition-all flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[16px]">visibility</span>
+                            <span>Lihat Halaman SOP</span>
+                        </a>
+                        <button type="button" onclick="confirmResetSop()" class="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer" title="Kembalikan semua pasal SOP ke standar awal">
+                            <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+                            <span>Reset Default</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Form 1: Header Meta Settings -->
+                    <form method="POST" action="superadmin.php" class="p-5 bg-surface-container-low rounded-2xl border border-outline-variant space-y-4">
+                        <input type="hidden" name="action" value="save_sop_header">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
+                                <span class="material-symbols-outlined text-base">page_header</span>
+                                <span>Pengaturan Header Halaman SOP</span>
+                            </div>
+                            <button type="submit" class="px-4 py-1.5 bg-primary text-on-primary font-bold text-xs rounded-xl hover:bg-primary-container transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs">
+                                <span class="material-symbols-outlined text-[15px]">save</span>
+                                <span>Simpan Header</span>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Badge Header</label>
+                                <input type="text" name="sop_badge" value="<?php echo htmlspecialchars($sop_data['badge'] ?? 'Standar Operasional Prosedur', ENT_QUOTES, 'UTF-8'); ?>" class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary focus:outline-none" placeholder="Standar Operasional Prosedur" required/>
+                            </div>
+                            <div class="md:col-span-4">
+                                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Judul Utama Halaman</label>
+                                <input type="text" name="sop_title" value="<?php echo htmlspecialchars($sop_data['title'] ?? 'SOP Peserta Magang Kedayweb', ENT_QUOTES, 'UTF-8'); ?>" class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary focus:outline-none" placeholder="SOP Peserta Magang Kedayweb" required/>
+                            </div>
+                            <div class="md:col-span-5">
+                                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">Subjudul / Keterangan</label>
+                                <input type="text" name="sop_subtitle" value="<?php echo htmlspecialchars($sop_data['subtitle'] ?? 'Kedayweb × Kulino House — wajib dibaca dan dipahami oleh seluruh peserta magang.', ENT_QUOTES, 'UTF-8'); ?>" class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary focus:outline-none" placeholder="Keterangan singkat SOP"/>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Section 2: Daftar Pasal & Aturan SOP (PHP Rendered Cards) -->
+                    <div>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary text-xl">format_list_bulleted</span>
+                                <h4 class="font-bold text-on-surface text-base">Daftar Pasal & Aturan SOP</h4>
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary">
+                                    <?php echo count($sop_data['sections'] ?? []); ?> Pasal
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="relative w-48 sm:w-64">
+                                    <span class="material-symbols-outlined text-sm text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2">search</span>
+                                    <input type="text" oninput="filterSopTable(this.value)" placeholder="Cari pasal / isi..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:outline-none">
+                                </div>
+                                <button type="button" onclick="openAddSopModal()" class="px-3.5 py-2 bg-primary text-on-primary font-bold text-xs rounded-xl shadow-xs hover:bg-primary-container transition-all flex items-center gap-1.5 cursor-pointer shrink-0">
+                                    <span class="material-symbols-outlined text-sm">add</span>
+                                    <span>Tambah Pasal</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <?php if (empty($sop_data['sections'])): ?>
+                            <div class="p-8 text-center bg-surface-container-low rounded-2xl border border-dashed border-outline-variant">
+                                <span class="material-symbols-outlined text-4xl text-slate-400 mb-2">gavel</span>
+                                <p class="text-sm font-bold text-on-surface">Belum ada pasal SOP yang terdaftar</p>
+                                <p class="text-xs text-on-surface-variant mt-1 mb-4">Tambahkan pasal baru atau klik "Reset Default" untuk memuat template SOP standar.</p>
+                                <button type="button" onclick="openAddSopModal()" class="px-4 py-2 bg-primary text-on-primary font-bold text-xs rounded-xl hover:bg-primary-container transition-all inline-flex items-center gap-1.5 cursor-pointer">
+                                    <span class="material-symbols-outlined text-sm">add_circle</span>
+                                    <span>Tambah Pasal Pertama</span>
+                                </button>
+                            </div>
+                        <?php else: ?>
+                            <div class="space-y-3" id="sop-list-container">
+                                <?php 
+                                $total_sections = count($sop_data['sections']);
+                                foreach ($sop_data['sections'] as $idx => $sec): 
+                                    $style = $sec['style'] ?? 'default';
+                                    $badgeStyle = match($style) {
+                                        'warning'  => 'bg-amber-100 text-amber-800 border-amber-300',
+                                        'primary'  => 'bg-indigo-100 text-indigo-800 border-indigo-300',
+                                        'centered' => 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                                        default    => 'bg-slate-100 text-slate-700 border-slate-300'
+                                    };
+                                    $styleLabel = match($style) {
+                                        'warning'  => 'Peringatan / Larangan',
+                                        'primary'  => 'Ketentuan Utama',
+                                        'centered' => 'Tengah (Center)',
+                                        default    => 'Standar'
+                                    };
+                                    $raw_snippet = strip_tags($sec['content'] ?? '');
+                                    $snippet = mb_strlen($raw_snippet) > 160 ? mb_substr($raw_snippet, 0, 160) . '...' : $raw_snippet;
+                                ?>
+                                    <div class="sop-section-item p-4 rounded-2xl border border-outline-variant bg-surface-container-lowest hover:border-primary/50 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <!-- Left: Order & Meta -->
+                                        <div class="flex items-start gap-3 flex-1 min-w-0">
+                                            <!-- Up/Down Reorder Form -->
+                                            <div class="flex flex-col items-center gap-1 pt-0.5 shrink-0">
+                                                <form method="POST" action="superadmin.php" class="inline">
+                                                    <input type="hidden" name="action" value="move_sop_section">
+                                                    <input type="hidden" name="section_index" value="<?php echo $idx; ?>">
+                                                    <input type="hidden" name="direction" value="-1">
+                                                    <button type="submit" <?php echo ($idx === 0) ? 'disabled' : ''; ?> class="p-1 rounded-lg text-slate-400 hover:text-primary hover:bg-surface-container disabled:opacity-20 disabled:pointer-events-none transition cursor-pointer" title="Pindah ke Atas">
+                                                        <span class="material-symbols-outlined text-[18px]">keyboard_arrow_up</span>
+                                                    </button>
+                                                </form>
+                                                <span class="text-[11px] font-bold text-slate-400 font-mono">#<?php echo $idx + 1; ?></span>
+                                                <form method="POST" action="superadmin.php" class="inline">
+                                                    <input type="hidden" name="action" value="move_sop_section">
+                                                    <input type="hidden" name="section_index" value="<?php echo $idx; ?>">
+                                                    <input type="hidden" name="direction" value="1">
+                                                    <button type="submit" <?php echo ($idx === $total_sections - 1) ? 'disabled' : ''; ?> class="p-1 rounded-lg text-slate-400 hover:text-primary hover:bg-surface-container disabled:opacity-20 disabled:pointer-events-none transition cursor-pointer" title="Pindah ke Bawah">
+                                                        <span class="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
+                                                    </button>
+                                                </form>
+                                            </div>
+
+                                            <!-- Content Detail -->
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 flex-wrap mb-1">
+                                                    <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border <?php echo $badgeStyle; ?>">
+                                                        <?php echo $styleLabel; ?>
+                                                    </span>
+                                                    <?php if (!empty($sec['nav_title'])): ?>
+                                                        <span class="text-[11px] text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-md">
+                                                            Nav: <?php echo htmlspecialchars($sec['nav_title'], ENT_QUOTES, 'UTF-8'); ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <h5 class="font-bold text-on-surface text-sm sm:text-base mb-1 truncate">
+                                                    <?php echo htmlspecialchars($sec['title'] ?? 'Pasal SOP', ENT_QUOTES, 'UTF-8'); ?>
+                                                </h5>
+                                                <p class="text-xs text-on-surface-variant line-clamp-2 leading-relaxed">
+                                                    <?php echo htmlspecialchars($snippet ?: '(Belum ada konten)', ENT_QUOTES, 'UTF-8'); ?>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Right: Action Buttons (EDIT & DELETE) -->
+                                        <div class="flex items-center gap-2 shrink-0 self-end md:self-center pt-2 md:pt-0 border-t md:border-t-0 border-outline-variant w-full md:w-auto justify-end">
+                                            <!-- Tombol Edit -->
+                                            <button type="button" onclick="openEditSopModal(<?php echo $idx; ?>)" class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Edit isi pasal ini">
+                                                <span class="material-symbols-outlined text-[16px]">edit</span>
+                                                <span>Edit Pasal</span>
+                                            </button>
+
+                                            <!-- Tombol Hapus -->
+                                            <form method="POST" action="superadmin.php" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pasal: <?php echo addslashes(htmlspecialchars($sec['title'] ?? '', ENT_QUOTES, 'UTF-8')); ?>?');" class="inline">
+                                                <input type="hidden" name="action" value="delete_sop_section">
+                                                <input type="hidden" name="section_index" value="<?php echo $idx; ?>">
+                                                <button type="submit" class="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs rounded-xl border border-red-200 transition-all flex items-center gap-1 cursor-pointer shadow-2xs" title="Hapus pasal ini dari SOP">
+                                                    <span class="material-symbols-outlined text-[16px]">delete</span>
+                                                    <span>Hapus</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Bottom Action Bar -->
+                    <div class="pt-4 border-t border-outline-variant flex flex-col sm:flex-row items-center justify-between gap-3 bg-surface-container-low p-4 rounded-2xl border">
+                        <div class="text-xs text-slate-500 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>Setiap perubahan pada pasal langsung tersimpan dan aktif di halaman SOP.</span>
+                        </div>
+                        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            <a href="../sop.php" target="_blank" class="px-4 py-2 bg-surface-container-high border border-outline-variant text-on-surface font-bold text-xs rounded-xl hover:bg-white transition-all flex items-center justify-center gap-1.5">
+                                <span class="material-symbols-outlined text-sm">open_in_new</span>
+                                <span>Preview SOP</span>
+                            </a>
+                            <button type="button" onclick="openAddSopModal()" class="px-5 py-2 bg-primary text-on-primary font-bold text-xs rounded-xl hover:bg-primary-container shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                                <span class="material-symbols-outlined text-base">add_circle</span>
+                                <span>Tambah Pasal Baru</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden Reset Form -->
+                <form id="reset-sop-form" method="POST" action="superadmin.php" class="hidden">
+                    <input type="hidden" name="action" value="reset_sop_data">
                 </form>
             </div>
 
@@ -1366,6 +1701,177 @@ if ($conn) {
         </div>
     </div>
 
+    <!-- Modal Tambah Pasal SOP Baru -->
+    <div id="add-sop-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
+        <div class="bg-surface-container-lowest rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-outline-variant max-h-[92vh] overflow-y-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-outline-variant mb-4">
+                <h3 class="font-headline-md font-bold text-primary flex items-center gap-2">
+                    <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+                    <span>Tambah Pasal SOP Baru</span>
+                </h3>
+                <button type="button" onclick="closeAddSopModal()" class="text-on-surface-variant hover:text-on-surface p-1 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form action="superadmin.php" method="POST" id="add-sop-form" onsubmit="return handleSopAddSubmit(event)" class="space-y-4">
+                <input type="hidden" name="action" value="add_sop_section"/>
+                <input type="hidden" name="content" id="add-sop-content" value=""/>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                    <div class="sm:col-span-8">
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                            Judul Pasal <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="title" required placeholder="Contoh: 14. Hak Cuti dan Evaluasi" class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-semibold focus:ring-2 focus:ring-primary focus:outline-none"/>
+                    </div>
+
+                    <div class="sm:col-span-4">
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                            Gaya Tampilan Card
+                        </label>
+                        <select name="style" class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary focus:outline-none cursor-pointer">
+                            <option value="default">Standar / Netral (Putih)</option>
+                            <option value="warning">Peringatan / Larangan (Oranye)</option>
+                            <option value="primary">Ketentuan Utama (Biru)</option>
+                            <option value="centered">Tengah / Center (Penutup)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                        Judul di Menu Samping <span class="text-slate-400 font-normal normal-case">(Opsional, jika kosong otomatis sama dengan Judul Pasal)</span>
+                    </label>
+                    <input type="text" name="nav_title" placeholder="Contoh: 14. Hak Cuti" class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary focus:outline-none"/>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                            Isi Peraturan / Konten Pasal <span class="text-red-500">*</span>
+                        </label>
+                        <!-- Tab Editor Mode Switcher -->
+                        <div class="flex items-center bg-surface-container rounded-lg p-0.5 border border-outline-variant text-[11px] font-bold">
+                            <button type="button" id="tab-add-visual" onclick="setSopEditorMode('add', 'visual')" class="px-2.5 py-1 rounded-md bg-white text-primary shadow-xs transition cursor-pointer flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[13px]">edit_note</span>
+                                <span>Editor Visual</span>
+                            </button>
+                            <button type="button" id="tab-add-html" onclick="setSopEditorMode('add', 'html')" class="px-2.5 py-1 rounded-md text-slate-500 hover:text-on-surface transition cursor-pointer flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[13px]">code</span>
+                                <span>Kode HTML</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Visual Editor (Quill) -->
+                    <div id="add-quill-wrapper" class="block">
+                        <div id="add-quill-editor"></div>
+                    </div>
+
+                    <!-- HTML Raw Textarea (Hidden by default) -->
+                    <div id="add-html-wrapper" class="hidden">
+                        <textarea id="add-raw-html" rows="7" placeholder="Tuliskan kode HTML di sini..." class="w-full font-mono text-xs px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:outline-none leading-relaxed"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-outline-variant">
+                    <button type="button" onclick="closeAddSopModal()" class="px-4 py-2.5 border border-outline-variant hover:bg-surface-container-high rounded-xl text-sm font-bold transition cursor-pointer">Batal</button>
+                    <button type="submit" class="px-6 py-2.5 bg-primary text-on-primary rounded-xl text-sm font-bold hover:bg-primary-container transition shadow-md flex items-center gap-1.5 cursor-pointer">
+                        <span class="material-symbols-outlined text-lg">check</span>
+                        <span>Simpan Pasal Baru</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Edit Pasal SOP -->
+    <div id="edit-sop-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
+        <div class="bg-surface-container-lowest rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-outline-variant max-h-[92vh] overflow-y-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-outline-variant mb-4">
+                <h3 class="font-headline-md font-bold text-indigo-700 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">edit_document</span>
+                    <span>Edit Pasal SOP</span>
+                </h3>
+                <button type="button" onclick="closeEditSopModal()" class="text-on-surface-variant hover:text-on-surface p-1 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form action="superadmin.php" method="POST" id="edit-sop-form" onsubmit="return handleSopEditSubmit(event)" class="space-y-4">
+                <input type="hidden" name="action" value="edit_sop_section"/>
+                <input type="hidden" name="section_index" id="edit-sop-index" value=""/>
+                <input type="hidden" name="content" id="edit-sop-content" value=""/>
+
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                    <div class="sm:col-span-8">
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                            Judul Pasal <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="title" id="edit-sop-title" required class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary focus:outline-none"/>
+                    </div>
+
+                    <div class="sm:col-span-4">
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                            Gaya Tampilan Card
+                        </label>
+                        <select name="style" id="edit-sop-style" class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary focus:outline-none cursor-pointer">
+                            <option value="default">Standar / Netral (Putih)</option>
+                            <option value="warning">Peringatan / Larangan (Oranye)</option>
+                            <option value="primary">Ketentuan Utama (Biru)</option>
+                            <option value="centered">Tengah / Center (Penutup)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                        Judul di Menu Samping <span class="text-slate-400 font-normal normal-case">(Opsional, jika kosong otomatis sama dengan Judul Pasal)</span>
+                    </label>
+                    <input type="text" name="nav_title" id="edit-sop-nav-title" class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary focus:outline-none"/>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                            Isi Peraturan / Konten Pasal <span class="text-red-500">*</span>
+                        </label>
+                        <!-- Tab Editor Mode Switcher -->
+                        <div class="flex items-center bg-surface-container rounded-lg p-0.5 border border-outline-variant text-[11px] font-bold">
+                            <button type="button" id="tab-edit-visual" onclick="setSopEditorMode('edit', 'visual')" class="px-2.5 py-1 rounded-md bg-white text-indigo-700 shadow-xs transition cursor-pointer flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[13px]">edit_note</span>
+                                <span>Editor Visual</span>
+                            </button>
+                            <button type="button" id="tab-edit-html" onclick="setSopEditorMode('edit', 'html')" class="px-2.5 py-1 rounded-md text-slate-500 hover:text-on-surface transition cursor-pointer flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[13px]">code</span>
+                                <span>Kode HTML</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Visual Editor (Quill) -->
+                    <div id="edit-quill-wrapper" class="block">
+                        <div id="edit-quill-editor"></div>
+                    </div>
+
+                    <!-- HTML Raw Textarea (Hidden by default) -->
+                    <div id="edit-html-wrapper" class="hidden">
+                        <textarea id="edit-raw-html" rows="8" placeholder="Tuliskan kode HTML di sini..." class="w-full font-mono text-xs px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:outline-none leading-relaxed"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-outline-variant">
+                    <button type="button" onclick="closeEditSopModal()" class="px-4 py-2.5 border border-outline-variant hover:bg-surface-container-high rounded-xl text-sm font-bold transition cursor-pointer">Batal</button>
+                    <button type="submit" class="px-6 py-2.5 bg-primary text-on-primary rounded-xl text-sm font-bold hover:bg-primary-container transition shadow-md flex items-center gap-1.5 cursor-pointer">
+                        <span class="material-symbols-outlined text-lg">save</span>
+                        <span>Simpan Perubahan Pasal</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <?php include '../partials/confirm-modal.php'; ?>
 
     <script>
@@ -1645,20 +2151,277 @@ if ($conn) {
             }
         }
 
+        // ── MANAJEMEN SOP BUILDER ──────────────────────────────────────────
+        let sopSections = <?php echo json_encode($sop_data['sections'] ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>;
+        if (!Array.isArray(sopSections)) sopSections = [];
+
+        function escapeSopAttr(text) {
+            return String(text || '').replace(/"/g, '&quot;');
+        }
+
+        function renderSopSections(filter = '') {
+            const container = document.getElementById('sop-sections-container');
+            const countBadge = document.getElementById('sop-count-badge');
+            if (!container) return;
+
+            const filterClean = (filter || '').toLowerCase().trim();
+            let visibleCount = 0;
+
+            if (sopSections.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center bg-surface-container-low border border-dashed border-outline-variant rounded-2xl">
+                        <span class="material-symbols-outlined text-4xl text-slate-400 mb-2">menu_book</span>
+                        <p class="font-bold text-on-surface text-sm">Belum ada pasal SOP terdaftar</p>
+                        <p class="text-xs text-on-surface-variant mt-1">Klik tombol "+ Tambah Pasal" untuk mulai membuat pasal atau aturan baru.</p>
+                        <button type="button" onclick="addSopSection()" class="mt-4 px-4 py-2 bg-primary text-on-primary font-bold text-xs rounded-xl hover:bg-primary-container transition-all cursor-pointer">
+                            + Tambah Pasal Pertama
+                        </button>
+                    </div>
+                `;
+                if (countBadge) countBadge.textContent = '0 Pasal';
+                return;
+            }
+
+            let html = '';
+            sopSections.forEach((sec, idx) => {
+                const titleStr = sec.title || '';
+                const navStr = sec.nav_title || '';
+                const contentStr = sec.content || '';
+                const styleStr = sec.style || 'default';
+                const secId = sec.id || ('sop-' + (idx + 1));
+
+                // Filter check
+                if (filterClean) {
+                    const matchTitle = titleStr.toLowerCase().includes(filterClean);
+                    const matchNav = navStr.toLowerCase().includes(filterClean);
+                    const matchContent = contentStr.toLowerCase().includes(filterClean);
+                    if (!matchTitle && !matchNav && !matchContent) {
+                        return;
+                    }
+                }
+                visibleCount++;
+
+                let styleBadge = '';
+                let styleBorder = 'border-outline-variant';
+                if (styleStr === 'warning') {
+                    styleBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">Larangan (Merah)</span>';
+                    styleBorder = 'border-rose-200';
+                } else if (styleStr === 'primary') {
+                    styleBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Nilai Utama (Biru)</span>';
+                    styleBorder = 'border-blue-200';
+                } else if (styleStr === 'centered') {
+                    styleBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">Penutup (Tengah)</span>';
+                    styleBorder = 'border-purple-200';
+                } else {
+                    styleBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">Standar (Netral)</span>';
+                }
+
+                html += `
+                <div class="glass-card bg-surface-container-lowest border ${styleBorder} rounded-2xl p-4 sm:p-5 shadow-xs transition-all" id="sop-card-${idx}">
+                    <!-- Card Top Header -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-outline-variant mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-lg bg-surface-container-high text-primary font-bold text-xs flex items-center justify-center font-mono">#${idx + 1}</span>
+                            <span class="font-bold text-sm text-on-surface line-clamp-1">${escapeHtml(titleStr || 'Pasal Tanpa Judul')}</span>
+                            ${styleBadge}
+                            <span class="text-[11px] font-mono text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100 hidden sm:inline">id: ${escapeHtml(secId)}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="moveSopSection(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} class="p-1.5 rounded-lg border border-outline-variant hover:bg-surface-container-high text-on-surface-variant disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer" title="Pindah ke Atas">
+                                <span class="material-symbols-outlined text-base">arrow_upward</span>
+                            </button>
+                            <button type="button" onclick="moveSopSection(${idx}, 1)" ${idx === sopSections.length - 1 ? 'disabled' : ''} class="p-1.5 rounded-lg border border-outline-variant hover:bg-surface-container-high text-on-surface-variant disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer" title="Pindah ke Bawah">
+                                <span class="material-symbols-outlined text-base">arrow_downward</span>
+                            </button>
+                            <button type="button" onclick="deleteSopSection(${idx})" class="p-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 transition-colors cursor-pointer" title="Hapus Pasal">
+                                <span class="material-symbols-outlined text-base">delete</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Card Body Fields -->
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                            <div class="sm:col-span-5">
+                                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Judul Pasal (Tampil di Halaman)</label>
+                                <input type="text" oninput="updateSopSectionField(${idx}, 'title', this.value)" value="${escapeSopAttr(titleStr)}" class="w-full px-3 py-2 text-xs font-bold bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:outline-none" placeholder="Contoh: 1. Tujuan"/>
+                            </div>
+                            <div class="sm:col-span-4">
+                                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Label Daftar Isi (Sidebar)</label>
+                                <input type="text" oninput="updateSopSectionField(${idx}, 'nav_title', this.value)" value="${escapeSopAttr(navStr)}" class="w-full px-3 py-2 text-xs font-medium bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:outline-none" placeholder="Label menu navigasi"/>
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1">Tipe / Gaya Kartu</label>
+                                <select onchange="updateSopSectionField(${idx}, 'style', this.value)" class="w-full px-3 py-2 text-xs font-semibold bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:outline-none">
+                                    <option value="default" ${styleStr === 'default' ? 'selected' : ''}>Standar (Netral)</option>
+                                    <option value="warning" ${styleStr === 'warning' ? 'selected' : ''}>Larangan (Merah)</option>
+                                    <option value="primary" ${styleStr === 'primary' ? 'selected' : ''}>Nilai Utama (Biru)</option>
+                                    <option value="centered" ${styleStr === 'centered' ? 'selected' : ''}>Penutup (Tengah)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Content Editor & Quick Tags Bar -->
+                        <div>
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                                <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Isi Konten Pasal (Mendukung HTML & Teks)</label>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="text-[11px] text-slate-400 mr-1 hidden md:inline">Sisipkan:</span>
+                                    <button type="button" onclick="insertQuickTag(${idx}, 'p')" class="px-2 py-1 text-[11px] font-semibold bg-surface-container-high hover:bg-slate-200 rounded-lg text-slate-700 transition-colors cursor-pointer">+ Paragraf</button>
+                                    <button type="button" onclick="insertQuickTag(${idx}, 'h4')" class="px-2 py-1 text-[11px] font-semibold bg-surface-container-high hover:bg-slate-200 rounded-lg text-slate-700 transition-colors cursor-pointer">+ Sub-Judul</button>
+                                    <button type="button" onclick="insertQuickTag(${idx}, 'ul')" class="px-2 py-1 text-[11px] font-semibold bg-surface-container-high hover:bg-slate-200 rounded-lg text-slate-700 transition-colors cursor-pointer">+ Daftar List</button>
+                                    <button type="button" onclick="toggleSopSectionPreview(${idx})" id="sop-prev-btn-${idx}" class="px-2.5 py-1 text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 cursor-pointer">
+                                        <span class="material-symbols-outlined text-[13px]">visibility</span>
+                                        <span>Preview</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <textarea id="sop-content-${idx}" oninput="updateSopSectionField(${idx}, 'content', this.value)" rows="5" class="w-full p-3 font-mono text-xs leading-relaxed bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:outline-none resize-y">${escapeHtml(contentStr)}</textarea>
+                            <div id="sop-preview-box-${idx}" class="hidden p-4 rounded-xl border border-dashed border-outline-variant bg-surface-container-low text-xs text-on-surface space-y-2 max-h-80 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            if (countBadge) {
+                countBadge.textContent = `${sopSections.length} Pasal${filterClean ? ` (${visibleCount} cocok)` : ''}`;
+            }
+        }
+
+        function updateSopSectionField(index, field, value) {
+            if (!sopSections[index]) return;
+            sopSections[index][field] = value;
+            if (field === 'style') {
+                renderSopSections(document.getElementById('sop-search-input')?.value || '');
+            }
+        }
+
+        function addSopSection() {
+            const nextNum = sopSections.length + 1;
+            const newSec = {
+                id: 'sop-' + Date.now(),
+                nav_title: nextNum + '. Judul Aturan',
+                title: nextNum + '. Judul Aturan Baru',
+                style: 'default',
+                content: '<p class="font-body-md text-body-md text-on-surface-variant">Tuliskan penjelasan dan ketentuan aturan magang di sini...</p>'
+            };
+            sopSections.push(newSec);
+            const searchInput = document.getElementById('sop-search-input');
+            if (searchInput) searchInput.value = '';
+            renderSopSections();
+
+            // Scroll to the newly created section card
+            setTimeout(() => {
+                const newCard = document.getElementById(`sop-card-${sopSections.length - 1}`);
+                if (newCard) {
+                    newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    newCard.classList.add('ring-2', 'ring-primary');
+                    setTimeout(() => newCard.classList.remove('ring-2', 'ring-primary'), 1500);
+                }
+            }, 100);
+        }
+
+        function deleteSopSection(index) {
+            const title = sopSections[index]?.title || 'pasal ini';
+            if (!confirm(`Hapus "${title}" dari daftar SOP?`)) return;
+            sopSections.splice(index, 1);
+            renderSopSections(document.getElementById('sop-search-input')?.value || '');
+        }
+
+        function moveSopSection(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= sopSections.length) return;
+            const temp = sopSections[index];
+            sopSections[index] = sopSections[newIndex];
+            sopSections[newIndex] = temp;
+            renderSopSections(document.getElementById('sop-search-input')?.value || '');
+            const targetCard = document.getElementById(`sop-card-${newIndex}`);
+            if (targetCard) targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function insertQuickTag(index, tagType) {
+            const textarea = document.getElementById(`sop-content-${index}`);
+            if (!textarea) return;
+
+            let snippet = '';
+            if (tagType === 'p') {
+                snippet = '\n<p class="font-body-md text-body-md text-on-surface-variant">Paragraf penjelasan baru...</p>\n';
+            } else if (tagType === 'h4') {
+                snippet = '\n<h4 class="font-label-lg text-label-lg text-primary font-bold mb-sm">Sub-Judul Aturan</h4>\n';
+            } else if (tagType === 'ul') {
+                snippet = '\n<ul class="list-disc pl-lg space-y-1 font-body-md text-body-md text-on-surface-variant">\n    <li>Poin aturan pertama</li>\n    <li>Poin aturan kedua</li>\n</ul>\n';
+            }
+
+            const startPos = textarea.selectionStart;
+            const endPos = textarea.selectionEnd;
+            const val = textarea.value;
+            textarea.value = val.substring(0, startPos) + snippet + val.substring(endPos);
+            textarea.selectionStart = textarea.selectionEnd = startPos + snippet.length;
+            textarea.focus();
+            updateSopSectionField(index, 'content', textarea.value);
+
+            // Update preview if open
+            const previewBox = document.getElementById(`sop-preview-box-${index}`);
+            if (previewBox && !previewBox.classList.contains('hidden')) {
+                previewBox.innerHTML = textarea.value;
+            }
+        }
+
+        function toggleSopSectionPreview(index) {
+            const textarea = document.getElementById(`sop-content-${index}`);
+            const previewBox = document.getElementById(`sop-preview-box-${index}`);
+            const btn = document.getElementById(`sop-prev-btn-${index}`);
+            if (!textarea || !previewBox) return;
+
+            if (previewBox.classList.contains('hidden')) {
+                previewBox.innerHTML = textarea.value || '<em class="text-slate-400">Konten kosong.</em>';
+                previewBox.classList.remove('hidden');
+                textarea.classList.add('hidden');
+                if (btn) btn.innerHTML = '<span class="material-symbols-outlined text-[13px]">code</span><span>Edit HTML</span>';
+            } else {
+                previewBox.classList.add('hidden');
+                textarea.classList.remove('hidden');
+                textarea.focus();
+                if (btn) btn.innerHTML = '<span class="material-symbols-outlined text-[13px]">visibility</span><span>Preview</span>';
+            }
+        }
+
+        function filterSopSections(query) {
+            renderSopSections(query);
+        }
+
+        function handleSopFormSubmit(event) {
+            const jsonInput = document.getElementById('sections_json_input');
+            if (jsonInput) {
+                jsonInput.value = JSON.stringify(sopSections);
+            }
+            return true;
+        }
+
+        function confirmResetSop() {
+            if (confirm('Apakah Anda yakin ingin mengembalikan seluruh isi SOP ke standar awal Kedayweb? Semua perubahan kustom yang pernah disimpan akan digantikan dengan teks standar.')) {
+                document.getElementById('reset-sop-form').submit();
+            }
+        }
+
         function switchSuperadminTab(tab) {
             const sectionLocation = document.getElementById('section-location');
             const sectionFooter = document.getElementById('section-footer');
+            const sectionSop = document.getElementById('section-sop');
             const sectionAccount = document.getElementById('section-account');
             const sectionPositions = document.getElementById('section-positions');
             const sectionApproval = document.getElementById('section-approval');
             const btnLocation = document.getElementById('nav-btn-location');
             const btnFooter = document.getElementById('nav-btn-footer');
+            const btnSop = document.getElementById('nav-btn-sop');
             const btnAccount = document.getElementById('nav-btn-account');
             const btnApproval = document.getElementById('nav-btn-approval');
             const btnAll = document.getElementById('nav-btn-all');
             const activeLabel = document.getElementById('tab-active-label');
 
-            const allBtns = [btnLocation, btnFooter, btnAccount, btnApproval, btnAll];
+            const allBtns = [btnLocation, btnFooter, btnSop, btnAccount, btnApproval, btnAll];
             allBtns.forEach(btn => {
                 if (!btn) return;
                 btn.classList.remove('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -1668,6 +2431,7 @@ if ($conn) {
             if (tab === 'location') {
                 if (sectionLocation) sectionLocation.classList.remove('hidden');
                 if (sectionFooter) sectionFooter.classList.add('hidden');
+                if (sectionSop) sectionSop.classList.add('hidden');
                 if (sectionAccount) sectionAccount.classList.add('hidden');
                 if (sectionPositions) sectionPositions.classList.add('hidden');
                 if (sectionApproval) sectionApproval.classList.add('hidden');
@@ -1687,6 +2451,7 @@ if ($conn) {
             } else if (tab === 'footer') {
                 if (sectionLocation) sectionLocation.classList.add('hidden');
                 if (sectionFooter) sectionFooter.classList.remove('hidden');
+                if (sectionSop) sectionSop.classList.add('hidden');
                 if (sectionAccount) sectionAccount.classList.add('hidden');
                 if (sectionPositions) sectionPositions.classList.add('hidden');
                 if (sectionApproval) sectionApproval.classList.add('hidden');
@@ -1697,9 +2462,24 @@ if ($conn) {
                 }
                 if (activeLabel) activeLabel.textContent = 'Mode: Set Footer';
                 history.replaceState(null, null, '#footer');
+            } else if (tab === 'sop') {
+                if (sectionLocation) sectionLocation.classList.add('hidden');
+                if (sectionFooter) sectionFooter.classList.add('hidden');
+                if (sectionSop) sectionSop.classList.remove('hidden');
+                if (sectionAccount) sectionAccount.classList.add('hidden');
+                if (sectionPositions) sectionPositions.classList.add('hidden');
+                if (sectionApproval) sectionApproval.classList.add('hidden');
+
+                if (btnSop) {
+                    btnSop.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
+                    btnSop.classList.remove('text-on-surface-variant', 'hover:bg-surface-container-high');
+                }
+                if (activeLabel) activeLabel.textContent = 'Mode: Set SOP';
+                history.replaceState(null, null, '#sop');
             } else if (tab === 'approval') {
                 if (sectionLocation) sectionLocation.classList.add('hidden');
                 if (sectionFooter) sectionFooter.classList.add('hidden');
+                if (sectionSop) sectionSop.classList.add('hidden');
                 if (sectionAccount) sectionAccount.classList.add('hidden');
                 if (sectionPositions) sectionPositions.classList.add('hidden');
                 if (sectionApproval) sectionApproval.classList.remove('hidden');
@@ -1713,6 +2493,7 @@ if ($conn) {
             } else if (tab === 'all') {
                 if (sectionLocation) sectionLocation.classList.remove('hidden');
                 if (sectionFooter) sectionFooter.classList.remove('hidden');
+                if (sectionSop) sectionSop.classList.remove('hidden');
                 if (sectionAccount) sectionAccount.classList.remove('hidden');
                 if (sectionPositions) sectionPositions.classList.remove('hidden');
                 if (sectionApproval) sectionApproval.classList.remove('hidden');
@@ -1732,6 +2513,7 @@ if ($conn) {
             } else { // default 'account'
                 if (sectionLocation) sectionLocation.classList.add('hidden');
                 if (sectionFooter) sectionFooter.classList.add('hidden');
+                if (sectionSop) sectionSop.classList.add('hidden');
                 if (sectionAccount) sectionAccount.classList.remove('hidden');
                 if (sectionPositions) sectionPositions.classList.remove('hidden');
                 if (sectionApproval) sectionApproval.classList.add('hidden');
@@ -1787,8 +2569,207 @@ if ($conn) {
             }
         }
 
+        // ============================================================
+        // SOP MANAGEMENT SCRIPT
+        // ============================================================
+        const sopSectionsData = <?php echo json_encode($sop_data['sections'] ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+        let addQuill = null;
+        let editQuill = null;
+        let currentAddMode = 'visual';
+        let currentEditMode = 'visual';
+
+        const quillToolbarOptions = [
+            [{ 'header': [false, 3, 4] }],
+            ['bold', 'italic', 'underline'],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['clean']
+        ];
+
+        function initQuillEditors() {
+            if (typeof Quill === 'undefined') return;
+
+            if (!addQuill && document.getElementById('add-quill-editor')) {
+                addQuill = new Quill('#add-quill-editor', {
+                    theme: 'snow',
+                    placeholder: 'Tuliskan peraturan atau poin-poin pasal di sini...',
+                    modules: { toolbar: quillToolbarOptions }
+                });
+            }
+
+            if (!editQuill && document.getElementById('edit-quill-editor')) {
+                editQuill = new Quill('#edit-quill-editor', {
+                    theme: 'snow',
+                    placeholder: 'Tuliskan peraturan atau poin-poin pasal di sini...',
+                    modules: { toolbar: quillToolbarOptions }
+                });
+            }
+        }
+
+        function setSopEditorMode(target, mode) {
+            initQuillEditors();
+            const isAdd = (target === 'add');
+            const quillWrapper = document.getElementById(isAdd ? 'add-quill-wrapper' : 'edit-quill-wrapper');
+            const htmlWrapper = document.getElementById(isAdd ? 'add-html-wrapper' : 'edit-html-wrapper');
+            const rawTextarea = document.getElementById(isAdd ? 'add-raw-html' : 'edit-raw-html');
+            const quillInstance = isAdd ? addQuill : editQuill;
+            const tabVisual = document.getElementById(isAdd ? 'tab-add-visual' : 'tab-edit-visual');
+            const tabHtml = document.getElementById(isAdd ? 'tab-add-html' : 'tab-edit-html');
+
+            if (mode === 'html') {
+                if (quillInstance) {
+                    rawTextarea.value = quillInstance.root.innerHTML;
+                }
+                quillWrapper.classList.add('hidden');
+                htmlWrapper.classList.remove('hidden');
+
+                tabVisual.className = 'px-2.5 py-1 rounded-md text-slate-500 hover:text-on-surface transition cursor-pointer flex items-center gap-1';
+                tabHtml.className = isAdd 
+                    ? 'px-2.5 py-1 rounded-md bg-white text-primary shadow-xs transition cursor-pointer flex items-center gap-1'
+                    : 'px-2.5 py-1 rounded-md bg-white text-indigo-700 shadow-xs transition cursor-pointer flex items-center gap-1';
+                
+                if (isAdd) currentAddMode = 'html'; else currentEditMode = 'html';
+            } else {
+                if (quillInstance) {
+                    quillInstance.root.innerHTML = rawTextarea.value;
+                }
+                htmlWrapper.classList.add('hidden');
+                quillWrapper.classList.remove('hidden');
+
+                tabHtml.className = 'px-2.5 py-1 rounded-md text-slate-500 hover:text-on-surface transition cursor-pointer flex items-center gap-1';
+                tabVisual.className = isAdd 
+                    ? 'px-2.5 py-1 rounded-md bg-white text-primary shadow-xs transition cursor-pointer flex items-center gap-1'
+                    : 'px-2.5 py-1 rounded-md bg-white text-indigo-700 shadow-xs transition cursor-pointer flex items-center gap-1';
+
+                if (isAdd) currentAddMode = 'visual'; else currentEditMode = 'visual';
+            }
+        }
+
+        function handleSopAddSubmit(e) {
+            initQuillEditors();
+            let finalHtml = '';
+            if (currentAddMode === 'visual' && addQuill) {
+                finalHtml = addQuill.root.innerHTML;
+                if (addQuill.getText().trim().length === 0 && !finalHtml.includes('<img')) {
+                    finalHtml = '';
+                }
+            } else {
+                finalHtml = document.getElementById('add-raw-html').value;
+            }
+            if (!finalHtml.trim()) {
+                alert('Isi peraturan / konten pasal tidak boleh kosong.');
+                e.preventDefault();
+                return false;
+            }
+            document.getElementById('add-sop-content').value = finalHtml;
+            return true;
+        }
+
+        function handleSopEditSubmit(e) {
+            initQuillEditors();
+            let finalHtml = '';
+            if (currentEditMode === 'visual' && editQuill) {
+                finalHtml = editQuill.root.innerHTML;
+                if (editQuill.getText().trim().length === 0 && !finalHtml.includes('<img')) {
+                    finalHtml = '';
+                }
+            } else {
+                finalHtml = document.getElementById('edit-raw-html').value;
+            }
+            if (!finalHtml.trim()) {
+                alert('Isi peraturan / konten pasal tidak boleh kosong.');
+                e.preventDefault();
+                return false;
+            }
+            document.getElementById('edit-sop-content').value = finalHtml;
+            return true;
+        }
+
+        function openAddSopModal() {
+            initQuillEditors();
+            const modal = document.getElementById('add-sop-modal');
+            if (!modal) return;
+            const form = modal.querySelector('form');
+            if (form) form.reset();
+            if (addQuill) {
+                addQuill.setContents([]);
+            }
+            document.getElementById('add-raw-html').value = '';
+            setSopEditorMode('add', 'visual');
+            modal.classList.remove('hidden');
+        }
+
+        function closeAddSopModal() {
+            const modal = document.getElementById('add-sop-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function openEditSopModal(index) {
+            initQuillEditors();
+            const item = sopSectionsData[index];
+            if (!item) {
+                alert('Data pasal tidak ditemukan.');
+                return;
+            }
+            document.getElementById('edit-sop-index').value = index;
+            document.getElementById('edit-sop-title').value = item.title || '';
+            document.getElementById('edit-sop-nav-title').value = item.nav_title || item.title || '';
+            document.getElementById('edit-sop-style').value = item.style || 'default';
+            
+            const rawContent = item.content || '';
+            if (editQuill) {
+                editQuill.root.innerHTML = rawContent;
+            }
+            document.getElementById('edit-raw-html').value = rawContent;
+            setSopEditorMode('edit', 'visual');
+            
+            const modal = document.getElementById('edit-sop-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeEditSopModal() {
+            const modal = document.getElementById('edit-sop-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function filterSopTable(query) {
+            const q = (query || '').toLowerCase().trim();
+            const items = document.querySelectorAll('.sop-section-item');
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(q) ? '' : 'none';
+            });
+        }
+
+        async function confirmResetSop() {
+            if (typeof window.showConfirmModal === 'function') {
+                const confirmed = await window.showConfirmModal({
+                    title: 'Reset Seluruh SOP ke Standar Awal?',
+                    message: 'Apakah Anda yakin ingin mengembalikan seluruh isi dan pasal SOP ke format awal? Semua pasal tambahan yang telah dibuat akan dihapus.',
+                    confirmText: 'Ya, Reset SOP',
+                    cancelText: 'Batal',
+                    type: 'danger'
+                });
+                if (confirmed) {
+                    document.getElementById('reset-sop-form').submit();
+                }
+            } else {
+                if (confirm('Apakah Anda yakin ingin mengembalikan seluruh isi SOP ke standar awal?')) {
+                    document.getElementById('reset-sop-form').submit();
+                }
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             initGeofenceMap();
+            initQuillEditors();
+
+            // Backdrop click close for SOP modals
+            document.getElementById('add-sop-modal')?.addEventListener('click', function(e) {
+                if (e.target === this) closeAddSopModal();
+            });
+            document.getElementById('edit-sop-modal')?.addEventListener('click', function(e) {
+                if (e.target === this) closeEditSopModal();
+            });
 
             let defaultTab = 'account';
             const actionSubmitted = '<?php echo htmlspecialchars($action ?? '', ENT_QUOTES, 'UTF-8'); ?>';
@@ -1796,10 +2777,14 @@ if ($conn) {
                 defaultTab = 'location';
             } else if (actionSubmitted === 'save_footer_settings') {
                 defaultTab = 'footer';
+            } else if (actionSubmitted.indexOf('sop') !== -1) {
+                defaultTab = 'sop';
             } else if (window.location.hash === '#location') {
                 defaultTab = 'location';
             } else if (window.location.hash === '#footer') {
                 defaultTab = 'footer';
+            } else if (window.location.hash === '#sop') {
+                defaultTab = 'sop';
             } else if (window.location.hash === '#approval') {
                 defaultTab = 'approval';
             } else if (window.location.hash === '#all') {
