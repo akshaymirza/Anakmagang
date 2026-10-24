@@ -11,6 +11,7 @@ header('Access-Control-Allow-Methods: GET, POST');
 
 require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/Login/koneksi.php';
+require_once __DIR__ . '/score-calculator.php';
 
 function check_admin_api(): void {
     if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -144,6 +145,29 @@ if ($action === 'toggle_single_status' && $_SERVER['REQUEST_METHOD'] === 'POST')
     exit;
 }
 
+// ── RECALCULATE SCORES (admin only) ─────────────────────────────────────────
+if ($action === 'recalculate_scores' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    check_admin_api();
+
+    $user_id = (int)($_POST['user_id'] ?? 0);
+    if ($user_id <= 0) {
+        // Recalculate semua intern
+        $res = @mysqli_query($conn, "SELECT DISTINCT user_id FROM certificates WHERE user_id IS NOT NULL AND user_id > 0");
+        $updated = 0;
+        if ($res) {
+            while ($row = mysqli_fetch_assoc($res)) {
+                update_certificate_scores($conn, (int)$row['user_id']);
+                $updated++;
+            }
+        }
+        echo json_encode(['success' => true, 'message' => "Skor $updated sertifikat berhasil dihitung ulang dari data presensi.", 'updated' => $updated]);
+    } else {
+        $scores = update_certificate_scores($conn, $user_id);
+        echo json_encode(['success' => true, 'message' => 'Skor berhasil dihitung ulang.', 'scores' => $scores]);
+    }
+    exit;
+}
+
 // ── VERIFY sertifikat (publik) ──────────────────────────────────────────────
 if ($action === 'verify') {
     $cert_id = trim($_GET['id'] ?? '');
@@ -181,8 +205,32 @@ if ($action === 'verify') {
         exit;
     }
 
-    // Hitung rata-rata skor
-    $avg_score = round(($cert['score_technical'] + $cert['score_discipline'] + $cert['score_attitude']) / 3);
+    // Hitung ulang skor secara live dari data presensi (jika ada user_id)
+    $userId = (int)($cert['user_id'] ?? 0);
+    $scoreTech = (int)$cert['score_technical'];
+    $scoreDisc = (int)$cert['score_discipline'];
+    $scoreAtt  = (int)$cert['score_attitude'];
+    $grade     = $cert['final_grade'];
+
+    if ($userId > 0) {
+        $liveScores = calculate_intern_scores($conn, $userId);
+        if ($liveScores['detail']['total_records'] > 0) {
+            // Update DB dengan skor terbaru
+            update_certificate_scores($conn, $userId);
+            $scoreTech = $liveScores['score_technical'];
+            $scoreDisc = $liveScores['score_discipline'];
+            $scoreAtt  = $liveScores['score_attitude'];
+            $grade     = $liveScores['final_grade'];
+        }
+    }
+
+    $avg_score = round(($scoreTech + $scoreDisc + $scoreAtt) / 3);
+
+    // Generate sub-skor bervariasi untuk tabel nilai
+    $seed = $userId > 0 ? $userId : crc32($cert['certificate_id']);
+    $subTech = generate_sub_scores($scoreTech, 6, $seed);
+    $subDisc = generate_sub_scores($scoreDisc, 3, $seed + 100);
+    $subAtt  = generate_sub_scores($scoreAtt,  3, $seed + 200);
 
     echo json_encode([
         'success'          => true,
@@ -194,16 +242,21 @@ if ($action === 'verify') {
         'start_date'       => $cert['start_fmt'],
         'end_date'         => $cert['end_fmt'],
         'issue_date'       => $cert['issue_fmt'],
-        'score_technical'  => (int)$cert['score_technical'],
-        'score_discipline' => (int)$cert['score_discipline'],
-        'score_attitude'   => (int)$cert['score_attitude'],
+        'score_technical'  => $scoreTech,
+        'score_discipline' => $scoreDisc,
+        'score_attitude'   => $scoreAtt,
         'avg_score'        => $avg_score,
-        'final_grade'      => $cert['final_grade'],
+        'final_grade'      => $grade,
         'supervisor_name'  => $cert['supervisor_name'],
         'status'           => $cert['status'],
         'is_approved'      => (int)($cert['is_approved'] ?? 0),
         'approved_at'      => $cert['approved_at'] ?? null,
         'notes'            => $cert['notes'],
+        'sub_scores'       => [
+            'technical'  => $subTech,
+            'discipline' => $subDisc,
+            'attitude'   => $subAtt,
+        ],
     ]);
     exit;
 }
@@ -225,7 +278,8 @@ if ($action === 'list') {
         YEAR(created_at)
     )";
 
-    $sql = "SELECT id, certificate_id, intern_name, intern_position, university,
+    $sql = "SELECT id, certificate_id, user_id, intern_name, intern_position, university,
+                   score_technical, score_discipline, score_attitude,
                    final_grade, status, is_approved, approved_at,
                    DATE_FORMAT(issue_date, '%d %b %Y') AS issue_fmt,
                    CAST($year_expr AS UNSIGNED) AS entry_year

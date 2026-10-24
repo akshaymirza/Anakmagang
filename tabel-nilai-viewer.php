@@ -37,11 +37,31 @@ $skor_teknis   = (int)($cert['score_technical']  ?? 0);
 $skor_disiplin = (int)($cert['score_discipline'] ?? 0);
 $skor_sikap    = (int)($cert['score_attitude']   ?? 0);
 
-$nt  = [$skor_disiplin, $skor_disiplin, $skor_disiplin, $skor_sikap, $skor_sikap, $skor_sikap];
-$tek = [$skor_teknis,   $skor_teknis,   $skor_teknis,   $skor_teknis, $skor_teknis, $skor_teknis];
+// Ambil user_id untuk seed deterministik
+$userId = 0;
+if ($cert_id && $conn) {
+    $uidStmt = $conn->prepare("SELECT user_id FROM certificates WHERE certificate_id = ? LIMIT 1");
+    $uidStmt->bind_param('s', $cert_id);
+    $uidStmt->execute();
+    $uidRes = $uidStmt->get_result();
+    $uidRow = $uidRes->fetch_assoc();
+    $userId = (int)($uidRow['user_id'] ?? 0);
+    $uidStmt->close();
+}
 
-$rata_nt  = round(array_sum($nt)  / count($nt),  2);
-$rata_tek = round(array_sum($tek) / count($tek), 2);
+require_once __DIR__ . '/score-calculator.php';
+$seed = $userId > 0 ? $userId : crc32($cert_id);
+
+// Sub-skor bervariasi: 3 disiplin + 3 sikap = 6 non-teknis, 6 teknis
+$subDisc = generate_sub_scores($skor_disiplin, 3, $seed + 100);
+$subAtt  = generate_sub_scores($skor_sikap,    3, $seed + 200);
+$subTech = generate_sub_scores($skor_teknis,   6, $seed);
+
+$nt  = array_merge($subDisc, $subAtt);
+$tek = $subTech;
+
+$rata_nt  = count($nt)  > 0 ? round(array_sum($nt)  / count($nt),  2) : 0;
+$rata_tek = count($tek) > 0 ? round(array_sum($tek) / count($tek), 2) : 0;
 $kumul    = round(($rata_nt + $rata_tek) / 2,    2);
 
 $label_nt = ['Kedisiplinan','Kemauan Kerja Dan Motivasi','Kerajinan',

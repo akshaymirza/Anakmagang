@@ -2,6 +2,7 @@
 require_once __DIR__ . '/session.php';
 require_login();
 require_once __DIR__ . '/Login/koneksi.php';
+require_once __DIR__ . '/score-calculator.php';
 
 // Auto-sync certificates for intern users
 if ($conn) {
@@ -49,6 +50,21 @@ $is_approved = 0;
 if ($cert) {
     $avg_score = round(($cert['score_technical'] + $cert['score_discipline'] + $cert['score_attitude']) / 3);
     $is_approved = intval($cert['is_approved'] ?? 0);
+
+    // Hitung ulang skor secara live dari data presensi
+    $uid = intval($cert['user_id'] ?? 0);
+    if ($uid > 0) {
+        $liveScores = calculate_intern_scores($conn, $uid);
+        if ($liveScores['detail']['total_records'] > 0) {
+            update_certificate_scores($conn, $uid);
+            $cert['score_technical']  = $liveScores['score_technical'];
+            $cert['score_discipline'] = $liveScores['score_discipline'];
+            $cert['score_attitude']   = $liveScores['score_attitude'];
+            $cert['final_grade']      = $liveScores['final_grade'];
+            $avg_score = $liveScores['avg_score'];
+        }
+    }
+
     if ($master_enabled && !empty($cert['certificate_id'])) {
         header('Location: verification.php?id=' . urlencode($cert['certificate_id']));
         exit;
@@ -428,14 +444,20 @@ include 'partials/sidebar-intern.php';
 
                     <!-- ── SLIDE 2: Sertifikat Belakang + Tabel Nilai ── -->
                     <?php
-                        // Skor yang tersedia di DB
+                        // Skor yang tersedia di DB (sudah diupdate live)
                         $skor_disiplin  = (int)$cert['score_discipline'];
                         $skor_teknis    = (int)$cert['score_technical'];
                         $skor_sikap     = (int)$cert['score_attitude'];
 
-                        // Distribusi skor ke 6 komponen non-teknis & 6 teknis
-                        $nonTeknis = [$skor_disiplin, $skor_disiplin, $skor_disiplin, $skor_sikap, $skor_sikap, $skor_sikap];
-                        $teknis    = [$skor_teknis,   $skor_teknis,   $skor_teknis,   $skor_teknis, $skor_teknis, $skor_teknis];
+                        // Sub-skor bervariasi menggunakan seed deterministik
+                        $certUserId = (int)($cert['user_id'] ?? 0);
+                        $seedVal = $certUserId > 0 ? $certUserId : crc32($cert['certificate_id']);
+                        $subDisc = generate_sub_scores($skor_disiplin, 3, $seedVal + 100);
+                        $subAtt  = generate_sub_scores($skor_sikap,    3, $seedVal + 200);
+                        $subTech = generate_sub_scores($skor_teknis,   6, $seedVal);
+
+                        $nonTeknis = array_merge($subDisc, $subAtt);
+                        $teknis    = $subTech;
 
                         $labelNonTeknis = ['Kedisiplinan','Kemauan Kerja Dan Motivasi','Kerajinan','Inisiatif Dan Kreatifitas','Kerjasama Dan Tanggung Jawab','Sikap Dan Perilaku'];
                         $labelTeknis    = ['Penguasaan Tools Dan Perangkat Kerja Utama','Kualitas & Ketepatan Hasil Pekerjaan','Pemahaman Brief & Penerapan Spesifikasi Tugas','Kecepatan & Ketepatan Waktu Penyelesaian Tugas','Kemampuan Penyelesaian Masalah','Laporan Hasil Kerja'];

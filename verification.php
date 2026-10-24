@@ -783,8 +783,13 @@ function populatePrintArea(d) {
     document.getElementById('p-tgl-bwi').textContent    = 'Banyuwangi, ' + (d.issue_date || '');
     document.getElementById('p-supervisor').textContent = d.supervisor_name || 'M. Lutfi Nur Fauzi, S.Kom.';
 
-    const nt = [d.score_discipline, d.score_discipline, d.score_discipline, d.score_attitude, d.score_attitude, d.score_attitude];
-    const tek = [d.score_technical, d.score_technical, d.score_technical, d.score_technical, d.score_technical, d.score_technical];
+    // Gunakan sub-skor bervariasi dari API (jika tersedia), fallback ke skor utama
+    const subDisc = d.sub_scores?.discipline || [d.score_discipline, d.score_discipline, d.score_discipline];
+    const subAtt  = d.sub_scores?.attitude   || [d.score_attitude, d.score_attitude, d.score_attitude];
+    const subTech = d.sub_scores?.technical  || [d.score_technical, d.score_technical, d.score_technical, d.score_technical, d.score_technical, d.score_technical];
+
+    const nt  = [...subDisc, ...subAtt]; // 6 sub-skor non-teknis
+    const tek = subTech;                 // 6 sub-skor teknis
     const labelNT = ['Kedisiplinan','Kemauan Kerja Dan Motivasi','Kerajinan','Inisiatif Dan Kreatifitas','Kerjasama Dan Tanggung Jawab','Sikap Dan Perilaku'];
     const labelT = ['Penguasaan Tools Dan Perangkat Kerja Utama','Kualitas & Ketepatan Hasil Pekerjaan','Pemahaman Brief & Penerapan Spesifikasi Tugas','Kecepatan & Ketepatan Waktu Penyelesaian Tugas','Kemampuan Penyelesaian Masalah','Laporan Hasil Kerja'];
 

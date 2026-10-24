@@ -67,6 +67,13 @@ include '../partials/sidebar-admin.php';
             </h2>
         </div>
         <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+            <button id="btn-recalc-all" onclick="recalculateAllScores()"
+                    class="bg-surface-bright text-primary border border-outline-variant px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:font-label-md flex items-center gap-1.5 sm:gap-2 hover:bg-surface-container-high transition-all active:scale-95 shadow-2xs cursor-pointer shrink-0"
+                    title="Hitung ulang seluruh nilai performa intern dari data absensi kehadiran">
+                <span id="recalc-all-icon" class="material-symbols-outlined text-[18px] sm:text-[20px]">sync</span>
+                <span class="hidden sm:inline font-semibold">Hitung Ulang Skor</span>
+                <span class="sm:hidden font-semibold">Hitung</span>
+            </button>
             <button id="btn-add" onclick="openModal()"
                     class="bg-primary text-on-primary px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:font-label-md flex items-center gap-1.5 sm:gap-2 hover:opacity-90 transition-all active:scale-95 shadow cursor-pointer shrink-0">
                 <span class="material-symbols-outlined text-[18px] sm:text-[20px]">add_circle</span>
@@ -267,23 +274,39 @@ include '../partials/sidebar-admin.php';
             </div>
         </div>
 
-        <!-- Scores -->
-        <div class="grid grid-cols-3 gap-4">
-            <div>
-                <label class="block font-label-sm text-on-surface-variant mb-1">Skor Teknis (0-100)</label>
-                <input id="f-tech" name="score_technical" type="number" min="0" max="100" value="0"
-                       class="w-full rounded-xl border border-outline-variant px-3 py-2 bg-surface-container-lowest focus:ring-2 focus:ring-primary text-sm"/>
+        <!-- Scores Header & Auto-Calculate -->
+        <div class="pt-1">
+            <div class="flex items-center justify-between mb-2">
+                <label class="font-label-md font-bold text-on-surface flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-primary text-[18px]">analytics</span>
+                    Penilaian Performa
+                </label>
+                <button type="button" id="btn-calc-modal" onclick="autoCalculateModalScores()"
+                        class="text-xs text-primary font-bold hover:underline flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 transition-all cursor-pointer">
+                    <span class="material-symbols-outlined text-[15px]">refresh</span>
+                    Hitung Otomatis dari Presensi
+                </button>
             </div>
-            <div>
-                <label class="block font-label-sm text-on-surface-variant mb-1">Skor Disiplin (0-100)</label>
-                <input id="f-disc" name="score_discipline" type="number" min="0" max="100" value="0"
-                       class="w-full rounded-xl border border-outline-variant px-3 py-2 bg-surface-container-lowest focus:ring-2 focus:ring-primary text-sm"/>
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block font-label-sm text-on-surface-variant mb-1">Skor Teknis (0-100)</label>
+                    <input id="f-tech" name="score_technical" type="number" min="0" max="100" value="0" oninput="updateModalFinalGrade()"
+                           class="w-full rounded-xl border border-outline-variant px-3 py-2 bg-surface-container-lowest focus:ring-2 focus:ring-primary text-sm font-semibold"/>
+                </div>
+                <div>
+                    <label class="block font-label-sm text-on-surface-variant mb-1">Skor Disiplin (0-100)</label>
+                    <input id="f-disc" name="score_discipline" type="number" min="0" max="100" value="0" oninput="updateModalFinalGrade()"
+                           class="w-full rounded-xl border border-outline-variant px-3 py-2 bg-surface-container-lowest focus:ring-2 focus:ring-primary text-sm font-semibold"/>
+                </div>
+                <div>
+                    <label class="block font-label-sm text-on-surface-variant mb-1">Skor Sikap (0-100)</label>
+                    <input id="f-att" name="score_attitude" type="number" min="0" max="100" value="0" oninput="updateModalFinalGrade()"
+                           class="w-full rounded-xl border border-outline-variant px-3 py-2 bg-surface-container-lowest focus:ring-2 focus:ring-primary text-sm font-semibold"/>
+                </div>
             </div>
-            <div>
-                <label class="block font-label-sm text-on-surface-variant mb-1">Skor Sikap (0-100)</label>
-                <input id="f-att" name="score_attitude" type="number" min="0" max="100" value="0"
-                       class="w-full rounded-xl border border-outline-variant px-3 py-2 bg-surface-container-lowest focus:ring-2 focus:ring-primary text-sm"/>
-            </div>
+            <p class="text-[11px] text-on-surface-variant mt-1.5">
+                * Skor kedisiplinan dan sikap dihitung secara dinamis dari persentase kehadiran tepat waktu.
+            </p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -522,10 +545,22 @@ async function loadCertificates() {
         return;
     }
 
-    tbody.innerHTML = data.map(c => `
+    tbody.innerHTML = data.map(c => {
+        const avgScore = Math.round(((Number(c.score_technical) || 0) + (Number(c.score_discipline) || 0) + (Number(c.score_attitude) || 0)) / 3);
+        const hasUserId = c.user_id && Number(c.user_id) > 0;
+        return `
         <tr class="hover:bg-surface-container-low transition-colors">
             <td class="px-4 py-3 font-mono text-sm font-bold text-primary">${c.certificate_id}</td>
-            <td class="px-4 py-3 font-medium">${c.intern_name}</td>
+            <td class="px-4 py-3">
+                <div class="font-medium text-on-surface">${c.intern_name}</div>
+                <div class="text-[11px] text-on-surface-variant flex items-center gap-1.5 mt-0.5">
+                    <span class="inline-flex items-center px-1.5 py-0.2 rounded font-bold text-primary bg-primary/10">Grade: ${c.final_grade || '—'}</span>
+                    <span>•</span>
+                    <span title="Rata-rata: ${avgScore}">Rerata: ${avgScore}</span>
+                    <span>•</span>
+                    <span class="text-xs text-on-surface-variant" title="Teknis: ${c.score_technical || 0}, Disiplin: ${c.score_discipline || 0}, Sikap: ${c.score_attitude || 0}">T:${c.score_technical || 0} D:${c.score_discipline || 0} S:${c.score_attitude || 0}</span>
+                </div>
+            </td>
             <td class="px-4 py-3 text-center">
                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
                     <span class="material-symbols-outlined text-[13px] text-blue-600">calendar_month</span>
@@ -552,6 +587,11 @@ async function loadCertificates() {
                        class="p-1.5 rounded-lg hover:bg-primary-fixed text-primary transition-colors" title="Lihat">
                         <span class="material-symbols-outlined text-[18px]">open_in_new</span>
                     </a>
+                    ${hasUserId ? `
+                    <button onclick="recalculateSingleScore(${c.user_id})"
+                            class="p-1.5 rounded-lg hover:bg-primary-container text-primary transition-colors" title="Hitung Ulang Skor dari Absensi">
+                        <span class="material-symbols-outlined text-[18px]">sync</span>
+                    </button>` : ''}
                     <button onclick="editCertificate(${c.id})"
                             class="p-1.5 rounded-lg hover:bg-surface-container-high text-on-surface-variant transition-colors" title="Edit">
                         <span class="material-symbols-outlined text-[18px]">edit</span>
@@ -563,7 +603,7 @@ async function loadCertificates() {
                 </div>
             </td>
         </tr>
-    `).join('');
+    `;}).join('');
 }
 
 // ── Auto-generate Certificate ID ──────────────────────────────────────────
@@ -737,6 +777,115 @@ async function toggleSingleCertStatus(id, newStatus) {
         showToast('Terjadi kesalahan server', 'error');
     }
 }
+
+// ── Recalculate Scores from Attendance ─────────────────────────────────────
+async function recalculateAllScores() {
+    const btn = document.getElementById('btn-recalc-all');
+    const icon = document.getElementById('recalc-all-icon');
+    if (btn) btn.disabled = true;
+    if (icon) icon.classList.add('animate-spin');
+
+    try {
+        const fd = new FormData();
+        fd.set('action', 'recalculate_scores');
+        const res = await fetch('../certificate-api.php', { method: 'POST', body: fd });
+        const json = await res.json();
+        if (json.success) {
+            loadCertificates();
+            showToast(json.message || 'Semua skor berhasil dihitung ulang', 'success');
+        } else {
+            showToast(json.message || 'Gagal menghitung skor', 'error');
+        }
+    } catch (e) {
+        showToast('Terjadi kesalahan koneksi server', 'error');
+    } finally {
+        if (btn) btn.disabled = false;
+        if (icon) icon.classList.remove('animate-spin');
+    }
+}
+
+async function recalculateSingleScore(userId) {
+    if (!userId) return;
+    try {
+        const fd = new FormData();
+        fd.set('action', 'recalculate_scores');
+        fd.set('user_id', userId);
+        const res = await fetch('../certificate-api.php', { method: 'POST', body: fd });
+        const json = await res.json();
+        if (json.success) {
+            loadCertificates();
+            showToast(json.message || 'Skor berhasil dihitung ulang', 'success');
+        } else {
+            showToast(json.message || 'Gagal menghitung skor', 'error');
+        }
+    } catch (e) {
+        showToast('Terjadi kesalahan koneksi server', 'error');
+    }
+}
+
+function determineGradeFromAvg(avg) {
+    if (avg >= 90) return 'A+';
+    if (avg >= 85) return 'A';
+    if (avg >= 80) return 'A-';
+    if (avg >= 75) return 'B+';
+    if (avg >= 70) return 'B';
+    if (avg >= 65) return 'B-';
+    if (avg >= 60) return 'C+';
+    if (avg >= 55) return 'C';
+    if (avg >= 50) return 'C-';
+    if (avg >= 45) return 'D';
+    return 'E';
+}
+
+function updateModalFinalGrade() {
+    const tech = Number(document.getElementById('f-tech')?.value) || 0;
+    const disc = Number(document.getElementById('f-disc')?.value) || 0;
+    const att  = Number(document.getElementById('f-att')?.value) || 0;
+    const avg  = Math.round((tech + disc + att) / 3);
+    const gradeInput = document.getElementById('f-grade');
+    if (gradeInput) {
+        gradeInput.value = determineGradeFromAvg(avg);
+    }
+}
+
+async function autoCalculateModalScores() {
+    const userId = document.getElementById('f-user-id')?.value;
+    if (!userId) {
+        showToast('Pilih peserta magang pada dropdown terlebih dahulu', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-calc-modal');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+
+    try {
+        const fd = new FormData();
+        fd.set('action', 'recalculate_scores');
+        fd.set('user_id', userId);
+        const res = await fetch('../certificate-api.php', { method: 'POST', body: fd });
+        const json = await res.json();
+        if (json.success && json.scores) {
+            const sc = json.scores;
+            if (document.getElementById('f-tech')) document.getElementById('f-tech').value = sc.score_technical;
+            if (document.getElementById('f-disc')) document.getElementById('f-disc').value = sc.score_discipline;
+            if (document.getElementById('f-att'))  document.getElementById('f-att').value  = sc.score_attitude;
+            if (document.getElementById('f-grade')) document.getElementById('f-grade').value = sc.final_grade;
+
+            const detail = sc.detail;
+            const msg = detail?.total_records > 0
+                ? `Berhasil! Kehadiran: ${detail.present_days}/${detail.total_work_days} hari (${detail.attendance_rate}%), Telat: ${detail.late_days}x`
+                : 'Belum ada data presensi, skor dihitung dari baseline default.';
+            showToast(msg, 'success');
+        } else {
+            showToast(json.message || 'Gagal menghitung skor otomatis', 'error');
+        }
+    } catch (e) {
+        showToast('Terjadi kesalahan koneksi server', 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    }
+}
+
 
 // ── Toast notification ─────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
