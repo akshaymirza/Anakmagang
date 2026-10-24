@@ -249,6 +249,10 @@ if (!function_exists('ensure_intern_certificate')) {
 		if ($chk_appr_at && mysqli_num_rows($chk_appr_at) == 0) {
 			@mysqli_query($conn, "ALTER TABLE certificates ADD COLUMN approved_at DATETIME DEFAULT NULL");
 		}
+		$chk_manual = @mysqli_query($conn, "SHOW COLUMNS FROM certificates LIKE 'is_score_manual'");
+		if ($chk_manual && mysqli_num_rows($chk_manual) == 0) {
+			@mysqli_query($conn, "ALTER TABLE certificates ADD COLUMN is_score_manual TINYINT(1) NOT NULL DEFAULT 0");
+		}
 
 		$ins = mysqli_prepare($conn, "INSERT INTO certificates 
 			(certificate_id, user_id, intern_name, intern_position, university, major, start_date, end_date, issue_date, score_technical, score_discipline, score_attitude, final_grade, supervisor_name, status, is_approved) 

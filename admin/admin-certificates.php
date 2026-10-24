@@ -303,10 +303,15 @@ include '../partials/sidebar-admin.php';
                     <input id="f-att" name="score_attitude" type="number" min="0" max="100" value="0" oninput="updateModalFinalGrade()"
                            class="w-full rounded-xl border border-outline-variant px-3 py-2 bg-surface-container-lowest focus:ring-2 focus:ring-primary text-sm font-semibold"/>
                 </div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2 pt-2 border-t border-outline-variant/60">
+                <p class="text-[11px] text-on-surface-variant">
+                    * <strong>Kedisiplinan</strong> dari presensi & jam masuk. <strong>Sikap</strong> & <strong>Teknis</strong> dari evaluasi pembimbing.
+                </p>
+                <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-on-surface select-none shrink-0">
+                    <input type="checkbox" id="f-manual-lock" name="is_score_manual" value="1" class="rounded border-outline-variant text-primary focus:ring-primary h-3.5 w-3.5" checked/>
+                    <span>Kunci Nilai Manual</span>
+                </label>
             </div>
-            <p class="text-[11px] text-on-surface-variant mt-1.5">
-                * Skor kedisiplinan dan sikap dihitung secara dinamis dari persentase kehadiran tepat waktu.
-            </p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -357,6 +362,127 @@ include '../partials/sidebar-admin.php';
         <button id="confirm-del-btn"
                 class="px-4 py-2 rounded-xl bg-error text-on-error font-label-md hover:opacity-90">Hapus</button>
     </div>
+</dialog>
+
+<!-- ── Quick Edit Performance Metrics Modal ── -->
+<dialog id="metrics-modal" class="w-full max-w-lg p-0 bg-surface rounded-2xl overflow-hidden shadow-2xl border border-outline-variant">
+    <div class="p-5 bg-surface-container-low border-b border-outline-variant flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[22px]">tune</span>
+            </div>
+            <div>
+                <h3 class="font-headline-sm font-bold text-on-surface">Edit Metrik Performa</h3>
+                <p id="m-intern-info" class="text-xs text-on-surface-variant font-medium"></p>
+            </div>
+        </div>
+        <button type="button" onclick="closeMetricsModal()" class="p-1 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors">
+            <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+    </div>
+    <form id="metrics-form" onsubmit="saveMetrics(event)" class="p-5 space-y-4">
+        <input type="hidden" id="m-cert-id" name="id"/>
+        <input type="hidden" id="m-user-id" value=""/>
+
+        <!-- Presensi Quick Stats Card -->
+        <div id="m-att-summary" class="p-3 rounded-xl bg-surface-container-lowest border border-outline-variant text-xs space-y-1">
+            <div class="flex items-center justify-between text-on-surface font-semibold">
+                <span class="flex items-center gap-1.5 text-primary">
+                    <span class="material-symbols-outlined text-[16px]">schedule</span>
+                    Catatan Absensi Kehadiran
+                </span>
+                <button type="button" onclick="loadAttendanceForMetrics()" class="text-primary hover:underline text-[11px] font-bold flex items-center gap-1 cursor-pointer">
+                    <span class="material-symbols-outlined text-[13px]">refresh</span> Muat Absensi
+                </button>
+            </div>
+            <p id="m-att-text" class="text-on-surface-variant text-[11px]">Memuat data absensi...</p>
+        </div>
+
+        <!-- 1. Skor Kedisiplinan -->
+        <div class="space-y-1.5 p-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest">
+            <div class="flex items-center justify-between">
+                <label class="font-label-sm font-bold text-on-surface flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-emerald-600 text-[18px]">verified_user</span>
+                    Kedisiplinan & Ketepatan Waktu
+                </label>
+                <button type="button" onclick="useCalculatedDiscipline()" class="text-[11px] text-primary hover:underline font-bold flex items-center gap-1 cursor-pointer">
+                    <span class="material-symbols-outlined text-[13px]">auto_fix_high</span> Ambil dari Absensi
+                </button>
+            </div>
+            <p class="text-[11px] text-on-surface-variant">Dihitung dari rasio kehadiran kerja, ketepatan waktu jam masuk, dan penalti telat.</p>
+            <div class="flex items-center gap-3 pt-1">
+                <input type="range" id="m-disc-range" min="0" max="100" oninput="syncMetric('disc', this.value)" class="flex-1 accent-emerald-600 cursor-pointer"/>
+                <input type="number" id="m-disc" name="score_discipline" min="0" max="100" oninput="syncMetric('disc', this.value, true)" class="w-16 rounded-xl border border-outline-variant px-2.5 py-1.5 text-center font-bold text-sm bg-surface-bright"/>
+            </div>
+        </div>
+
+        <!-- 2. Skor Sikap & Perilaku -->
+        <div class="space-y-1.5 p-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest">
+            <div class="flex items-center justify-between">
+                <label class="font-label-sm font-bold text-on-surface flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-amber-600 text-[18px]">psychology</span>
+                    Sikap & Perilaku (Soft-Skill)
+                </label>
+                <span class="text-[11px] text-on-surface-variant font-medium">Evaluasi Pembimbing</span>
+            </div>
+            <p class="text-[11px] text-on-surface-variant">Penilaian etika, komunikasi, inisiatif, kerjasama tim, dan integritas kerja.</p>
+            <div class="flex items-center gap-3 pt-1">
+                <input type="range" id="m-att-range" min="0" max="100" oninput="syncMetric('att', this.value)" class="flex-1 accent-amber-600 cursor-pointer"/>
+                <input type="number" id="m-att" name="score_attitude" min="0" max="100" oninput="syncMetric('att', this.value, true)" class="w-16 rounded-xl border border-outline-variant px-2.5 py-1.5 text-center font-bold text-sm bg-surface-bright"/>
+            </div>
+        </div>
+
+        <!-- 3. Skor Kompetensi Teknis -->
+        <div class="space-y-1.5 p-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest">
+            <div class="flex items-center justify-between">
+                <label class="font-label-sm font-bold text-on-surface flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-blue-600 text-[18px]">code</span>
+                    Kompetensi Teknis
+                </label>
+                <span class="text-[11px] text-on-surface-variant font-medium">Penguasaan Tugas & Proyek</span>
+            </div>
+            <p class="text-[11px] text-on-surface-variant">Kualitas hasil pekerjaan, pemahaman brief/tools, dan penyelesaian masalah teknis.</p>
+            <div class="flex items-center gap-3 pt-1">
+                <input type="range" id="m-tech-range" min="0" max="100" oninput="syncMetric('tech', this.value)" class="flex-1 accent-blue-600 cursor-pointer"/>
+                <input type="number" id="m-tech" name="score_technical" min="0" max="100" oninput="syncMetric('tech', this.value, true)" class="w-16 rounded-xl border border-outline-variant px-2.5 py-1.5 text-center font-bold text-sm bg-surface-bright"/>
+            </div>
+        </div>
+
+        <!-- Rangkuman Hasil & Predikat -->
+        <div class="p-3.5 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-between">
+            <div>
+                <p class="text-xs font-semibold text-on-surface-variant">Rata-rata Skor:</p>
+                <p id="m-avg-score" class="text-xl font-extrabold text-primary">0</p>
+            </div>
+            <div>
+                <label class="block font-label-sm text-on-surface-variant text-right mb-0.5">Predikat / Grade</label>
+                <input type="text" id="m-grade" name="final_grade" class="w-20 rounded-xl border border-outline-variant px-2.5 py-1 font-bold text-center text-primary text-base bg-surface-bright"/>
+            </div>
+        </div>
+
+        <!-- Manual Lock Toggle -->
+        <div class="flex items-center justify-between p-3 rounded-xl bg-surface-container-low border border-outline-variant/60">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[20px]">lock</span>
+                <div>
+                    <p class="text-xs font-bold text-on-surface">Kunci Nilai Manual</p>
+                    <p class="text-[11px] text-on-surface-variant">Nilai tidak akan ditimpa otomatis saat melihat sertifikat / verifikasi.</p>
+                </div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer select-none">
+                <input type="checkbox" id="m-lock" name="is_score_manual" value="1" class="sr-only peer" checked/>
+                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+            </label>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-3 border-t border-outline-variant">
+            <button type="button" onclick="closeMetricsModal()" class="px-4 py-2 rounded-xl border border-outline font-label-md hover:bg-surface-container-low transition-colors">Batal</button>
+            <button type="submit" id="btn-save-metrics" class="px-6 py-2 rounded-xl bg-primary text-on-primary font-label-md hover:opacity-90 transition-all flex items-center gap-2 shadow cursor-pointer">
+                <span class="material-symbols-outlined text-[18px]">save</span>
+                <span>Simpan Metrik</span>
+            </button>
+        </div>
+    </form>
 </dialog>
 
 <script>
@@ -552,7 +678,12 @@ async function loadCertificates() {
         <tr class="hover:bg-surface-container-low transition-colors">
             <td class="px-4 py-3 font-mono text-sm font-bold text-primary">${c.certificate_id}</td>
             <td class="px-4 py-3">
-                <div class="font-medium text-on-surface">${c.intern_name}</div>
+                <div class="font-medium text-on-surface flex items-center gap-1.5 flex-wrap">
+                    <span>${c.intern_name}</span>
+                    ${Number(c.is_score_manual) === 1
+                        ? '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800" title="Skor ditentukan secara manual oleh admin/pembimbing">Manual</span>'
+                        : '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800" title="Skor tersinkron otomatis dari data presensi">Auto</span>'}
+                </div>
                 <div class="text-[11px] text-on-surface-variant flex items-center gap-1.5 mt-0.5">
                     <span class="inline-flex items-center px-1.5 py-0.2 rounded font-bold text-primary bg-primary/10">Grade: ${c.final_grade || '—'}</span>
                     <span>•</span>
@@ -584,9 +715,13 @@ async function loadCertificates() {
             <td class="px-4 py-3 text-center">
                 <div class="flex items-center justify-center gap-1">
                     <a href="../verification.php?id=${encodeURIComponent(c.certificate_id)}" target="_blank"
-                       class="p-1.5 rounded-lg hover:bg-primary-fixed text-primary transition-colors" title="Lihat">
+                       class="p-1.5 rounded-lg hover:bg-primary-fixed text-primary transition-colors" title="Lihat Sertifikat">
                         <span class="material-symbols-outlined text-[18px]">open_in_new</span>
                     </a>
+                    <button onclick="openMetricsModal(${c.id})"
+                            class="p-1.5 rounded-lg hover:bg-amber-100 text-amber-700 transition-colors" title="Edit Metrik Performa (Teknis, Disiplin, Sikap)">
+                        <span class="material-symbols-outlined text-[18px]">tune</span>
+                    </button>
                     ${hasUserId ? `
                     <button onclick="recalculateSingleScore(${c.user_id})"
                             class="p-1.5 rounded-lg hover:bg-primary-container text-primary transition-colors" title="Hitung Ulang Skor dari Absensi">
@@ -678,6 +813,12 @@ function openModal(data = null) {
     // Auto-generate ID jika mode tambah
     if (!data) fetchNextCertId();
 
+    // Set manual lock checkbox
+    const lockEl = document.getElementById('f-manual-lock');
+    if (lockEl) {
+        lockEl.checked = data ? (Number(data.is_score_manual) !== 0) : true;
+    }
+
     document.getElementById('cert-modal').showModal();
 }
 
@@ -709,6 +850,9 @@ async function saveCertificate(e) {
         } else {
             formData.delete('id');
         }
+
+        // Set manual lock
+        formData.set('is_score_manual', document.getElementById('f-manual-lock')?.checked ? '1' : '0');
 
         const res  = await fetch('../certificate-api.php', { method: 'POST', body: formData });
         const text = await res.text();
@@ -883,6 +1027,140 @@ async function autoCalculateModalScores() {
         showToast('Terjadi kesalahan koneksi server', 'error');
     } finally {
         if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    }
+}
+
+// ── Metrics Modal Functions ───────────────────────────────────────────────
+let currentMetricCert = null;
+let lastCalculatedScores = null;
+
+async function openMetricsModal(certId) {
+    try {
+        const res = await fetch(`../certificate-api.php?action=get&id=${certId}`);
+        const json = await res.json();
+        if (!json.success || !json.data) {
+            showToast('Gagal memuat data sertifikat', 'error');
+            return;
+        }
+
+        currentMetricCert = json.data;
+        document.getElementById('m-cert-id').value = certId;
+        document.getElementById('m-user-id').value = currentMetricCert.user_id || '';
+        document.getElementById('m-intern-info').textContent = `${currentMetricCert.intern_name} • ${currentMetricCert.certificate_id} (${currentMetricCert.intern_position})`;
+
+        const tech = Number(currentMetricCert.score_technical) || 0;
+        const disc = Number(currentMetricCert.score_discipline) || 0;
+        const att  = Number(currentMetricCert.score_attitude) || 0;
+
+        syncMetric('tech', tech, false);
+        syncMetric('disc', disc, false);
+        syncMetric('att',  att,  false);
+
+        const grade = currentMetricCert.final_grade || determineGradeFromAvg(Math.round((tech + disc + att) / 3));
+        document.getElementById('m-grade').value = grade;
+        document.getElementById('m-lock').checked = Number(currentMetricCert.is_score_manual) !== 0;
+
+        document.getElementById('metrics-modal').showModal();
+        loadAttendanceForMetrics();
+    } catch (e) {
+        showToast('Terjadi kesalahan memuat data', 'error');
+    }
+}
+
+function closeMetricsModal() {
+    document.getElementById('metrics-modal').close();
+    currentMetricCert = null;
+    lastCalculatedScores = null;
+}
+
+function syncMetric(type, val, fromInput = false) {
+    val = Math.max(0, Math.min(100, Number(val) || 0));
+    if (fromInput) {
+        const rangeEl = document.getElementById(`m-${type}-range`);
+        if (rangeEl) rangeEl.value = val;
+    } else {
+        const numEl = document.getElementById(`m-${type}`);
+        const rangeEl = document.getElementById(`m-${type}-range`);
+        if (numEl) numEl.value = val;
+        if (rangeEl) rangeEl.value = val;
+    }
+    recalcMetricsSummary();
+}
+
+function recalcMetricsSummary() {
+    const tech = Number(document.getElementById('m-tech')?.value) || 0;
+    const disc = Number(document.getElementById('m-disc')?.value) || 0;
+    const att  = Number(document.getElementById('m-att')?.value) || 0;
+    const avg  = Math.round((tech + disc + att) / 3);
+
+    const avgEl = document.getElementById('m-avg-score');
+    if (avgEl) avgEl.textContent = avg;
+
+    const gradeEl = document.getElementById('m-grade');
+    if (gradeEl) gradeEl.value = determineGradeFromAvg(avg);
+}
+
+async function loadAttendanceForMetrics() {
+    const userId = document.getElementById('m-user-id')?.value;
+    const textEl = document.getElementById('m-att-text');
+    if (!userId || Number(userId) <= 0) {
+        if (textEl) textEl.textContent = 'Peserta ini tidak terhubung ke akun user intern, data absensi tidak dapat dikalkulasi otomatis.';
+        return;
+    }
+    if (textEl) textEl.textContent = 'Menghitung catatan absensi...';
+    try {
+        const fd = new FormData();
+        fd.set('action', 'recalculate_scores');
+        fd.set('user_id', userId);
+        const res = await fetch('../certificate-api.php', { method: 'POST', body: fd });
+        const json = await res.json();
+        if (json.success && json.scores) {
+            lastCalculatedScores = json.scores;
+            const det = json.scores.detail;
+            if (det && det.total_records > 0) {
+                if (textEl) textEl.innerHTML = `<span class="text-emerald-700 font-bold">Kehadiran: ${det.present_days}/${det.total_work_days} hari (${det.attendance_rate}%)</span> • Telat: <span class="font-bold text-amber-700">${det.late_days}x</span> • Alfa: <span class="font-bold text-red-600">${det.absent_days}</span> • Skor Disiplin Terhitung: <strong class="text-primary">${json.scores.score_discipline}</strong>`;
+            } else {
+                if (textEl) textEl.textContent = 'Belum ada catatan absensi dalam periode magang peserta ini.';
+            }
+        }
+    } catch(e) {
+        if (textEl) textEl.textContent = 'Gagal memuat catatan absensi.';
+    }
+}
+
+function useCalculatedDiscipline() {
+    if (lastCalculatedScores && typeof lastCalculatedScores.score_discipline === 'number') {
+        syncMetric('disc', lastCalculatedScores.score_discipline, false);
+        showToast(`Skor kedisiplinan diisi dari presensi: ${lastCalculatedScores.score_discipline}`, 'success');
+    } else {
+        showToast('Data kalkulasi presensi belum tersedia', 'error');
+    }
+}
+
+async function saveMetrics(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-metrics');
+    if (btn) btn.disabled = true;
+
+    try {
+        const formEl = document.getElementById('metrics-form');
+        const fd = new FormData(formEl);
+        fd.set('action', 'update_metrics');
+        fd.set('is_score_manual', document.getElementById('m-lock')?.checked ? '1' : '0');
+
+        const res = await fetch('../certificate-api.php', { method: 'POST', body: fd });
+        const json = await res.json();
+        if (json.success) {
+            closeMetricsModal();
+            loadCertificates();
+            showToast(json.message || 'Metrik performa berhasil disimpan', 'success');
+        } else {
+            showToast(json.message || 'Gagal menyimpan metrik performa', 'error');
+        }
+    } catch (e) {
+        showToast('Terjadi kesalahan server saat menyimpan metrik', 'error');
+    } finally {
+        if (btn) btn.disabled = false;
     }
 }
 

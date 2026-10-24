@@ -51,17 +51,18 @@ if ($cert) {
     $avg_score = round(($cert['score_technical'] + $cert['score_discipline'] + $cert['score_attitude']) / 3);
     $is_approved = intval($cert['is_approved'] ?? 0);
 
-    // Hitung ulang skor secara live dari data presensi
+    // Hitung ulang skor secara live dari data presensi hanya jika skor belum dikunci manual oleh admin
     $uid = intval($cert['user_id'] ?? 0);
-    if ($uid > 0) {
+    $isManual = !empty($cert['is_score_manual']);
+    if ($uid > 0 && !$isManual) {
         $liveScores = calculate_intern_scores($conn, $uid);
         if ($liveScores['detail']['total_records'] > 0) {
-            update_certificate_scores($conn, $uid);
+            update_certificate_scores($conn, $uid, false);
             $cert['score_technical']  = $liveScores['score_technical'];
             $cert['score_discipline'] = $liveScores['score_discipline'];
             $cert['score_attitude']   = $liveScores['score_attitude'];
             $cert['final_grade']      = $liveScores['final_grade'];
-            $avg_score = $liveScores['avg_score'];
+            $avg_score                = $liveScores['avg_score'];
         }
     }
 

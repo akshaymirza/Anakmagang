@@ -42,6 +42,10 @@ if ($conn) {
     if ($chk_appr_at && mysqli_num_rows($chk_appr_at) == 0) {
         @mysqli_query($conn, "ALTER TABLE certificates ADD COLUMN approved_at DATETIME DEFAULT NULL");
     }
+    $chk_manual = @mysqli_query($conn, "SHOW COLUMNS FROM certificates LIKE 'is_score_manual'");
+    if ($chk_manual && mysqli_num_rows($chk_manual) == 0) {
+        @mysqli_query($conn, "ALTER TABLE certificates ADD COLUMN is_score_manual TINYINT(1) NOT NULL DEFAULT 0");
+    }
 }
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'verify';
@@ -151,18 +155,18 @@ if ($action === 'recalculate_scores' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $user_id = (int)($_POST['user_id'] ?? 0);
     if ($user_id <= 0) {
-        // Recalculate semua intern
+        // Recalculate semua intern (force=true)
         $res = @mysqli_query($conn, "SELECT DISTINCT user_id FROM certificates WHERE user_id IS NOT NULL AND user_id > 0");
         $updated = 0;
         if ($res) {
             while ($row = mysqli_fetch_assoc($res)) {
-                update_certificate_scores($conn, (int)$row['user_id']);
+                update_certificate_scores($conn, (int)$row['user_id'], true);
                 $updated++;
             }
         }
         echo json_encode(['success' => true, 'message' => "Skor $updated sertifikat berhasil dihitung ulang dari data presensi.", 'updated' => $updated]);
     } else {
-        $scores = update_certificate_scores($conn, $user_id);
+        $scores = update_certificate_scores($conn, $user_id, true);
         echo json_encode(['success' => true, 'message' => 'Skor berhasil dihitung ulang.', 'scores' => $scores]);
     }
     exit;
@@ -205,18 +209,19 @@ if ($action === 'verify') {
         exit;
     }
 
-    // Hitung ulang skor secara live dari data presensi (jika ada user_id)
-    $userId = (int)($cert['user_id'] ?? 0);
+    // Hitung ulang skor secara live dari data presensi (jika ada user_id dan BUKAN manual)
+    $userId    = (int)($cert['user_id'] ?? 0);
     $scoreTech = (int)$cert['score_technical'];
     $scoreDisc = (int)$cert['score_discipline'];
     $scoreAtt  = (int)$cert['score_attitude'];
     $grade     = $cert['final_grade'];
+    $isManual  = !empty($cert['is_score_manual']);
 
-    if ($userId > 0) {
+    if ($userId > 0 && !$isManual) {
         $liveScores = calculate_intern_scores($conn, $userId);
         if ($liveScores['detail']['total_records'] > 0) {
-            // Update DB dengan skor terbaru
-            update_certificate_scores($conn, $userId);
+            // Update DB dengan skor terbaru (force=false, aman)
+            update_certificate_scores($conn, $userId, false);
             $scoreTech = $liveScores['score_technical'];
             $scoreDisc = $liveScores['score_discipline'];
             $scoreAtt  = $liveScores['score_attitude'];
@@ -280,7 +285,7 @@ if ($action === 'list') {
 
     $sql = "SELECT id, certificate_id, user_id, intern_name, intern_position, university,
                    score_technical, score_discipline, score_attitude,
-                   final_grade, status, is_approved, approved_at,
+                   final_grade, status, is_approved, approved_at, is_score_manual,
                    DATE_FORMAT(issue_date, '%d %b %Y') AS issue_fmt,
                    CAST($year_expr AS UNSIGNED) AS entry_year
             FROM certificates
@@ -383,27 +388,70 @@ if ($action === 'update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $status          = trim($_POST['status'] ?? 'active');
     $notes           = trim($_POST['notes'] ?? '');
 
+    $is_score_manual = isset($_POST['is_score_manual']) ? (int)$_POST['is_score_manual'] : 1;
+
     $stmt = $conn->prepare(
         "UPDATE certificates SET
             intern_name=?, intern_position=?, university=?, major=?,
             start_date=?, end_date=?, issue_date=?,
             score_technical=?, score_discipline=?, score_attitude=?,
-            final_grade=?, supervisor_name=?, status=?, notes=?
+            final_grade=?, supervisor_name=?, status=?, notes=?, is_score_manual=?
          WHERE id=?"
     );
     $stmt->bind_param(
-        'sssssssiiissssi',
+        'sssssssiiisssiii',
         $intern_name, $intern_position, $university, $major,
         $start_date, $end_date, $issue_date,
         $score_technical, $score_discipline, $score_attitude,
         $final_grade, $supervisor_name, $status, $notes,
-        $id
+        $is_score_manual, $id
     );
 
     if ($stmt->execute()) {
         echo json_encode(['success' => true, 'message' => 'Sertifikat berhasil diperbarui.']);
     } else {
         echo json_encode(['success' => false, 'message' => 'Gagal update: ' . $conn->error]);
+    }
+    exit;
+}
+
+// ── UPDATE METRICS ONLY (admin only) ─────────────────────────────────────────
+if ($action === 'update_metrics' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    check_admin_api();
+
+    $id = (int)($_POST['id'] ?? 0);
+    if (!$id) {
+        echo json_encode(['success' => false, 'message' => 'ID sertifikat tidak valid.']);
+        exit;
+    }
+
+    $tech  = max(0, min(100, intval($_POST['score_technical'] ?? 0)));
+    $disc  = max(0, min(100, intval($_POST['score_discipline'] ?? 0)));
+    $att   = max(0, min(100, intval($_POST['score_attitude'] ?? 0)));
+    $grade = trim($_POST['final_grade'] ?? '');
+    if (empty($grade)) {
+        $avg = round(($tech + $disc + $att) / 3);
+        $grade = determine_grade($avg);
+    }
+    $is_manual = isset($_POST['is_score_manual']) ? (int)$_POST['is_score_manual'] : 1;
+
+    $stmt = $conn->prepare("UPDATE certificates SET score_technical=?, score_discipline=?, score_attitude=?, final_grade=?, is_score_manual=? WHERE id=?");
+    $stmt->bind_param('iiisii', $tech, $disc, $att, $grade, $is_manual, $id);
+    if ($stmt->execute()) {
+        $stmt->close();
+        echo json_encode([
+            'success' => true,
+            'message' => 'Metrik performa berhasil diperbarui!',
+            'scores'  => [
+                'score_technical'  => $tech,
+                'score_discipline' => $disc,
+                'score_attitude'   => $att,
+                'final_grade'      => $grade,
+                'is_score_manual'  => $is_manual,
+            ]
+        ]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Gagal memperbarui metrik: ' . $conn->error]);
     }
     exit;
 }

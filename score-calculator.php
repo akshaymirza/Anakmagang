@@ -16,7 +16,7 @@ if (!function_exists('calculate_intern_scores')) {
     function calculate_intern_scores(mysqli $conn, int $userId): array
     {
         // ── 1. Ambil data sertifikat untuk rentang tanggal ──
-        $certStmt = mysqli_prepare($conn, "SELECT start_date, end_date, score_technical FROM certificates WHERE user_id = ? LIMIT 1");
+        $certStmt = mysqli_prepare($conn, "SELECT start_date, end_date, score_technical, score_discipline, score_attitude, is_score_manual FROM certificates WHERE user_id = ? LIMIT 1");
         if (!$certStmt) {
             return fallback_scores();
         }
@@ -134,36 +134,34 @@ if (!function_exists('calculate_intern_scores')) {
         $effectiveAbsent   = $absentDays + $daysWithoutRecord;
 
         // ── 6. Hitung Skor Kedisiplinan (0-100) ──
-        // Formula:
-        //   Base = ((present + late + permit) / totalWorkDays) * 100
-        //   Penalty terlambat: -1 per hari terlambat
-        //   Penalty alfa: sudah terhitung di base (tidak hadir = 0)
-        //   Bonus: permit dihitung sebagai 0.8 kehadiran (izin tetap sedikit mengurangi)
+        // Kedisiplinan dihitung murni dari data presensi:
+        //   - Rasio kehadiran (present + late + permit)
+        //   - Rasio ketepatan waktu (hadir tepat waktu tanpa telat)
+        //   - Penalti keterlambatan (-1.5 per hari telat)
         $attendedDays = $presentDays + $lateDays + ($permitDays * 0.8);
-        $attendanceRate = ($attendedDays / $totalWorkDays) * 100;
-        $latePenalty = $lateDays * 1.5; // setiap telat mengurangi 1.5 poin
-        $scoreDiscipline = max(0, min(100, round($attendanceRate - $latePenalty)));
-
-        // ── 7. Hitung Skor Sikap & Kerjasama (0-100) ──
-        // Berdasarkan kedisiplinan dengan bobot & variasi
-        // Intern yang hadir konsisten tanpa telat → sikap bagus
-        // Rasio "hadir tepat waktu" vs total
+        $attendanceRate = ($totalWorkDays > 0) ? ($attendedDays / $totalWorkDays) * 100 : 0;
         $onTimeRate = ($totalWorkDays > 0) ? ($presentDays / $totalWorkDays) * 100 : 0;
-        $scoreAttitude = max(0, min(100, round(
-            ($scoreDiscipline * 0.6) + ($onTimeRate * 0.4)
-        )));
+        $latePenalty = $lateDays * 1.5;
 
-        // ── 8. Skor Teknis ──
-        // Tetap manual dari admin, tapi jika masih default (85) → beri baseline cerdas
-        $existingTech = (int)($certRow['score_technical'] ?? 0);
-        $scoreTechnical = $existingTech;
-        // Jika belum pernah diedit (masih 0 atau template 85) dan sudah ada data presensi
-        // beri skor baseline berdasarkan kehadiran (asumsi: rajin hadir = rajin belajar)
-        if (($existingTech === 0 || $existingTech === 85) && $totalRecords > 0) {
-            // Baseline teknis: 70% dari kehadiran + 30% random seed
-            $techBase = ($attendanceRate * 0.70) + 25; // range ~25-95
-            $scoreTechnical = max(0, min(100, round($techBase)));
+        if ($totalRecords > 0) {
+            $scoreDiscipline = max(0, min(100, round(
+                ($attendanceRate * 0.6) + ($onTimeRate * 0.4) - $latePenalty
+            )));
+        } else {
+            // Jika belum ada catatan presensi, gunakan nilai yang sudah tersimpan jika ada
+            $scoreDiscipline = (int)($certRow['score_discipline'] ?? 0);
         }
+
+        // ── 7. Skor Sikap & Perilaku (0-100) ──
+        // Sikap dan perilaku adalah evaluasi soft-skill (etika, inisiatif, kerjasama, tanggung jawab).
+        // Penilaian ini merupakan evaluasi dari Admin/Pembimbing dan BUKAN dari jam datang presensi.
+        $existingAttitude = (int)($certRow['score_attitude'] ?? 0);
+        $scoreAttitude = $existingAttitude > 0 ? $existingAttitude : 85;
+
+        // ── 8. Skor Kompetensi Teknis (0-100) ──
+        // Diisi/dievaluasi oleh Admin atau Pembimbing berdasarkan penguasaan tugas/proyek.
+        $existingTech = (int)($certRow['score_technical'] ?? 0);
+        $scoreTechnical = $existingTech > 0 ? $existingTech : 85;
 
         // ── 9. Tentukan final grade ──
         $avgScore = round(($scoreTechnical + $scoreDiscipline + $scoreAttitude) / 3);
@@ -251,10 +249,33 @@ if (!function_exists('update_certificate_scores')) {
      *
      * @param mysqli $conn
      * @param int    $userId
+     * @param bool   $force Jika false dan is_score_manual=1, tidak akan menimpa nilai editan admin
      * @return array Skor yang sudah dihitung
      */
-    function update_certificate_scores(mysqli $conn, int $userId): array
+    function update_certificate_scores(mysqli $conn, int $userId, bool $force = false): array
     {
+        // Cek apakah skor dikunci manual oleh admin
+        $chk = mysqli_prepare($conn, "SELECT is_score_manual, score_technical, score_discipline, score_attitude, final_grade FROM certificates WHERE user_id = ? LIMIT 1");
+        if ($chk) {
+            mysqli_stmt_bind_param($chk, "i", $userId);
+            mysqli_stmt_execute($chk);
+            $cRow = mysqli_fetch_assoc(mysqli_stmt_get_result($chk));
+            mysqli_stmt_close($chk);
+            if ($cRow && !empty($cRow['is_score_manual']) && !$force) {
+                // Jangan timpa editan admin jika tidak dipaksa
+                $avg = round(((int)$cRow['score_technical'] + (int)$cRow['score_discipline'] + (int)$cRow['score_attitude']) / 3);
+                return [
+                    'score_technical'  => (int)$cRow['score_technical'],
+                    'score_discipline' => (int)$cRow['score_discipline'],
+                    'score_attitude'   => (int)$cRow['score_attitude'],
+                    'final_grade'      => $cRow['final_grade'] ?: determine_grade($avg),
+                    'avg_score'        => $avg,
+                    'is_manual'        => true,
+                    'detail'           => ['manual' => true],
+                ];
+            }
+        }
+
         $scores = calculate_intern_scores($conn, $userId);
 
         $stmt = mysqli_prepare($conn,
