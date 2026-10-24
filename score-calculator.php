@@ -13,20 +13,29 @@ if (!function_exists('calculate_intern_scores')) {
      * @param int    $userId ID user (intern)
      * @return array ['score_technical'=>int, 'score_discipline'=>int, 'score_attitude'=>int, 'final_grade'=>string, 'detail'=>[...]]
      */
-    function calculate_intern_scores(mysqli $conn, int $userId): array
+    function calculate_intern_scores(mysqli $conn, int $userId, int $certId = 0): array
     {
         // ── 1. Ambil data sertifikat untuk rentang tanggal ──
-        $certStmt = mysqli_prepare($conn, "SELECT start_date, end_date, score_technical, score_discipline, score_attitude, is_score_manual FROM certificates WHERE user_id = ? LIMIT 1");
+        if ($certId > 0) {
+            $certStmt = mysqli_prepare($conn, "SELECT id, user_id, start_date, end_date, score_technical, score_discipline, score_attitude, is_score_manual FROM certificates WHERE id = ? LIMIT 1");
+            mysqli_stmt_bind_param($certStmt, "i", $certId);
+        } else {
+            $certStmt = mysqli_prepare($conn, "SELECT id, user_id, start_date, end_date, score_technical, score_discipline, score_attitude, is_score_manual FROM certificates WHERE user_id = ? LIMIT 1");
+            mysqli_stmt_bind_param($certStmt, "i", $userId);
+        }
         if (!$certStmt) {
             return fallback_scores();
         }
-        mysqli_stmt_bind_param($certStmt, "i", $userId);
         mysqli_stmt_execute($certStmt);
         $certRow = mysqli_fetch_assoc(mysqli_stmt_get_result($certStmt));
         mysqli_stmt_close($certStmt);
 
         if (!$certRow) {
             return fallback_scores();
+        }
+
+        if ($userId <= 0 && !empty($certRow['user_id'])) {
+            $userId = (int)$certRow['user_id'];
         }
 
         $startDate = $certRow['start_date'];
@@ -143,25 +152,34 @@ if (!function_exists('calculate_intern_scores')) {
         $onTimeRate = ($totalWorkDays > 0) ? ($presentDays / $totalWorkDays) * 100 : 0;
         $latePenalty = $lateDays * 1.5;
 
-        if ($totalRecords > 0) {
-            $scoreDiscipline = max(0, min(100, round(
-                ($attendanceRate * 0.6) + ($onTimeRate * 0.4) - $latePenalty
-            )));
-        } else {
-            // Jika belum ada catatan presensi, gunakan nilai yang sudah tersimpan jika ada
-            $scoreDiscipline = (int)($certRow['score_discipline'] ?? 0);
-        }
-
-        // ── 7. Skor Sikap & Perilaku (0-100) ──
-        // Sikap dan perilaku adalah evaluasi soft-skill (etika, inisiatif, kerjasama, tanggung jawab).
-        // Penilaian ini merupakan evaluasi dari Admin/Pembimbing dan BUKAN dari jam datang presensi.
+        $isManual = !empty($certRow['is_score_manual']);
         $existingAttitude = (int)($certRow['score_attitude'] ?? 0);
-        $scoreAttitude = $existingAttitude > 0 ? $existingAttitude : 85;
+        $existingTech     = (int)($certRow['score_technical'] ?? 0);
 
-        // ── 8. Skor Kompetensi Teknis (0-100) ──
-        // Diisi/dievaluasi oleh Admin atau Pembimbing berdasarkan penguasaan tugas/proyek.
-        $existingTech = (int)($certRow['score_technical'] ?? 0);
-        $scoreTechnical = $existingTech > 0 ? $existingTech : 85;
+        if ($isManual) {
+            // Skor dikunci manual oleh admin
+            $scoreDiscipline = (int)($certRow['score_discipline'] ?? 0);
+            $scoreAttitude   = $existingAttitude;
+            $scoreTechnical  = $existingTech;
+        } else {
+            // Scoring dinamis murni untuk SEMUA intern:
+            if ($totalRecords > 0) {
+                // Ada catatan presensi: hitung dinamis
+                $scoreDiscipline = max(0, min(100, round(
+                    ($attendanceRate * 0.6) + ($onTimeRate * 0.4) - $latePenalty
+                )));
+                // Sikap dinamis dari konsistensi kehadiran dan ketepatan waktu
+                $scoreAttitude = max(0, min(100, round(($attendanceRate * 0.65) + ($onTimeRate * 0.35))));
+                // Teknis dinamis dari keaktifan belajar
+                $scoreTechnical = max(0, min(100, round(($attendanceRate * 0.70) + 25)));
+            } else {
+                // SAMA SEKALI BELUM PERNAH HADIR (0 catatan presensi / alpa total):
+                // Konsisten dinamis: skor adalah 0 (Grade E)
+                $scoreDiscipline = 0;
+                $scoreAttitude   = 0;
+                $scoreTechnical  = 0;
+            }
+        }
 
         // ── 9. Tentukan final grade ──
         $avgScore = round(($scoreTechnical + $scoreDiscipline + $scoreAttitude) / 3);
@@ -252,15 +270,25 @@ if (!function_exists('update_certificate_scores')) {
      * @param bool   $force Jika false dan is_score_manual=1, tidak akan menimpa nilai editan admin
      * @return array Skor yang sudah dihitung
      */
-    function update_certificate_scores(mysqli $conn, int $userId, bool $force = false): array
+    function update_certificate_scores(mysqli $conn, int $userId, bool $force = false, int $certId = 0): array
     {
         // Cek apakah skor dikunci manual oleh admin
-        $chk = mysqli_prepare($conn, "SELECT is_score_manual, score_technical, score_discipline, score_attitude, final_grade FROM certificates WHERE user_id = ? LIMIT 1");
-        if ($chk) {
+        if ($certId > 0) {
+            $chk = mysqli_prepare($conn, "SELECT id, user_id, is_score_manual, score_technical, score_discipline, score_attitude, final_grade FROM certificates WHERE id = ? LIMIT 1");
+            mysqli_stmt_bind_param($chk, "i", $certId);
+        } else {
+            $chk = mysqli_prepare($conn, "SELECT id, user_id, is_score_manual, score_technical, score_discipline, score_attitude, final_grade FROM certificates WHERE user_id = ? LIMIT 1");
             mysqli_stmt_bind_param($chk, "i", $userId);
+        }
+        $cRow = null;
+        if ($chk) {
             mysqli_stmt_execute($chk);
             $cRow = mysqli_fetch_assoc(mysqli_stmt_get_result($chk));
             mysqli_stmt_close($chk);
+            if ($cRow) {
+                if ($certId <= 0) $certId = (int)$cRow['id'];
+                if ($userId <= 0) $userId = (int)$cRow['user_id'];
+            }
             if ($cRow && !empty($cRow['is_score_manual']) && !$force) {
                 // Jangan timpa editan admin jika tidak dipaksa
                 $avg = round(((int)$cRow['score_technical'] + (int)$cRow['score_discipline'] + (int)$cRow['score_attitude']) / 3);
@@ -276,27 +304,104 @@ if (!function_exists('update_certificate_scores')) {
             }
         }
 
-        $scores = calculate_intern_scores($conn, $userId);
+        $scores = calculate_intern_scores($conn, $userId, $certId);
 
-        $stmt = mysqli_prepare($conn,
-            "UPDATE certificates SET
-                score_technical = ?, score_discipline = ?, score_attitude = ?,
-                final_grade = ?
-             WHERE user_id = ?"
-        );
-        if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "iiisi",
-                $scores['score_technical'],
-                $scores['score_discipline'],
-                $scores['score_attitude'],
-                $scores['final_grade'],
-                $userId
+        if ($certId > 0) {
+            $stmt = mysqli_prepare($conn,
+                "UPDATE certificates SET
+                    score_technical = ?, score_discipline = ?, score_attitude = ?,
+                    final_grade = ?
+                 WHERE id = ?"
             );
-            mysqli_stmt_execute($stmt);
-            mysqli_stmt_close($stmt);
+            if ($stmt) {
+                mysqli_stmt_bind_param($stmt, "iiisi",
+                    $scores['score_technical'],
+                    $scores['score_discipline'],
+                    $scores['score_attitude'],
+                    $scores['final_grade'],
+                    $certId
+                );
+                mysqli_stmt_execute($stmt);
+                mysqli_stmt_close($stmt);
+            }
+        } elseif ($userId > 0) {
+            $stmt = mysqli_prepare($conn,
+                "UPDATE certificates SET
+                    score_technical = ?, score_discipline = ?, score_attitude = ?,
+                    final_grade = ?
+                 WHERE user_id = ?"
+            );
+            if ($stmt) {
+                mysqli_stmt_bind_param($stmt, "iiisi",
+                    $scores['score_technical'],
+                    $scores['score_discipline'],
+                    $scores['score_attitude'],
+                    $scores['final_grade'],
+                    $userId
+                );
+                mysqli_stmt_execute($stmt);
+                mysqli_stmt_close($stmt);
+            }
         }
 
         return $scores;
+    }
+}
+
+if (!function_exists('seed_intern_attendance')) {
+    /**
+     * Generate data presensi realistis untuk keperluan simulasi scoring dinamis
+     */
+    function seed_intern_attendance(mysqli $conn, array $plans): int
+    {
+        $inserted = 0;
+        foreach ($plans as $username => $plan) {
+            // Ambil rentang tanggal dari sertifikat
+            $q = mysqli_query($conn, "SELECT c.start_date, c.end_date FROM certificates c JOIN users u ON c.user_id = u.id WHERE u.username = '" . mysqli_real_escape_string($conn, $username) . "' LIMIT 1");
+            if (!$q || !($cRow = mysqli_fetch_assoc($q))) continue;
+
+            $startDate = $cRow['start_date'];
+            $endDate   = min($cRow['end_date'], date('Y-m-d'));
+
+            // Hapus presensi lama user ini agar fresh
+            mysqli_query($conn, "DELETE FROM attendance WHERE username = '" . mysqli_real_escape_string($conn, $username) . "'");
+
+            $curr = new DateTime($startDate);
+            $end  = new DateTime($endDate);
+            $pRatio = $plan['present_ratio'] ?? 0.8;
+            $lRatio = $plan['late_ratio'] ?? 0.05;
+
+            $dayIdx = 0;
+            while ($curr <= $end && $dayIdx < 50) {
+                $dayOfWeek = $curr->format('N'); // 1 (Mon) - 7 (Sun)
+                if ($dayOfWeek <= 6) { // Senin - Sabtu
+                    $r = (crc32($username . '_' . $dayIdx) % 100) / 100;
+                    $status = null;
+                    $clockIn = null;
+                    if ($r < $pRatio) {
+                        // Hadir
+                        if ($r < $lRatio) {
+                            $status = 'late';
+                            $clockIn = '09:' . sprintf('%02d', 10 + ($dayIdx % 45));
+                        } else {
+                            $status = 'present';
+                            $clockIn = '07:' . sprintf('%02d', 45 + ($dayIdx % 15));
+                        }
+                    } elseif ($r < $pRatio + 0.04) {
+                        $status = 'permit';
+                    }
+
+                    if ($status) {
+                        $dStr = $curr->format('Y-m-d');
+                        $ins = mysqli_query($conn, "INSERT INTO attendance (username, date, status, clock_in, location_in, created_at) VALUES ('" . mysqli_real_escape_string($conn, $username) . "', '$dStr', '$status', " . ($clockIn ? "'$clockIn'" : "NULL") . ", 'Kantor Kedayweb', '$dStr 08:00:00')");
+                        if ($ins) $inserted++;
+                    }
+                    $dayIdx++;
+                }
+                $curr->modify('+1 day');
+            }
+        }
+        return $inserted;
     }
 }
 

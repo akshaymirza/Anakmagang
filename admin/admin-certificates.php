@@ -44,6 +44,12 @@ rsort($cohort_years);
         dialog { border-radius: 1rem; border: none; box-shadow: 0 25px 50px -12px rgba(0,0,0,.25); }
         @keyframes fadeIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
         dialog[open] { animation: fadeIn .2s ease; }
+        dialog#metrics-modal[open] {
+            display: flex !important;
+            flex-direction: column !important;
+            max-height: 88vh !important;
+            margin: auto !important;
+        }
     </style>
 </head>
 <body class="bg-background text-on-surface font-body-md flex h-screen overflow-hidden">
@@ -73,6 +79,13 @@ include '../partials/sidebar-admin.php';
                 <span id="recalc-all-icon" class="material-symbols-outlined text-[18px] sm:text-[20px]">sync</span>
                 <span class="hidden sm:inline font-semibold">Hitung Ulang Skor</span>
                 <span class="sm:hidden font-semibold">Hitung</span>
+            </button>
+            <button id="btn-seed-att" onclick="seedSampleAttendance()"
+                    class="bg-surface-bright text-emerald-700 border border-emerald-300 hover:bg-emerald-50 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl text-xs sm:font-label-md flex items-center gap-1.5 sm:gap-2 transition-all active:scale-95 shadow-2xs cursor-pointer shrink-0"
+                    title="Buat data presensi simulasi otomatis untuk semua intern agar melihat variasi nilai dinamis (A+, A, B, C, D, E)">
+                <span id="seed-att-icon" class="material-symbols-outlined text-[18px] sm:text-[20px] text-emerald-600">playlist_add_check</span>
+                <span class="hidden sm:inline font-semibold">Simulasi Presensi</span>
+                <span class="sm:hidden font-semibold">Simulasi</span>
             </button>
             <button id="btn-add" onclick="openModal()"
                     class="bg-primary text-on-primary px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:font-label-md flex items-center gap-1.5 sm:gap-2 hover:opacity-90 transition-all active:scale-95 shadow cursor-pointer shrink-0">
@@ -365,8 +378,9 @@ include '../partials/sidebar-admin.php';
 </dialog>
 
 <!-- ── Quick Edit Performance Metrics Modal ── -->
-<dialog id="metrics-modal" class="w-full max-w-lg p-0 bg-surface rounded-2xl overflow-hidden shadow-2xl border border-outline-variant">
-    <div class="p-5 bg-surface-container-low border-b border-outline-variant flex items-center justify-between">
+<dialog id="metrics-modal" class="w-full max-w-lg p-0 bg-surface rounded-2xl shadow-2xl border border-outline-variant overflow-hidden">
+    <!-- Fixed Header -->
+    <div class="p-4 sm:p-5 bg-surface-container-low border-b border-outline-variant flex items-center justify-between shrink-0">
         <div class="flex items-center gap-2.5">
             <div class="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <span class="material-symbols-outlined text-[22px]">tune</span>
@@ -376,111 +390,123 @@ include '../partials/sidebar-admin.php';
                 <p id="m-intern-info" class="text-xs text-on-surface-variant font-medium"></p>
             </div>
         </div>
-        <button type="button" onclick="closeMetricsModal()" class="p-1 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors">
+        <button type="button" onclick="closeMetricsModal()" class="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer" aria-label="Tutup Modal">
             <span class="material-symbols-outlined text-[20px]">close</span>
         </button>
     </div>
-    <form id="metrics-form" onsubmit="saveMetrics(event)" class="p-5 space-y-4">
-        <input type="hidden" id="m-cert-id" name="id"/>
-        <input type="hidden" id="m-user-id" value=""/>
 
-        <!-- Presensi Quick Stats Card -->
-        <div id="m-att-summary" class="p-3 rounded-xl bg-surface-container-lowest border border-outline-variant text-xs space-y-1">
-            <div class="flex items-center justify-between text-on-surface font-semibold">
-                <span class="flex items-center gap-1.5 text-primary">
-                    <span class="material-symbols-outlined text-[16px]">schedule</span>
-                    Catatan Absensi Kehadiran
-                </span>
-                <button type="button" onclick="loadAttendanceForMetrics()" class="text-primary hover:underline text-[11px] font-bold flex items-center gap-1 cursor-pointer">
-                    <span class="material-symbols-outlined text-[13px]">refresh</span> Muat Absensi
-                </button>
-            </div>
-            <p id="m-att-text" class="text-on-surface-variant text-[11px]">Memuat data absensi...</p>
-        </div>
+    <!-- Form with Scrollable Body and Sticky Footer -->
+    <form id="metrics-form" onsubmit="saveMetrics(event)" class="flex-1 flex flex-col overflow-hidden min-h-0">
+        <!-- Scrollable Content with max-h safety -->
+        <div class="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 min-h-0 max-h-[58vh] sm:max-h-[62vh]">
+            <input type="hidden" id="m-cert-id" name="id"/>
+            <input type="hidden" id="m-user-id" value=""/>
 
-        <!-- 1. Skor Kedisiplinan -->
-        <div class="space-y-1.5 p-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest">
-            <div class="flex items-center justify-between">
-                <label class="font-label-sm font-bold text-on-surface flex items-center gap-1.5">
-                    <span class="material-symbols-outlined text-emerald-600 text-[18px]">verified_user</span>
-                    Kedisiplinan & Ketepatan Waktu
-                </label>
-                <button type="button" onclick="useCalculatedDiscipline()" class="text-[11px] text-primary hover:underline font-bold flex items-center gap-1 cursor-pointer">
-                    <span class="material-symbols-outlined text-[13px]">auto_fix_high</span> Ambil dari Absensi
-                </button>
+            <!-- Presensi Quick Stats Card -->
+            <div id="m-att-summary" class="p-3 rounded-xl bg-surface-container-lowest border border-outline-variant text-xs space-y-1">
+                <div class="flex items-center justify-between text-on-surface font-semibold">
+                    <span class="flex items-center gap-1.5 text-primary">
+                        <span class="material-symbols-outlined text-[16px]">schedule</span>
+                        Catatan Absensi Kehadiran
+                    </span>
+                    <button type="button" onclick="loadAttendanceForMetrics()" class="text-primary hover:underline text-[11px] font-bold flex items-center gap-1 cursor-pointer">
+                        <span class="material-symbols-outlined text-[13px]">refresh</span> Muat Absensi
+                    </button>
+                </div>
+                <p id="m-att-text" class="text-on-surface-variant text-[11px]">Memuat data absensi...</p>
             </div>
-            <p class="text-[11px] text-on-surface-variant">Dihitung dari rasio kehadiran kerja, ketepatan waktu jam masuk, dan penalti telat.</p>
-            <div class="flex items-center gap-3 pt-1">
-                <input type="range" id="m-disc-range" min="0" max="100" oninput="syncMetric('disc', this.value)" class="flex-1 accent-emerald-600 cursor-pointer"/>
-                <input type="number" id="m-disc" name="score_discipline" min="0" max="100" oninput="syncMetric('disc', this.value, true)" class="w-16 rounded-xl border border-outline-variant px-2.5 py-1.5 text-center font-bold text-sm bg-surface-bright"/>
-            </div>
-        </div>
 
-        <!-- 2. Skor Sikap & Perilaku -->
-        <div class="space-y-1.5 p-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest">
-            <div class="flex items-center justify-between">
-                <label class="font-label-sm font-bold text-on-surface flex items-center gap-1.5">
-                    <span class="material-symbols-outlined text-amber-600 text-[18px]">psychology</span>
-                    Sikap & Perilaku (Soft-Skill)
-                </label>
-                <span class="text-[11px] text-on-surface-variant font-medium">Evaluasi Pembimbing</span>
-            </div>
-            <p class="text-[11px] text-on-surface-variant">Penilaian etika, komunikasi, inisiatif, kerjasama tim, dan integritas kerja.</p>
-            <div class="flex items-center gap-3 pt-1">
-                <input type="range" id="m-att-range" min="0" max="100" oninput="syncMetric('att', this.value)" class="flex-1 accent-amber-600 cursor-pointer"/>
-                <input type="number" id="m-att" name="score_attitude" min="0" max="100" oninput="syncMetric('att', this.value, true)" class="w-16 rounded-xl border border-outline-variant px-2.5 py-1.5 text-center font-bold text-sm bg-surface-bright"/>
-            </div>
-        </div>
-
-        <!-- 3. Skor Kompetensi Teknis -->
-        <div class="space-y-1.5 p-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest">
-            <div class="flex items-center justify-between">
-                <label class="font-label-sm font-bold text-on-surface flex items-center gap-1.5">
-                    <span class="material-symbols-outlined text-blue-600 text-[18px]">code</span>
-                    Kompetensi Teknis
-                </label>
-                <span class="text-[11px] text-on-surface-variant font-medium">Penguasaan Tugas & Proyek</span>
-            </div>
-            <p class="text-[11px] text-on-surface-variant">Kualitas hasil pekerjaan, pemahaman brief/tools, dan penyelesaian masalah teknis.</p>
-            <div class="flex items-center gap-3 pt-1">
-                <input type="range" id="m-tech-range" min="0" max="100" oninput="syncMetric('tech', this.value)" class="flex-1 accent-blue-600 cursor-pointer"/>
-                <input type="number" id="m-tech" name="score_technical" min="0" max="100" oninput="syncMetric('tech', this.value, true)" class="w-16 rounded-xl border border-outline-variant px-2.5 py-1.5 text-center font-bold text-sm bg-surface-bright"/>
-            </div>
-        </div>
-
-        <!-- Rangkuman Hasil & Predikat -->
-        <div class="p-3.5 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-between">
-            <div>
-                <p class="text-xs font-semibold text-on-surface-variant">Rata-rata Skor:</p>
-                <p id="m-avg-score" class="text-xl font-extrabold text-primary">0</p>
-            </div>
-            <div>
-                <label class="block font-label-sm text-on-surface-variant text-right mb-0.5">Predikat / Grade</label>
-                <input type="text" id="m-grade" name="final_grade" class="w-20 rounded-xl border border-outline-variant px-2.5 py-1 font-bold text-center text-primary text-base bg-surface-bright"/>
-            </div>
-        </div>
-
-        <!-- Manual Lock Toggle -->
-        <div class="flex items-center justify-between p-3 rounded-xl bg-surface-container-low border border-outline-variant/60">
-            <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-primary text-[20px]">lock</span>
-                <div>
-                    <p class="text-xs font-bold text-on-surface">Kunci Nilai Manual</p>
-                    <p class="text-[11px] text-on-surface-variant">Nilai tidak akan ditimpa otomatis saat melihat sertifikat / verifikasi.</p>
+            <!-- 1. Skor Kedisiplinan -->
+            <div class="space-y-1.5 p-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest">
+                <div class="flex items-center justify-between">
+                    <label class="font-label-sm font-bold text-on-surface flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-emerald-600 text-[18px]">verified_user</span>
+                        Kedisiplinan & Ketepatan Waktu
+                    </label>
+                    <button type="button" onclick="useCalculatedDiscipline()" class="text-[11px] text-primary hover:underline font-bold flex items-center gap-1 cursor-pointer">
+                        <span class="material-symbols-outlined text-[13px]">auto_fix_high</span> Ambil dari Absensi
+                    </button>
+                </div>
+                <p class="text-[11px] text-on-surface-variant">Dihitung dari rasio kehadiran kerja, ketepatan waktu jam masuk, dan penalti telat.</p>
+                <div class="flex items-center gap-3 pt-1">
+                    <input type="range" id="m-disc-range" min="0" max="100" oninput="syncMetric('disc', this.value)" class="flex-1 accent-emerald-600 cursor-pointer"/>
+                    <input type="number" id="m-disc" name="score_discipline" min="0" max="100" oninput="syncMetric('disc', this.value, true)" class="w-16 rounded-xl border border-outline-variant px-2.5 py-1.5 text-center font-bold text-sm bg-surface-bright"/>
                 </div>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer select-none">
-                <input type="checkbox" id="m-lock" name="is_score_manual" value="1" class="sr-only peer" checked/>
-                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-            </label>
+
+            <!-- 2. Skor Sikap & Perilaku -->
+            <div class="space-y-1.5 p-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest">
+                <div class="flex items-center justify-between">
+                    <label class="font-label-sm font-bold text-on-surface flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-amber-600 text-[18px]">psychology</span>
+                        Sikap & Perilaku (Soft-Skill)
+                    </label>
+                    <span class="text-[11px] text-on-surface-variant font-medium">Evaluasi Pembimbing</span>
+                </div>
+                <p class="text-[11px] text-on-surface-variant">Penilaian etika, komunikasi, inisiatif, kerjasama tim, dan integritas kerja.</p>
+                <div class="flex items-center gap-3 pt-1">
+                    <input type="range" id="m-att-range" min="0" max="100" oninput="syncMetric('att', this.value)" class="flex-1 accent-amber-600 cursor-pointer"/>
+                    <input type="number" id="m-att" name="score_attitude" min="0" max="100" oninput="syncMetric('att', this.value, true)" class="w-16 rounded-xl border border-outline-variant px-2.5 py-1.5 text-center font-bold text-sm bg-surface-bright"/>
+                </div>
+            </div>
+
+            <!-- 3. Skor Kompetensi Teknis -->
+            <div class="space-y-1.5 p-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest">
+                <div class="flex items-center justify-between">
+                    <label class="font-label-sm font-bold text-on-surface flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-blue-600 text-[18px]">code</span>
+                        Kompetensi Teknis
+                    </label>
+                    <span class="text-[11px] text-on-surface-variant font-medium">Penguasaan Tugas & Proyek</span>
+                </div>
+                <p class="text-[11px] text-on-surface-variant">Kualitas hasil pekerjaan, pemahaman brief/tools, dan penyelesaian masalah teknis.</p>
+                <div class="flex items-center gap-3 pt-1">
+                    <input type="range" id="m-tech-range" min="0" max="100" oninput="syncMetric('tech', this.value)" class="flex-1 accent-blue-600 cursor-pointer"/>
+                    <input type="number" id="m-tech" name="score_technical" min="0" max="100" oninput="syncMetric('tech', this.value, true)" class="w-16 rounded-xl border border-outline-variant px-2.5 py-1.5 text-center font-bold text-sm bg-surface-bright"/>
+                </div>
+            </div>
+
+            <!-- Rangkuman Hasil & Predikat -->
+            <div class="p-3.5 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-on-surface-variant">Rata-rata Skor:</p>
+                    <p id="m-avg-score" class="text-xl font-extrabold text-primary">0</p>
+                </div>
+                <div>
+                    <label class="block font-label-sm text-on-surface-variant text-right mb-0.5">Predikat / Grade</label>
+                    <input type="text" id="m-grade" name="final_grade" class="w-20 rounded-xl border border-outline-variant px-2.5 py-1 font-bold text-center text-primary text-base bg-surface-bright"/>
+                </div>
+            </div>
+
+            <!-- Manual Lock Toggle -->
+            <div class="flex items-center justify-between p-3 rounded-xl bg-surface-container-low border border-outline-variant/60">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-[20px]">lock</span>
+                    <div>
+                        <p class="text-xs font-bold text-on-surface">Kunci Nilai Manual</p>
+                        <p class="text-[11px] text-on-surface-variant">Nilai tidak akan ditimpa otomatis saat melihat sertifikat / verifikasi.</p>
+                    </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer select-none">
+                    <input type="checkbox" id="m-lock" name="is_score_manual" value="1" class="sr-only peer" checked/>
+                    <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+            </div>
         </div>
 
-        <div class="flex justify-end gap-3 pt-3 border-t border-outline-variant">
-            <button type="button" onclick="closeMetricsModal()" class="px-4 py-2 rounded-xl border border-outline font-label-md hover:bg-surface-container-low transition-colors">Batal</button>
-            <button type="submit" id="btn-save-metrics" class="px-6 py-2 rounded-xl bg-primary text-on-primary font-label-md hover:opacity-90 transition-all flex items-center gap-2 shadow cursor-pointer">
-                <span class="material-symbols-outlined text-[18px]">save</span>
-                <span>Simpan Metrik</span>
-            </button>
+        <!-- Fixed Sticky Footer with Save Button (Selalu Kelihatan di Bawah) -->
+        <div class="p-4 bg-surface-container-low border-t border-outline-variant flex items-center justify-between gap-3 shrink-0">
+            <span class="text-xs text-on-surface-variant font-medium hidden sm:inline-flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-emerald-600 text-[18px]">verified</span>
+                <span>Nilai langsung aktif</span>
+            </span>
+            <div class="flex items-center gap-2 ml-auto">
+                <button type="button" onclick="closeMetricsModal()" class="px-4 py-2 rounded-xl border border-outline font-label-md text-sm hover:bg-surface-container-high transition-colors cursor-pointer">Batal</button>
+                <button type="submit" id="btn-save-metrics" class="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-label-md font-bold text-sm hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 shadow-md cursor-pointer">
+                    <span class="material-symbols-outlined text-[18px]">save</span>
+                    <span>Simpan Metrik</span>
+                </button>
+            </div>
         </div>
     </form>
 </dialog>
@@ -722,11 +748,10 @@ async function loadCertificates() {
                             class="p-1.5 rounded-lg hover:bg-amber-100 text-amber-700 transition-colors" title="Edit Metrik Performa (Teknis, Disiplin, Sikap)">
                         <span class="material-symbols-outlined text-[18px]">tune</span>
                     </button>
-                    ${hasUserId ? `
-                    <button onclick="recalculateSingleScore(${c.user_id})"
+                    <button onclick="recalculateSingleScore(${c.user_id}, ${c.id})"
                             class="p-1.5 rounded-lg hover:bg-primary-container text-primary transition-colors" title="Hitung Ulang Skor dari Absensi">
                         <span class="material-symbols-outlined text-[18px]">sync</span>
-                    </button>` : ''}
+                    </button>
                     <button onclick="editCertificate(${c.id})"
                             class="p-1.5 rounded-lg hover:bg-surface-container-high text-on-surface-variant transition-colors" title="Edit">
                         <span class="material-symbols-outlined text-[18px]">edit</span>
@@ -948,12 +973,12 @@ async function recalculateAllScores() {
     }
 }
 
-async function recalculateSingleScore(userId) {
-    if (!userId) return;
+async function recalculateSingleScore(userId, certId = 0) {
     try {
         const fd = new FormData();
         fd.set('action', 'recalculate_scores');
-        fd.set('user_id', userId);
+        if (certId) fd.set('cert_id', certId);
+        if (userId) fd.set('user_id', userId);
         const res = await fetch('../certificate-api.php', { method: 'POST', body: fd });
         const json = await res.json();
         if (json.success) {
@@ -964,6 +989,31 @@ async function recalculateSingleScore(userId) {
         }
     } catch (e) {
         showToast('Terjadi kesalahan koneksi server', 'error');
+    }
+}
+
+async function seedSampleAttendance() {
+    const btn = document.getElementById('btn-seed-att');
+    const icon = document.getElementById('seed-att-icon');
+    if (btn) btn.disabled = true;
+    if (icon) icon.classList.add('animate-spin');
+
+    try {
+        const fd = new FormData();
+        fd.set('action', 'seed_sample_attendance');
+        const res = await fetch('../certificate-api.php', { method: 'POST', body: fd });
+        const json = await res.json();
+        if (json.success) {
+            loadCertificates();
+            showToast(json.message || 'Data presensi simulasi & skor dinamis berhasil di-generate!', 'success');
+        } else {
+            showToast(json.message || 'Gagal generate simulasi presensi', 'error');
+        }
+    } catch (e) {
+        showToast('Terjadi kesalahan koneksi server', 'error');
+    } finally {
+        if (btn) btn.disabled = false;
+        if (icon) icon.classList.remove('animate-spin');
     }
 }
 

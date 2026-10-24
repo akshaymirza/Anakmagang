@@ -154,21 +154,68 @@ if ($action === 'recalculate_scores' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     check_admin_api();
 
     $user_id = (int)($_POST['user_id'] ?? 0);
-    if ($user_id <= 0) {
-        // Recalculate semua intern (force=true)
-        $res = @mysqli_query($conn, "SELECT DISTINCT user_id FROM certificates WHERE user_id IS NOT NULL AND user_id > 0");
+    $cert_id = (int)($_POST['cert_id'] ?? 0);
+
+    if ($cert_id > 0) {
+        $cRes = mysqli_query($conn, "SELECT id, user_id FROM certificates WHERE id = $cert_id LIMIT 1");
+        if ($cRow = mysqli_fetch_assoc($cRes)) {
+            $scores = update_certificate_scores($conn, (int)$cRow['user_id'], true, (int)$cRow['id']);
+            echo json_encode(['success' => true, 'message' => 'Skor berhasil dihitung ulang dari data presensi.', 'scores' => $scores]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Sertifikat tidak ditemukan.']);
+        }
+    } elseif ($user_id > 0) {
+        $scores = update_certificate_scores($conn, $user_id, true);
+        echo json_encode(['success' => true, 'message' => 'Skor berhasil dihitung ulang dari data presensi.', 'scores' => $scores]);
+    } else {
+        // Recalculate SEMUA (ALL) sertifikat di database secara dinamis
+        $res = @mysqli_query($conn, "SELECT id, user_id FROM certificates");
         $updated = 0;
         if ($res) {
             while ($row = mysqli_fetch_assoc($res)) {
-                update_certificate_scores($conn, (int)$row['user_id'], true);
+                $uid = (int)($row['user_id'] ?? 0);
+                $cid = (int)$row['id'];
+                update_certificate_scores($conn, $uid, true, $cid);
                 $updated++;
             }
         }
-        echo json_encode(['success' => true, 'message' => "Skor $updated sertifikat berhasil dihitung ulang dari data presensi.", 'updated' => $updated]);
-    } else {
-        $scores = update_certificate_scores($conn, $user_id, true);
-        echo json_encode(['success' => true, 'message' => 'Skor berhasil dihitung ulang.', 'scores' => $scores]);
+        echo json_encode(['success' => true, 'message' => "Skor $updated seluruh sertifikat berhasil dihitung ulang secara dinamis.", 'updated' => $updated]);
     }
+    exit;
+}
+
+// ── SEED SAMPLE ATTENDANCE (admin only) ─────────────────────────────────────
+if ($action === 'seed_sample_attendance' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    check_admin_api();
+
+    $seedPlans = [
+        'INT-2024-001' => ['present_ratio' => 0.96, 'late_ratio' => 0.02], // Rajin -> A+
+        'fairuz'       => ['present_ratio' => 0.88, 'late_ratio' => 0.04], // Baik -> A
+        'filbert'      => ['present_ratio' => 0.76, 'late_ratio' => 0.10], // Cukup -> B
+        'budi'         => ['present_ratio' => 0.60, 'late_ratio' => 0.14], // Kurang -> C
+        'rudi'         => ['present_ratio' => 0.42, 'late_ratio' => 0.18], // Sangat Kurang -> D
+        'fil'          => ['present_ratio' => 0.05, 'late_ratio' => 0.05], // Alpa mayoritas -> E
+    ];
+
+    require_once __DIR__ . '/score-calculator.php';
+    seed_intern_attendance($conn, $seedPlans);
+
+    // Hitung ulang seluruh sertifikat secara dinamis
+    $res = @mysqli_query($conn, "SELECT id, user_id FROM certificates");
+    $updated = 0;
+    if ($res) {
+        while ($row = mysqli_fetch_assoc($res)) {
+            $uid = (int)($row['user_id'] ?? 0);
+            $cid = (int)$row['id'];
+            update_certificate_scores($conn, $uid, true, $cid);
+            $updated++;
+        }
+    }
+
+    echo json_encode([
+        'success' => true,
+        'message' => "Data presensi simulasi berhasil dibuat & skor dinamis seluruh $updated sertifikat berhasil dihitung!",
+    ]);
     exit;
 }
 
