@@ -416,7 +416,7 @@ include 'partials/topnav-public.php';
                         <div class="vf-slide">
                             <div class="p-3 md:p-lg bg-surface">
                                 <div id="cert-preview" class="cert-canvas" role="img" aria-label="Preview sertifikat magang">
-                                    <img class="cert-bg" src="uploads/Certificate/SertifikatNew.png" alt="" draggable="false"/>
+                                    <img class="cert-bg" src="uploads/Certificate/Sertifikat_Resmi.png" alt="" draggable="false"/>
                                     <div id="cert-name" class="cert-name">—</div>
                                     <div id="cert-qr" class="cert-qr" style="display:none">
                                         <img id="cert-qr-img" alt="QR verifikasi sertifikat"/>
@@ -977,7 +977,7 @@ function renderCertBack(d) {
 <div id="print-area">
     <!-- Halaman 1: Sertifikat Depan -->
     <div class="print-page print-page-front" id="print-page-front">
-        <img class="print-bg" src="uploads/Certificate/SertifikatNew.png" alt="" />
+        <img class="print-bg" src="uploads/Certificate/Sertifikat_Resmi.png" alt="" />
         <div id="print-cert-name" class="print-name">—</div>
         <div class="print-qr">
             <img id="print-cert-qr-img" alt="QR Code" />
