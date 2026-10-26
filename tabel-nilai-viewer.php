@@ -12,7 +12,7 @@ $cert = null;
 if ($cert_id && $conn) {
     $stmt = $conn->prepare(
         "SELECT intern_name, major, score_technical, score_discipline, score_attitude,
-                supervisor_name, issue_date,
+                supervisor_name, issue_date, is_approved,
                 DATE_FORMAT(start_date,'%d %M %Y') AS start_fmt,
                 DATE_FORMAT(end_date,  '%d %M %Y') AS end_fmt
          FROM certificates WHERE certificate_id = ? LIMIT 1"
@@ -32,6 +32,7 @@ $waktu       = ($start && $end_d) ? "$start sampai $end_d" : '';
 $supervisor  = $cert['supervisor_name'] ?? 'M. Lutfi Nur Fauzi, S.Kom.';
 $issue_date  = $cert['issue_date']      ?? date('Y-m-d');
 $tgl_bwi     = 'Banyuwangi, ' . date('d F Y', strtotime($issue_date));
+$is_approved = intval($cert['is_approved'] ?? 0);
 
 $skor_teknis   = (int)($cert['score_technical']  ?? 0);
 $skor_disiplin = (int)($cert['score_discipline'] ?? 0);
@@ -131,6 +132,7 @@ function fmt($n) { return number_format($n, 2, ',', '.'); }
   .predikat th { font-weight: 500; padding: 1pt 0; border-top: var(--garis); border-bottom: var(--garis); }
   .predikat td { padding: 0; text-align: center; }
   .predikat tbody tr:first-child td { padding-top: 1pt; }
+  .ttd { text-align: center; }
   .ttd p { line-height: 17pt; }
   .ttd .ruang { height: 44pt; }
   .ttd .nama { font-weight: 500; text-decoration: underline; }
@@ -207,7 +209,17 @@ function fmt($n) { return number_format($n, 2, ',', '.'); }
     <div class="ttd">
       <p><?php echo htmlspecialchars($tgl_bwi); ?></p>
       <p>Founder &amp; Director Kedayweb</p>
-      <div class="ruang"></div>
+      <?php if ($is_approved): ?>
+        <!-- ✅ Approved: tampil gambar ttd_Resmi.png -->
+        <div class="ruang" style="display:flex;align-items:center;justify-content:center;height:44pt;">
+          <img src="uploads/Certificate/ttd_Resmi.png"
+               alt="Tanda Tangan Resmi"
+               style="max-height:44pt;max-width:200pt;width:200pt;object-fit:contain;" />
+        </div>
+      <?php else: ?>
+        <!-- 🔒 Belum approved: ruang kosong saja -->
+        <div class="ruang"></div>
+      <?php endif; ?>
       <p class="nama"><?php echo htmlspecialchars($supervisor); ?></p>
     </div>
   </section>

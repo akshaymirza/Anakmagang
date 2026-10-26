@@ -410,32 +410,28 @@ include 'partials/sidebar-intern.php';
                                 </div>
                                 <!-- Signatures -->
                                 <?php if ($is_approved): ?>
-                                <div class="grid grid-cols-2 gap-6 pt-6 border-t border-slate-200 max-w-2xl mx-auto items-end text-xs">
-                                    <div class="text-center">
-                                        <p class="text-slate-500 mb-8">Diterbitkan Pada: <span class="font-bold text-slate-800"><?php echo htmlspecialchars($cert['issue_fmt']); ?></span></p>
-                                        <div class="w-24 h-12 mx-auto flex items-center justify-center opacity-80">
-                                            <span class="font-bold text-blue-900 text-lg border-b-2 border-blue-900 pb-0.5">KEDAYWEB</span>
-                                        </div>
-                                        <p class="font-bold text-slate-900 mt-1">Tim Admin Kedayweb</p>
-                                        <p class="text-[11px] text-slate-500">Penyelenggara Program</p>
-                                    </div>
-                                    <div class="text-center">
-                                        <p class="text-slate-500 mb-8">Pembimbing Magang</p>
-                                        <div class="w-28 h-12 mx-auto flex items-center justify-center">
-                                            <span class="font-serif italic font-extrabold text-blue-950 text-xl border-b border-slate-400 px-3 pb-1"><?php echo htmlspecialchars($cert['supervisor_name'] ?: 'M. Lutfi Nur Fauzi, S.Kom.'); ?></span>
-                                        </div>
-                                        <p class="font-bold text-slate-900 mt-1"><?php echo htmlspecialchars($cert['supervisor_name'] ?: 'M. Lutfi Nur Fauzi, S.Kom.'); ?></p>
-                                        <p class="text-[11px] text-slate-500">Supervisor / Evaluator</p>
+                                <!-- ✅ APPROVED: Tampil tanda tangan resmi (ttd_Resmi.png) -->
+                                <div class="pt-6 border-t border-slate-200 max-w-2xl mx-auto">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <p class="text-xs text-slate-500 mb-1">Diterbitkan Pada: <span class="font-bold text-slate-800"><?php echo htmlspecialchars($cert['issue_fmt']); ?></span></p>
+                                        <img
+                                            src="uploads/Certificate/ttd_Resmi.png"
+                                            alt="Tanda Tangan Resmi"
+                                            class="h-24 md:h-28 object-contain drop-shadow-sm"
+                                            title="Tanda Tangan & Stempel Resmi Kedayweb"
+                                        />
+                                        <p class="text-[11px] text-slate-500 -mt-1">Tanda Tangan & Stempel Resmi Kedayweb</p>
                                     </div>
                                 </div>
                                 <?php else: ?>
-                                <div class="pt-6 border-t border-amber-200 max-w-2xl mx-auto">
-                                    <div class="flex items-center justify-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
-                                        <span class="material-symbols-outlined text-amber-600 text-2xl shrink-0">pending_actions</span>
-                                        <div class="text-center">
-                                            <p class="font-bold text-amber-900 text-sm">Menunggu Persetujuan Super Admin</p>
-                                            <p class="text-amber-700 text-xs mt-0.5">Tanda tangan dan stempel resmi akan muncul setelah Super Admin menyetujui sertifikat ini.</p>
+                                <!-- 🔒 NOT APPROVED: Tampil gembok sebagai penanda belum disetujui -->
+                                <div class="pt-6 border-t border-slate-200 max-w-2xl mx-auto">
+                                    <div class="flex flex-col items-center justify-center gap-2 p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                                        <div class="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center shadow-inner">
+                                            <span class="material-symbols-outlined text-amber-600 text-3xl filled-icon" style="font-variation-settings:'FILL' 1;">lock</span>
                                         </div>
+                                        <p class="font-bold text-amber-900 text-sm">Menunggu Persetujuan Super Admin</p>
+                                        <p class="text-slate-500 text-xs text-center max-w-xs">Tanda tangan dan stempel resmi akan muncul setelah Super Admin menyetujui sertifikat ini.</p>
                                     </div>
                                 </div>
                                 <?php endif; ?>

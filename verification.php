@@ -78,6 +78,16 @@
             white-space: nowrap; max-width: 100%; text-overflow: ellipsis; overflow: hidden;
             margin-top: 0.15cqw;
         }
+        /* ── Overlay ttd_Resmi.png saat sudah di-approve ── */
+        .cert-approved-ttd {
+            position: absolute; bottom: 11.5%; right: 8.5%;
+            width: 22%; height: 13%;
+            z-index: 25; pointer-events: none;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .cert-approved-ttd img {
+            width: 100%; height: 100%; object-fit: contain;
+        }
 
         /* ── Slider ── */
         .vf-slider-outer { overflow: hidden; width: 100%; }
@@ -145,6 +155,7 @@
         }
         .cb-predikat th { font-weight:500; padding:.1cqw 0; border-top:1px solid #000; border-bottom:1px solid #000; }
         .cb-predikat td { padding:0; text-align:center; }
+        .cb-ttd { text-align: center; }
         .cb-ttd p { line-height:1.65cqw; font-size:1.05cqw; }
         .cb-ttd-ruang { height:4.2cqw; }
         .cb-ttd-nama { font-weight:500; text-decoration:underline; }
@@ -263,6 +274,7 @@
             .print-page-back .predikat th { font-weight: 500; padding: 1pt 0; border-top: 1px solid #000; border-bottom: 1px solid #000; }
             .print-page-back .predikat td { padding: 0; text-align: center; }
             .print-page-back .predikat tbody tr:first-child td { padding-top: 1pt; }
+            .print-page-back .ttd { text-align: center; }
             .print-page-back .ttd p { line-height: 17pt; }
             .print-page-back .ttd .ruang { height: 44pt; }
             .print-page-back .ttd .nama { font-weight: 500; text-decoration: underline; }
@@ -398,6 +410,10 @@ include 'partials/topnav-public.php';
                                             <span class="cover-title">Menunggu Approval</span>
                                             <span class="cover-desc">Super Admin</span>
                                         </div>
+                                    </div>
+                                    <!-- ✅ Tanda tangan resmi (ttd_Resmi.png) saat sudah di-approve -->
+                                    <div id="cert-approved-ttd" class="cert-approved-ttd" style="display:none;">
+                                        <img src="uploads/Certificate/ttd_Resmi.png" alt="Tanda Tangan Resmi" />
                                     </div>
                                 </div>
                             </div>
@@ -590,9 +606,13 @@ function showResult(d) {
     const covers = document.getElementById('cert-unapproved-covers');
     const resApprovalStatus = document.getElementById('res-approval-status');
 
+    const approvedTtd = document.getElementById('cert-approved-ttd');
+
     if (isApproved) {
         if (approvalChip) approvalChip.classList.add('hidden');
         if (covers) covers.style.display = 'none';
+        // Tampilkan gambar tanda tangan resmi
+        if (approvedTtd) approvedTtd.style.display = 'flex';
         if (resApprovalStatus) {
             resApprovalStatus.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1';
             resApprovalStatus.innerHTML = '<span class="material-symbols-outlined text-sm">verified</span> Disetujui Super Admin';
@@ -603,6 +623,8 @@ function showResult(d) {
             approvalChip.innerHTML = '<span class="material-symbols-outlined text-[18px]">pending</span> Menunggu Approval Super Admin';
         }
         if (covers) covers.style.display = 'block';
+        // Sembunyikan tanda tangan resmi
+        if (approvedTtd) approvedTtd.style.display = 'none';
         if (resApprovalStatus) {
             resApprovalStatus.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 flex items-center gap-1';
             resApprovalStatus.innerHTML = '<span class="material-symbols-outlined text-sm">hourglass_empty</span> Belum Disetujui Super Admin';
@@ -770,10 +792,22 @@ function populatePrintArea(d) {
         pQrImg.src = scQrImg.src;
     }
 
-    // Covers
+    // Covers (halaman depan - gembok jika belum approved)
     const pCovers = document.getElementById('print-cert-covers');
     if (pCovers) {
         pCovers.style.display = d.is_approved ? 'none' : 'block';
+    }
+
+    // TTD Resmi - halaman depan
+    const pFrontTtd = document.getElementById('print-cert-ttd');
+    if (pFrontTtd) {
+        pFrontTtd.style.display = d.is_approved ? 'block' : 'none';
+    }
+
+    // TTD Resmi - halaman belakang (tabel nilai)
+    const pBackTtdImg = document.getElementById('print-ttd-img');
+    if (pBackTtdImg) {
+        pBackTtdImg.style.display = d.is_approved ? 'block' : 'none';
     }
 
     // Halaman Belakang (Tabel Nilai)
@@ -942,6 +976,11 @@ function renderCertBack(d) {
                 <span style="font-size:9pt;color:#b45309">Super Admin</span>
             </div>
         </div>
+        <!-- ✅ TTD Resmi halaman depan (tampil saat approved) -->
+        <div id="print-cert-ttd" style="display:none;position:absolute;bottom:12%;right:8%;width:22%;height:13%;z-index:25;align-items:center;justify-content:center;">
+            <img src="uploads/Certificate/ttd_Resmi.png" alt="Tanda Tangan Resmi"
+                 style="max-width:100%;max-height:100%;object-fit:contain;" />
+        </div>
     </div>
 
     <!-- Halaman 2: Tabel Nilai PKL -->
@@ -1007,7 +1046,12 @@ function renderCertBack(d) {
             <div class="ttd">
                 <p id="p-tgl-bwi"></p>
                 <p>Founder &amp; Director Kedayweb</p>
-                <div class="ruang"></div>
+                <div class="ruang" id="print-ttd-ruang" style="display:flex;align-items:center;justify-content:center;">
+                    <img id="print-ttd-img"
+                         src="uploads/Certificate/ttd_Resmi.png"
+                         alt="Tanda Tangan Resmi"
+                         style="display:none;max-height:44pt;max-width:200pt;width:200pt;object-fit:contain;" />
+                </div>
                 <p class="nama" id="p-supervisor"></p>
             </div>
         </section>
