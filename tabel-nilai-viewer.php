@@ -163,7 +163,7 @@ function fmt($n) { return number_format($n, 2, ',', '.'); }
   <section class="data-siswa">
     <div class="baris"><span class="label">NAMA SISWA</span><span>:</span><span><?php echo $nama; ?></span></div>
     <div class="baris"><span class="label">JURUSAN</span><span>:</span><span><?php echo $jurusan; ?></span></div>
-    <div class="baris"><span class="label">TEMPAT PRAKERIN</span><span>:</span><span>CV. Kedayweb (IT &amp; Multimedia Agency)</span></div>
+    <div class="baris"><span class="label">TEMPAT PRAKERIN</span><span>:</span><span>CV. Fauzi Mediatama</span></div>
     <div class="baris"><span class="label">ALAMAT TEMPAT PRAKERIN</span><span>:</span><span>Banyuwangi, Jawa Timur</span></div>
     <div class="baris"><span class="label">WAKTU PELAKSANAAN</span><span>:</span><span><?php echo htmlspecialchars($waktu); ?></span></div>
   </section>
