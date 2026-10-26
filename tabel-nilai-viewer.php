@@ -134,7 +134,25 @@ function fmt($n) { return number_format($n, 2, ',', '.'); }
   .predikat tbody tr:first-child td { padding-top: 1pt; }
   .ttd { text-align: center; }
   .ttd p { line-height: 17pt; }
-  .ttd .ruang { height: 44pt; }
+  .ttd .ruang {
+    height: 44pt;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ttd .ruang img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 75pt;
+    width: auto;
+    max-height: none !important;
+    max-width: none !important;
+    object-fit: contain;
+    pointer-events: none;
+  }
   .ttd .nama { font-weight: 500; text-decoration: underline; }
 </style>
 </head>
@@ -211,10 +229,9 @@ function fmt($n) { return number_format($n, 2, ',', '.'); }
       <p>Founder &amp; Director Kedayweb</p>
       <?php if ($is_approved): ?>
         <!-- ✅ Approved: tampil gambar ttd_Resmi.png -->
-        <div class="ruang" style="display:flex;align-items:center;justify-content:center;height:44pt;">
+        <div class="ruang">
           <img src="uploads/Certificate/ttd_Resmi.png"
-               alt="Tanda Tangan Resmi"
-               style="max-height:44pt;max-width:200pt;width:200pt;object-fit:contain;" />
+               alt="Tanda Tangan Resmi" />
         </div>
       <?php else: ?>
         <!-- 🔒 Belum approved: ruang kosong saja -->

@@ -231,7 +231,8 @@ if ($cert) {
         }
         .cb-predikat td { padding: 0; text-align: center; }
         .cb-ttd p { line-height: 1.65cqw; font-size: 1.05cqw; }
-        .cb-ttd .ruang { height: 4.2cqw; }
+        .cb-ttd .ruang { height: 4.2cqw; position: relative; display: flex; align-items: center; justify-content: center; }
+        .cb-ttd .ruang img { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); height: 8.5cqw; width: auto; max-height: none; max-width: none; object-fit: contain; }
         .cb-ttd .nama { font-weight: 500; text-decoration: underline; }
 
         @media print {
@@ -417,7 +418,7 @@ include 'partials/sidebar-intern.php';
                                         <img
                                             src="uploads/Certificate/ttd_Resmi.png"
                                             alt="Tanda Tangan Resmi"
-                                            class="h-24 md:h-28 object-contain drop-shadow-sm"
+                                            class="h-28 md:h-36 object-contain drop-shadow-sm"
                                             title="Tanda Tangan & Stempel Resmi Kedayweb"
                                         />
                                         <p class="text-[11px] text-slate-500 -mt-1">Tanda Tangan & Stempel Resmi Kedayweb</p>

@@ -80,8 +80,8 @@
         }
         /* ── Overlay ttd_Resmi.png saat sudah di-approve ── */
         .cert-approved-ttd {
-            position: absolute; bottom: 11.5%; right: 8.5%;
-            width: 22%; height: 13%;
+            position: absolute; bottom: 9%; right: 6.5%;
+            width: 26%; height: 14.5%;
             z-index: 25; pointer-events: none;
             display: flex; align-items: center; justify-content: center;
         }
@@ -157,7 +157,8 @@
         .cb-predikat td { padding:0; text-align:center; }
         .cb-ttd { text-align: center; }
         .cb-ttd p { line-height:1.65cqw; font-size:1.05cqw; }
-        .cb-ttd-ruang { height:4.2cqw; }
+        .cb-ttd-ruang { height:4.2cqw; position:relative; display:flex; align-items:center; justify-content:center; }
+        .cb-ttd-ruang img { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); height:8.5cqw; width:auto; max-height:none; max-width:none; object-fit:contain; }
         .cb-ttd-nama { font-weight:500; text-decoration:underline; }
 
         /* ── Cetak / Simpan PDF: 297mm x 210mm (A4 Landscape) ── */
@@ -276,7 +277,24 @@
             .print-page-back .predikat tbody tr:first-child td { padding-top: 1pt; }
             .print-page-back .ttd { text-align: center; }
             .print-page-back .ttd p { line-height: 17pt; }
-            .print-page-back .ttd .ruang { height: 44pt; }
+            .print-page-back .ttd .ruang {
+                height: 44pt;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .print-page-back .ttd .ruang img {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                height: 85pt;
+                width: auto;
+                max-height: none !important;
+                max-width: none !important;
+                object-fit: contain;
+            }
             .print-page-back .ttd .nama { font-weight: 500; text-decoration: underline; }
         }
     </style>
@@ -801,7 +819,7 @@ function populatePrintArea(d) {
     // TTD Resmi - halaman depan
     const pFrontTtd = document.getElementById('print-cert-ttd');
     if (pFrontTtd) {
-        pFrontTtd.style.display = d.is_approved ? 'block' : 'none';
+        pFrontTtd.style.display = d.is_approved ? 'flex' : 'none';
     }
 
     // TTD Resmi - halaman belakang (tabel nilai)
@@ -977,9 +995,9 @@ function renderCertBack(d) {
             </div>
         </div>
         <!-- ✅ TTD Resmi halaman depan (tampil saat approved) -->
-        <div id="print-cert-ttd" style="display:none;position:absolute;bottom:12%;right:8%;width:22%;height:13%;z-index:25;align-items:center;justify-content:center;">
+        <div id="print-cert-ttd" style="display:none;position:absolute;bottom:10.75%;right:6.5%;width:26%;height:14.5%;z-index:25;align-items:center;justify-content:center;">
             <img src="uploads/Certificate/ttd_Resmi.png" alt="Tanda Tangan Resmi"
-                 style="max-width:100%;max-height:100%;object-fit:contain;" />
+                 style="width:100%;height:100%;object-fit:contain;" />
         </div>
     </div>
 
@@ -1046,11 +1064,11 @@ function renderCertBack(d) {
             <div class="ttd">
                 <p id="p-tgl-bwi"></p>
                 <p>Founder &amp; Director Kedayweb</p>
-                <div class="ruang" id="print-ttd-ruang" style="display:flex;align-items:center;justify-content:center;">
+                <div class="ruang" id="print-ttd-ruang">
                     <img id="print-ttd-img"
                          src="uploads/Certificate/ttd_Resmi.png"
                          alt="Tanda Tangan Resmi"
-                         style="display:none;max-height:44pt;max-width:200pt;width:200pt;object-fit:contain;" />
+                         style="display:none;" />
                 </div>
                 <p class="nama" id="p-supervisor"></p>
             </div>
