@@ -3,12 +3,15 @@ require_once __DIR__ . '/../session.php';
 require_superadmin();
 require_once __DIR__ . '/../sop_helper.php';
 $sop_data = get_sop_data();
+require_once __DIR__ . '/../about_helper.php';
+$about_file = get_about_file_path();
 
 // Database connection attempt
 $conn = null;
 if (file_exists(__DIR__ . '/../Login/koneksi.php')) {
     include_once __DIR__ . '/../Login/koneksi.php';
 }
+$about_data = get_about_content($conn, $about_file);
 
 $positions_file = __DIR__ . '/../uploads/positions.json';
 if (!file_exists(dirname($positions_file))) {
@@ -185,6 +188,111 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $msg = "Pengaturan dan isi Standar Operasional Prosedur (SOP) berhasil disimpan!";
             $msg_type = "success";
         }
+        } elseif ($action === 'add_about_section') {
+        $about_data = get_about_content($conn, $about_file);
+        $sec_title   = trim($_POST['section_title'] ?? '');
+        $sec_badge   = trim($_POST['section_badge'] ?? 'Informasi');
+        $sec_icon    = trim($_POST['section_icon'] ?? 'info');
+        $sec_content = trim($_POST['section_content'] ?? '');
+        $sec_style   = trim($_POST['section_style'] ?? 'two_column');
+        $sec_image   = trim($_POST['section_image'] ?? '');
+
+        if (isset($_FILES['section_image_file']) && $_FILES['section_image_file']['error'] === UPLOAD_ERR_OK) {
+            $uploaded = handle_about_image_upload($_FILES['section_image_file'], 'section');
+            if ($uploaded) {
+                $sec_image = $uploaded;
+            }
+        }
+
+        if (!empty($sec_title) && !empty($sec_content)) {
+            if (!isset($about_data['extra_sections']) || !is_array($about_data['extra_sections'])) {
+                $about_data['extra_sections'] = [];
+            }
+            $about_data['extra_sections'][] = [
+                'id'      => 'sec_' . time() . '_' . mt_rand(100, 999),
+                'title'   => $sec_title,
+                'badge'   => $sec_badge,
+                'icon'    => !empty($sec_icon) ? $sec_icon : 'info',
+                'content' => $sec_content,
+                'image'   => $sec_image,
+                'style'   => in_array($sec_style, ['two_column', 'card_grid', 'full_banner']) ? $sec_style : 'two_column'
+            ];
+            save_about_content($conn, $about_file, $about_data);
+            $msg = "Bagian baru '" . htmlspecialchars($sec_title, ENT_QUOTES, 'UTF-8') . "' berhasil ditambahkan ke halaman Tentang!";
+            $msg_type = "success";
+        } else {
+            $msg = "Judul dan Konten bagian tidak boleh kosong!";
+            $msg_type = "danger";
+        }
+    } elseif ($action === 'edit_about_section') {
+        $about_data = get_about_content($conn, $about_file);
+        $idx         = isset($_POST['section_index']) ? (int)$_POST['section_index'] : -1;
+        $sec_title   = trim($_POST['section_title'] ?? '');
+        $sec_badge   = trim($_POST['section_badge'] ?? 'Informasi');
+        $sec_icon    = trim($_POST['section_icon'] ?? 'info');
+        $sec_content = trim($_POST['section_content'] ?? '');
+        $sec_style   = trim($_POST['section_style'] ?? 'two_column');
+        $sec_image   = trim($_POST['section_image'] ?? '');
+        $remove_img  = !empty($_POST['remove_section_image']);
+
+        if ($idx >= 0 && isset($about_data['extra_sections'][$idx])) {
+            $current_img = $about_data['extra_sections'][$idx]['image'] ?? '';
+            if ($remove_img) {
+                $current_img = '';
+            } elseif (isset($_FILES['section_image_file']) && $_FILES['section_image_file']['error'] === UPLOAD_ERR_OK) {
+                $uploaded = handle_about_image_upload($_FILES['section_image_file'], 'section');
+                if ($uploaded) {
+                    $current_img = $uploaded;
+                }
+            } elseif (!empty($sec_image)) {
+                $current_img = $sec_image;
+            }
+
+            $about_data['extra_sections'][$idx]['title']   = $sec_title;
+            $about_data['extra_sections'][$idx]['badge']   = $sec_badge;
+            $about_data['extra_sections'][$idx]['icon']    = !empty($sec_icon) ? $sec_icon : 'info';
+            $about_data['extra_sections'][$idx]['content'] = $sec_content;
+            $about_data['extra_sections'][$idx]['style']   = in_array($sec_style, ['two_column', 'card_grid', 'full_banner']) ? $sec_style : 'two_column';
+            $about_data['extra_sections'][$idx]['image']   = $current_img;
+
+            save_about_content($conn, $about_file, $about_data);
+            $msg = "Bagian '" . htmlspecialchars($sec_title, ENT_QUOTES, 'UTF-8') . "' berhasil diperbarui!";
+            $msg_type = "success";
+        } else {
+            $msg = "Gagal memperbarui: bagian tidak ditemukan.";
+            $msg_type = "danger";
+        }
+    } elseif ($action === 'delete_about_section') {
+        $about_data = get_about_content($conn, $about_file);
+        $idx = isset($_POST['section_index']) ? (int)$_POST['section_index'] : -1;
+        if ($idx >= 0 && isset($about_data['extra_sections'][$idx])) {
+            $deleted_title = $about_data['extra_sections'][$idx]['title'] ?? 'Bagian';
+            array_splice($about_data['extra_sections'], $idx, 1);
+            save_about_content($conn, $about_file, $about_data);
+            $msg = "Bagian '" . htmlspecialchars($deleted_title, ENT_QUOTES, 'UTF-8') . "' berhasil dikurangi / dihapus dari halaman Tentang!";
+            $msg_type = "success";
+        } else {
+            $msg = "Gagal menghapus: bagian tidak ditemukan.";
+            $msg_type = "danger";
+        }
+    } elseif ($action === 'move_about_section') {
+        $about_data = get_about_content($conn, $about_file);
+        $idx = (int)($_POST['section_index'] ?? -1);
+        $dir = (int)($_POST['direction'] ?? 0);
+        $target = $idx + $dir;
+        if (isset($about_data['extra_sections'][$idx]) && isset($about_data['extra_sections'][$target])) {
+            $temp = $about_data['extra_sections'][$idx];
+            $about_data['extra_sections'][$idx] = $about_data['extra_sections'][$target];
+            $about_data['extra_sections'][$target] = $temp;
+            save_about_content($conn, $about_file, $about_data);
+            $msg = "Urutan bagian berhasil diubah!";
+            $msg_type = "success";
+        }
+    } elseif ($action === 'reset_about_data') {
+        $about_data = reset_about_to_default($conn, $about_file);
+        $msg = "Bagian dan foto halaman Tentang berhasil dikembalikan ke standar awal!";
+        $msg_type = "success";
+
     } elseif ($action === 'add_user') {
         $username        = trim($_POST['username'] ?? '');
         $password        = trim($_POST['password'] ?? '');
@@ -637,6 +745,10 @@ $sop_data = get_sop_data();
                     <button type="button" id="nav-btn-sop" onclick="switchSuperadminTab('sop')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high">
                         <span class="material-symbols-outlined text-lg">gavel</span>
                         <span>Set SOP</span>
+                    </button>
+                    <button type="button" id="nav-btn-about" onclick="switchSuperadminTab('about')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high">
+                        <span class="material-symbols-outlined text-lg">info</span>
+                        <span>Set Tentang</span>
                     </button>
                     <button type="button" id="nav-btn-approval" onclick="switchSuperadminTab('approval')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high relative">
                         <span class="material-symbols-outlined text-lg">workspace_premium</span>
@@ -1473,11 +1585,296 @@ $sop_data = get_sop_data();
                 </div>
             </div>
 
+            <!-- Section 6: Kelola Halaman Tentang (Menambah & Mengurangi Isi dan Gambar) -->
+            <div class="glass-card rounded-2xl border border-outline-variant p-6 shadow-sm hidden space-y-8" id="section-about">
+                <!-- Header Card -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between pb-5 border-b border-outline-variant gap-4">
+                    <div>
+                        <div class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary bg-primary-container/30 px-3 py-1 rounded-full border border-primary/20 mb-2">
+                            <span class="material-symbols-outlined text-sm">tune</span>
+                            <span>Fitur Tambah & Kurangi Konten / Gambar Tentang</span>
+                        </div>
+                        <h3 class="font-headline-md font-bold text-on-surface">Kelola Isi & Gambar Halaman Tentang</h3>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                            Di sini Super Admin dapat <strong>menambah</strong> dan <strong>mengurangi (menghapus)</strong> bagian isi konten baru beserta gambarnya pada halaman Tentang.
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a href="../about.php" target="_blank" class="px-4 py-2.5 bg-surface-container-high hover:bg-surface-container border border-outline-variant text-on-surface font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                            <span class="material-symbols-outlined text-base">open_in_new</span>
+                            <span>Lihat Halaman Tentang</span>
+                        </a>
+                        <button type="button" onclick="openAddAboutSectionModal()" class="px-4 py-2.5 bg-primary hover:bg-primary-container text-on-primary font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                            <span class="material-symbols-outlined text-base">add</span>
+                            <span>+ Tambah Bagian Baru</span>
+                        </button>
+                        <button type="button" onclick="confirmResetAboutSuperadmin()" class="px-3 py-2.5 border border-outline-variant text-on-surface-variant hover:text-red-600 hover:bg-red-50 font-bold text-xs rounded-xl transition-all flex items-center gap-1 cursor-pointer" title="Reset Standar Default">
+                            <span class="material-symbols-outlined text-base">restart_alt</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bagian 1: Daftar Seksi / Bagian Tambahan (Menambah & Mengurangi Isi Konten) -->
+                <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-6 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-outline-variant gap-3">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-xl">layers</span>
+                            <div>
+                                <h4 class="font-headline-sm font-bold text-on-surface">Bagian / Seksi Konten Halaman Tentang</h4>
+                                <p class="text-xs text-on-surface-variant">Tambah seksi informasi baru (seperti Nilai Budaya, Fasilitas, FAQ) atau kurangi/hapus seksi yang tidak diperlukan.</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="openAddAboutSectionModal()" class="px-4 py-2 bg-primary text-on-primary font-bold text-xs rounded-xl shadow-xs hover:bg-primary-container transition flex items-center gap-1 cursor-pointer self-start sm:self-auto">
+                            <span class="material-symbols-outlined text-base">add</span>
+                            <span>+ Tambah Bagian Baru</span>
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="border-b border-outline-variant bg-surface-container-low text-on-surface-variant uppercase font-bold text-[11px]">
+                                    <th class="py-3 px-3 w-12 text-center">Urutan</th>
+                                    <th class="py-3 px-3 w-36">Kategori & Icon</th>
+                                    <th class="py-3 px-3">Judul & Cuplikan Isi Konten</th>
+                                    <th class="py-3 px-3 w-28 text-center">Foto</th>
+                                    <th class="py-3 px-3 w-40 text-center">Aksi (Kurangi / Edit)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline-variant/60">
+                                <?php 
+                                $extra_sec_list = $about_data['extra_sections'] ?? [];
+                                if (!empty($extra_sec_list)):
+                                    foreach ($extra_sec_list as $s_idx => $sec): 
+                                        $has_img = !empty($sec['image']);
+                                ?>
+                                    <tr class="hover:bg-surface-container-high/40 transition">
+                                        <td class="py-3 px-3 text-center">
+                                            <div class="flex flex-col items-center gap-0.5">
+                                                <?php if ($s_idx > 0): ?>
+                                                <form method="POST" action="superadmin.php" class="inline">
+                                                    <input type="hidden" name="action" value="move_about_section"/>
+                                                    <input type="hidden" name="section_index" value="<?php echo $s_idx; ?>"/>
+                                                    <input type="hidden" name="direction" value="-1"/>
+                                                    <button type="submit" title="Pindah ke Atas" class="p-0.5 rounded text-on-surface-variant hover:text-primary transition cursor-pointer">
+                                                        <span class="material-symbols-outlined text-[16px]">arrow_upward</span>
+                                                    </button>
+                                                </form>
+                                                <?php endif; ?>
+                                                <span class="font-bold text-xs text-on-surface"><?php echo ($s_idx + 1); ?></span>
+                                                <?php if ($s_idx < count($extra_sec_list) - 1): ?>
+                                                <form method="POST" action="superadmin.php" class="inline">
+                                                    <input type="hidden" name="action" value="move_about_section"/>
+                                                    <input type="hidden" name="section_index" value="<?php echo $s_idx; ?>"/>
+                                                    <input type="hidden" name="direction" value="1"/>
+                                                    <button type="submit" title="Pindah ke Bawah" class="p-0.5 rounded text-on-surface-variant hover:text-primary transition cursor-pointer">
+                                                        <span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+                                                    </button>
+                                                </form>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-3">
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface text-[10px] font-bold border border-outline-variant">
+                                                <span class="material-symbols-outlined text-[12px]"><?php echo htmlspecialchars($sec['icon'] ?? 'info', ENT_QUOTES, 'UTF-8'); ?></span>
+                                                <span><?php echo htmlspecialchars($sec['badge'] ?? 'Informasi', ENT_QUOTES, 'UTF-8'); ?></span>
+                                            </span>
+                                            <div class="text-[10px] text-on-surface-variant mt-1 capitalize">Layout: <?php echo str_replace('_', ' ', htmlspecialchars($sec['style'] ?? 'two_column', ENT_QUOTES, 'UTF-8')); ?></div>
+                                        </td>
+                                        <td class="py-3 px-3">
+                                            <div class="font-bold text-on-surface text-xs"><?php echo htmlspecialchars($sec['title'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="text-on-surface-variant text-[11px] line-clamp-2 mt-0.5 leading-relaxed"><?php echo htmlspecialchars(strip_tags($sec['content'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></div>
+                                        </td>
+                                        <td class="py-3 px-3 text-center">
+                                            <?php if ($has_img): ?>
+                                                <img src="<?php echo htmlspecialchars(strpos($sec['image'], 'http') === 0 ? $sec['image'] : '../' . $sec['image'], ENT_QUOTES, 'UTF-8'); ?>" class="w-14 h-10 object-cover rounded-md border border-outline-variant mx-auto"/>
+                                            <?php else: ?>
+                                                <span class="text-[11px] text-on-surface-variant italic">Tanpa foto</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="py-3 px-3 text-center">
+                                            <div class="flex items-center justify-center gap-1.5">
+                                                <button type="button" onclick="openEditAboutSectionModal(<?php echo $s_idx; ?>)" class="px-2.5 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-on-surface font-bold text-[11px] flex items-center gap-1 cursor-pointer" title="Edit Bagian">
+                                                    <span class="material-symbols-outlined text-[14px]">edit</span>
+                                                    <span>Edit</span>
+                                                </button>
+                                                <button type="button" onclick="confirmDeleteAboutSection(<?php echo $s_idx; ?>, '<?php echo htmlspecialchars(addslashes($sec['title'] ?? 'Bagian'), ENT_QUOTES, 'UTF-8'); ?>')" class="px-2.5 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] flex items-center gap-1 cursor-pointer" title="Kurangi / Hapus Bagian">
+                                                    <span class="material-symbols-outlined text-[14px]">delete</span>
+                                                    <span>Hapus</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php 
+                                    endforeach; 
+                                else: 
+                                ?>
+                                    <tr>
+                                        <td colspan="5" class="py-8 text-center text-on-surface-variant text-xs">
+                                            Belum ada bagian / seksi tambahan. Klik tombol "+ Tambah Bagian Baru" di atas untuk menambahkan.
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                </div>
+        <div class="mt-auto shrink-0 w-full">   <!-- ── Modal Tambah Seksi Tentang ── -->
+    <div id="modal-add-about-section" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
+        <div class="bg-surface-container-lowest rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-outline-variant max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-outline-variant mb-4 sticky top-0 bg-surface-container-lowest z-10">
+                <h3 class="font-headline-md font-bold text-primary flex items-center gap-2">
+                    <span class="material-symbols-outlined text-xl">post_add</span>
+                    <span>Tambah Bagian / Seksi Baru</span>
+                </h3>
+                <button type="button" onclick="closeAddAboutSectionModal()" class="text-on-surface-variant hover:text-on-surface">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form action="superadmin.php" method="POST" enctype="multipart/form-data" class="space-y-4">
+                <input type="hidden" name="action" value="add_about_section"/>
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Judul Bagian <span class="text-red-500">*</span></label>
+                    <input type="text" name="section_title" placeholder="Contoh: Budaya & Nilai Kerja" required class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none"/>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface-variant mb-1">Badge Kategori</label>
+                        <input type="text" name="section_badge" value="Informasi" class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none"/>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface-variant mb-1">Icon Material Symbol</label>
+                        <input type="text" name="section_icon" value="stars" placeholder="stars, apartment, info, groups" class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none"/>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Gaya Tampilan (Layout)</label>
+                    <select name="section_style" class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none">
+                        <option value="two_column">Dua Kolom (Teks & Foto Berdampingan)</option>
+                        <option value="card_grid">Kartu Fitur (Feature Card)</option>
+                        <option value="full_banner">Banner Sorotan Lebar (Full-Width Highlight)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Isi Konten / Deskripsi <span class="text-red-500">*</span></label>
+                    <textarea name="section_content" rows="4" placeholder="Tuliskan isi teks atau rincian poin-poin..." required class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none leading-relaxed"></textarea>
+                </div>
+                <div class="p-3 bg-surface-container-low rounded-xl border border-outline-variant space-y-2">
+                    <label class="block text-xs font-bold text-on-surface">Foto / Gambar Pendukung (Opsional)</label>
+                    <div>
+                        <span class="text-[11px] text-on-surface-variant block mb-1">Upload File Foto:</span>
+                        <input type="file" name="section_image_file" accept="image/*" class="w-full px-3 py-1.5 text-xs border border-outline-variant rounded-lg bg-surface-container-lowest mb-1"/>
+                    </div>
+                    <div>
+                        <span class="text-[11px] text-on-surface-variant block mb-1">Atau Masukkan URL Gambar:</span>
+                        <input type="text" name="section_image" placeholder="https://..." class="w-full px-3.5 py-1.5 text-xs border border-outline-variant rounded-lg bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none"/>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-outline-variant">
+                    <button type="button" onclick="closeAddAboutSectionModal()" class="px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold hover:bg-surface-container transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-primary text-on-primary rounded-xl text-xs font-bold hover:bg-primary-container transition shadow-md">Simpan Bagian Baru</button>
+                </div>
+            </form>
         </div>
-        <div class="mt-auto shrink-0 w-full">
-            <?php include '../partials/footer.php'; ?>
+    </div>
+
+    <!-- ── Modal Edit Seksi Tentang ── -->
+    <div id="modal-edit-about-section" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
+        <div class="bg-surface-container-lowest rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-outline-variant max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-outline-variant mb-4 sticky top-0 bg-surface-container-lowest z-10">
+                <h3 class="font-headline-md font-bold text-amber-600 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-xl">edit</span>
+                    <span>Edit Bagian Konten</span>
+                </h3>
+                <button type="button" onclick="closeEditAboutSectionModal()" class="text-on-surface-variant hover:text-on-surface">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form action="superadmin.php" method="POST" enctype="multipart/form-data" class="space-y-4">
+                <input type="hidden" name="action" value="edit_about_section"/>
+                <input type="hidden" id="edit-about-sec-idx" name="section_index" value=""/>
+
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Judul Bagian <span class="text-red-500">*</span></label>
+                    <input type="text" id="edit-about-sec-title" name="section_title" required class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none"/>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface-variant mb-1">Badge Kategori</label>
+                        <input type="text" id="edit-about-sec-badge" name="section_badge" class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none"/>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface-variant mb-1">Icon Material Symbol</label>
+                        <input type="text" id="edit-about-sec-icon" name="section_icon" class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none"/>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Gaya Tampilan (Layout)</label>
+                    <select id="edit-about-sec-style" name="section_style" class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none">
+                        <option value="two_column">Dua Kolom (Teks & Foto Berdampingan)</option>
+                        <option value="card_grid">Kartu Fitur (Feature Card)</option>
+                        <option value="full_banner">Banner Sorotan Lebar (Full-Width Highlight)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Isi Konten / Deskripsi <span class="text-red-500">*</span></label>
+                    <textarea id="edit-about-sec-content" name="section_content" rows="4" required class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none leading-relaxed"></textarea>
+                </div>
+                <div class="p-3 bg-surface-container-low rounded-xl border border-outline-variant space-y-2">
+                    <label class="block text-xs font-bold text-on-surface">Foto / Gambar Pendukung</label>
+                    <div id="edit-about-sec-preview-box" class="flex items-center gap-3 p-2 bg-surface-container-lowest rounded-lg border border-outline-variant mb-2">
+                        <img id="edit-about-sec-preview-img" src="" class="w-12 h-10 object-cover rounded border border-outline-variant"/>
+                        <div class="text-[11px] text-on-surface-variant flex-1 truncate">
+                            <span class="font-bold text-on-surface block">Foto Saat Ini:</span>
+                            <span id="edit-about-sec-url-text" class="text-slate-500 truncate block"></span>
+                        </div>
+                        <label class="flex items-center gap-1 text-[11px] text-red-600 font-bold cursor-pointer">
+                            <input type="checkbox" name="remove_section_image" value="1" class="rounded text-red-600"/>
+                            <span>Hapus Foto</span>
+                        </label>
+                    </div>
+                    <div>
+                        <span class="text-[11px] text-on-surface-variant block mb-1">Ganti File Baru:</span>
+                        <input type="file" name="section_image_file" accept="image/*" class="w-full px-3 py-1.5 text-xs border border-outline-variant rounded-lg bg-surface-container-lowest mb-1"/>
+                    </div>
+                    <div>
+                        <span class="text-[11px] text-on-surface-variant block mb-1">Atau Ubah URL Gambar:</span>
+                        <input type="text" id="edit-about-sec-image" name="section_image" placeholder="https://..." class="w-full px-3.5 py-1.5 text-xs border border-outline-variant rounded-lg bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none"/>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-outline-variant">
+                    <button type="button" onclick="closeEditAboutSectionModal()" class="px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold hover:bg-surface-container transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-amber-600 text-white rounded-xl text-xs font-bold hover:bg-amber-700 transition shadow-md">Simpan Perubahan</button>
+                </div>
+            </form>
         </div>
-    </main>
+    </div>
+
+    <!-- ── Modal Konfirmasi Hapus Universal Tentang ── -->
+    <div id="modal-delete-about" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
+        <div class="bg-surface-container-lowest rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-outline-variant text-center space-y-4">
+            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+                <span class="material-symbols-outlined text-2xl">delete_forever</span>
+            </div>
+            <div>
+                <h3 class="font-headline-sm font-bold text-on-surface" id="delete-about-modal-title">Hapus Item?</h3>
+                <p class="text-xs text-on-surface-variant mt-1" id="delete-about-modal-desc">Apakah Anda yakin ingin menghapus item ini?</p>
+            </div>
+            <form id="delete-about-form" action="superadmin.php" method="POST" class="flex justify-center gap-2 pt-2">
+                <input type="hidden" id="delete-about-action" name="action" value=""/>
+                <input type="hidden" id="delete-about-idx" name="" value=""/>
+                <button type="button" onclick="closeDeleteAboutModal()" class="px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold hover:bg-surface-container transition">Batal</button>
+                <button type="submit" class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition shadow-md">Ya, Hapus</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Form Tersembunyi Reset Standar Tentang -->
+    <form id="reset-about-form" action="superadmin.php" method="POST" class="hidden">
+        <input type="hidden" name="action" value="reset_about_data"/>
+    </form>
 
     <!-- Modal Set Tanggal Mulai Absen Intern -->
     <div id="start-date-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
@@ -2413,6 +2810,7 @@ $sop_data = get_sop_data();
             const sectionAccount = document.getElementById('section-account');
             const sectionPositions = document.getElementById('section-positions');
             const sectionApproval = document.getElementById('section-approval');
+            const sectionAbout = document.getElementById('section-about');
             const btnLocation = document.getElementById('nav-btn-location');
             const btnFooter = document.getElementById('nav-btn-footer');
             const btnSop = document.getElementById('nav-btn-sop');
@@ -2421,7 +2819,8 @@ $sop_data = get_sop_data();
             const btnAll = document.getElementById('nav-btn-all');
             const activeLabel = document.getElementById('tab-active-label');
 
-            const allBtns = [btnLocation, btnFooter, btnSop, btnAccount, btnApproval, btnAll];
+            const btnAbout = document.getElementById('nav-btn-about');
+            const allBtns = [btnLocation, btnFooter, btnSop, btnAbout, btnAccount, btnApproval, btnAll];
             allBtns.forEach(btn => {
                 if (!btn) return;
                 btn.classList.remove('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -2435,6 +2834,8 @@ $sop_data = get_sop_data();
                 if (sectionAccount) sectionAccount.classList.add('hidden');
                 if (sectionPositions) sectionPositions.classList.add('hidden');
                 if (sectionApproval) sectionApproval.classList.add('hidden');
+
+                if (sectionAbout) sectionAbout.classList.add('hidden');
 
                 if (btnLocation) {
                     btnLocation.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -2456,6 +2857,8 @@ $sop_data = get_sop_data();
                 if (sectionPositions) sectionPositions.classList.add('hidden');
                 if (sectionApproval) sectionApproval.classList.add('hidden');
 
+                if (sectionAbout) sectionAbout.classList.add('hidden');
+
                 if (btnFooter) {
                     btnFooter.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
                     btnFooter.classList.remove('text-on-surface-variant', 'hover:bg-surface-container-high');
@@ -2470,19 +2873,38 @@ $sop_data = get_sop_data();
                 if (sectionPositions) sectionPositions.classList.add('hidden');
                 if (sectionApproval) sectionApproval.classList.add('hidden');
 
+                if (sectionAbout) sectionAbout.classList.add('hidden');
+
                 if (btnSop) {
                     btnSop.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
                     btnSop.classList.remove('text-on-surface-variant', 'hover:bg-surface-container-high');
                 }
                 if (activeLabel) activeLabel.textContent = 'Mode: Set SOP';
                 history.replaceState(null, null, '#sop');
-            } else if (tab === 'approval') {
+                        } else if (tab === 'about') {
+                if (sectionLocation) sectionLocation.classList.add('hidden');
+                if (sectionFooter) sectionFooter.classList.add('hidden');
+                if (sectionSop) sectionSop.classList.add('hidden');
+                if (sectionAccount) sectionAccount.classList.add('hidden');
+                if (sectionPositions) sectionPositions.classList.add('hidden');
+                if (sectionApproval) sectionApproval.classList.add('hidden');
+                if (sectionAbout) sectionAbout.classList.remove('hidden');
+
+                if (btnAbout) {
+                    btnAbout.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
+                    btnAbout.classList.remove('text-on-surface-variant', 'hover:bg-surface-container-high');
+                }
+                if (activeLabel) activeLabel.textContent = 'Mode: Set Tentang';
+                history.replaceState(null, null, '#about');
+} else if (tab === 'approval') {
                 if (sectionLocation) sectionLocation.classList.add('hidden');
                 if (sectionFooter) sectionFooter.classList.add('hidden');
                 if (sectionSop) sectionSop.classList.add('hidden');
                 if (sectionAccount) sectionAccount.classList.add('hidden');
                 if (sectionPositions) sectionPositions.classList.add('hidden');
                 if (sectionApproval) sectionApproval.classList.remove('hidden');
+
+                if (sectionAbout) sectionAbout.classList.add('hidden');
 
                 if (btnApproval) {
                     btnApproval.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -2497,6 +2919,7 @@ $sop_data = get_sop_data();
                 if (sectionAccount) sectionAccount.classList.remove('hidden');
                 if (sectionPositions) sectionPositions.classList.remove('hidden');
                 if (sectionApproval) sectionApproval.classList.remove('hidden');
+                if (sectionAbout) sectionAbout.classList.remove('hidden');
 
                 if (btnAll) {
                     btnAll.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -2517,6 +2940,7 @@ $sop_data = get_sop_data();
                 if (sectionAccount) sectionAccount.classList.remove('hidden');
                 if (sectionPositions) sectionPositions.classList.remove('hidden');
                 if (sectionApproval) sectionApproval.classList.add('hidden');
+                if (sectionAbout) sectionAbout.classList.add('hidden');
 
                 if (btnAccount) {
                     btnAccount.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -2779,12 +3203,16 @@ $sop_data = get_sop_data();
                 defaultTab = 'footer';
             } else if (actionSubmitted.indexOf('sop') !== -1) {
                 defaultTab = 'sop';
+            } else if (actionSubmitted.indexOf('about') !== -1) {
+                defaultTab = 'about';
             } else if (window.location.hash === '#location') {
                 defaultTab = 'location';
             } else if (window.location.hash === '#footer') {
                 defaultTab = 'footer';
             } else if (window.location.hash === '#sop') {
                 defaultTab = 'sop';
+            } else if (window.location.hash === '#about') {
+                defaultTab = 'about';
             } else if (window.location.hash === '#approval') {
                 defaultTab = 'approval';
             } else if (window.location.hash === '#all') {
@@ -2857,6 +3285,112 @@ $sop_data = get_sop_data();
                 if (e.target === this) closeStartDateModal();
             });
         });
+    
+        // ===== SET TENTANG (MENAMBAH & MENGURANGI ISI / GAMBAR) =====
+        const aboutSectionsData = <?php echo json_encode($about_data['extra_sections'] ?? []); ?>;
+
+        function openAddAboutSectionModal() {
+            const modal = document.getElementById('modal-add-about-section');
+            if (modal) {
+                const form = modal.querySelector('form');
+                if (form) form.reset();
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeAddAboutSectionModal() {
+            const modal = document.getElementById('modal-add-about-section');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function openEditAboutSectionModal(index) {
+            const item = aboutSectionsData[index];
+            if (!item) return;
+
+            document.getElementById('edit-about-sec-idx').value = index;
+            document.getElementById('edit-about-sec-title').value = item.title || '';
+            document.getElementById('edit-about-sec-badge').value = item.badge || 'Informasi';
+            document.getElementById('edit-about-sec-icon').value = item.icon || 'info';
+            document.getElementById('edit-about-sec-style').value = item.style || 'two_column';
+            document.getElementById('edit-about-sec-content').value = item.content || '';
+            document.getElementById('edit-about-sec-image').value = item.image || '';
+
+            const previewBox = document.getElementById('edit-about-sec-preview-box');
+            const previewImg = document.getElementById('edit-about-sec-preview-img');
+            const urlText = document.getElementById('edit-about-sec-url-text');
+
+            if (item.image) {
+                let imgSrc = item.image.startsWith('http') ? item.image : ('../' + item.image);
+                previewImg.src = imgSrc;
+                urlText.textContent = item.image;
+                previewBox.classList.remove('hidden');
+            } else {
+                previewBox.classList.add('hidden');
+            }
+
+            const modal = document.getElementById('modal-edit-about-section');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeEditAboutSectionModal() {
+            const modal = document.getElementById('modal-edit-about-section');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function confirmDeleteAboutSection(index, title) {
+            const modal = document.getElementById('modal-delete-about');
+            if (!modal) return;
+            document.getElementById('delete-about-action').value = 'delete_about_section';
+            const idxInput = document.getElementById('delete-about-idx');
+            idxInput.name = 'section_index';
+            idxInput.value = index;
+            document.getElementById('delete-about-modal-title').textContent = 'Kurangi / Hapus Bagian?';
+            document.getElementById('delete-about-modal-desc').textContent = 'Apakah Anda yakin ingin menghapus bagian "' + title + '" beserta gambarnya dari halaman Tentang?';
+            modal.classList.remove('hidden');
+        }
+
+        function closeDeleteAboutModal() {
+            const modal = document.getElementById('modal-delete-about');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function confirmResetAboutSuperadmin() {
+            if (typeof window.showConfirmModal === 'function') {
+                const confirmed = await window.showConfirmModal({
+                    title: 'Kembalikan Konten Tambahan Tentang?',
+                    message: 'Apakah Anda yakin ingin menghapus semua bagian tambahan dan mengembalikan halaman Tentang ke standar awal?',
+                    confirmText: 'Ya, Reset',
+                    cancelText: 'Batal',
+                    type: 'danger'
+                });
+                if (confirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = 'superadmin.php';
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'action';
+                    input.value = 'reset_about_data';
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            } else {
+                if (confirm('Apakah Anda yakin ingin menghapus semua bagian tambahan dan mengembalikan ke standar awal?')) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = 'superadmin.php';
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'action';
+                    input.value = 'reset_about_data';
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            }
+        }
+
     </script>
 </body>
 </html>
