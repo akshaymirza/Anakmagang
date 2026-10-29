@@ -1,0 +1,39 @@
+{
+    "type": "privacy",
+    "badge": "Privasi & Keamanan Data",
+    "title": "Kebijakan Privasi Kedayweb Platform",
+    "intro": "Privasi Anda sangat penting bagi Kedayweb Platform. Kebijakan ini menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi data pribadi Anda.",
+    "updated_at": "2026-10-29 04:04:42",
+    "sections": [
+        {
+            "id": "priv-1",
+            "title": "1. Pengumpulan Data Pribadi",
+            "icon": "person_search",
+            "content": "Data yang dikumpulkan pada platform ini (seperti nama, institusi asal, kontak, dan foto identitas) hanya digunakan untuk kepentingan administrasi program magang, verifikasi sertifikat, dan presensi harian."
+        },
+        {
+            "id": "priv-2",
+            "title": "2. Keamanan & Kerahasiaan Data",
+            "icon": "security",
+            "content": "Kedayweb berkomitmen menjaga kerahasiaan informasi personal peserta intern dan tidak membagikan atau menjual data kepada pihak ketiga tanpa izin resmi dari pengguna yang bersangkutan."
+        },
+        {
+            "id": "priv-3",
+            "title": "3. Sertifikasi Digital & Verifikasi Publik",
+            "icon": "verified_user",
+            "content": "Nomor ID sertifikat dan nama peserta yang tercantum pada sertifikat kelulusan dapat diverifikasi secara publik oleh pihak perekrut atau kampus mitra untuk memastikan keabsahan dokumen resmi."
+        },
+        {
+            "id": "priv-4",
+            "title": "4. Data Lokasi & Presensi Geofencing",
+            "icon": "location_on",
+            "content": "Data koordinat GPS hanya diakses pada saat pengguna melakukan check-in dan check-out kehadiran untuk memverifikasi radius kantor, dan tidak dilacak secara kontinu di luar jam absensi."
+        },
+        {
+            "id": "priv-5",
+            "title": "5. Penyimpanan & Hak Pembaruan Data",
+            "icon": "cloud_done",
+            "content": "Data disimpan secara aman dalam sistem database terenkripsi. Peserta berhak mengajukan koreksi atau pembaruan informasi profil jika terdapat kekeliruan data diri."
+        }
+    ]
+}

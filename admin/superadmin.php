@@ -4,6 +4,9 @@ require_superadmin();
 require_once __DIR__ . '/../sop_helper.php';
 $sop_data = get_sop_data();
 require_once __DIR__ . '/../about_helper.php';
+require_once __DIR__ . '/../legal_helper.php';
+$privacy_data = get_legal_data('privacy');
+$terms_data   = get_legal_data('terms');
 $about_file = get_about_file_path();
 
 // Database connection attempt
@@ -291,6 +294,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'reset_about_data') {
         $about_data = reset_about_to_default($conn, $about_file);
         $msg = "Bagian dan foto halaman Tentang berhasil dikembalikan ke standar awal!";
+        $msg_type = "success";
+
+        } elseif ($action === 'save_legal_header') {
+        $doc_type = trim($_POST['doc_type'] ?? 'privacy');
+        $title    = trim($_POST['title'] ?? '');
+        $badge    = trim($_POST['badge'] ?? '');
+        $intro    = trim($_POST['intro'] ?? '');
+        if (!empty($title)) {
+            update_legal_header($doc_type, $title, $badge, $intro);
+            $doc_name = ($doc_type === 'terms') ? 'Syarat & Ketentuan' : 'Kebijakan Privasi';
+            $msg = "Header $doc_name berhasil diperbarui!";
+            $msg_type = "success";
+        }
+    } elseif ($action === 'add_legal_section') {
+        $doc_type = trim($_POST['doc_type'] ?? 'privacy');
+        $title    = trim($_POST['title'] ?? '');
+        $icon     = trim($_POST['icon'] ?? '');
+        $content_text = trim($_POST['content'] ?? '');
+        if (!empty($title) && !empty($content_text)) {
+            add_legal_section($doc_type, $title, $icon, $content_text);
+            $doc_name = ($doc_type === 'terms') ? 'Syarat & Ketentuan' : 'Kebijakan Privasi';
+            $msg = "Poin baru '" . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . "' berhasil ditambahkan ke $doc_name!";
+            $msg_type = "success";
+        } else {
+            $msg = "Judul dan Isi poin tidak boleh kosong!";
+            $msg_type = "danger";
+        }
+    } elseif ($action === 'edit_legal_section') {
+        $doc_type = trim($_POST['doc_type'] ?? 'privacy');
+        $idx      = (int)($_POST['section_index'] ?? -1);
+        $title    = trim($_POST['title'] ?? '');
+        $icon     = trim($_POST['icon'] ?? '');
+        $content_text = trim($_POST['content'] ?? '');
+        if ($idx >= 0 && !empty($title) && !empty($content_text)) {
+            edit_legal_section($doc_type, $idx, $title, $icon, $content_text);
+            $doc_name = ($doc_type === 'terms') ? 'Syarat & Ketentuan' : 'Kebijakan Privasi';
+            $msg = "Poin '" . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . "' pada $doc_name berhasil diperbarui!";
+            $msg_type = "success";
+        } else {
+            $msg = "Gagal memperbarui poin: data tidak lengkap.";
+            $msg_type = "danger";
+        }
+    } elseif ($action === 'delete_legal_section') {
+        $doc_type = trim($_POST['doc_type'] ?? 'privacy');
+        $idx      = (int)($_POST['section_index'] ?? -1);
+        $curr_data = get_legal_data($doc_type);
+        $del_title = $curr_data['sections'][$idx]['title'] ?? 'Poin';
+        if (delete_legal_section($doc_type, $idx)) {
+            $doc_name = ($doc_type === 'terms') ? 'Syarat & Ketentuan' : 'Kebijakan Privasi';
+            $msg = "Poin '" . htmlspecialchars($del_title, ENT_QUOTES, 'UTF-8') . "' berhasil dihapus dari $doc_name!";
+            $msg_type = "success";
+        } else {
+            $msg = "Gagal menghapus poin.";
+            $msg_type = "danger";
+        }
+    } elseif ($action === 'move_legal_section') {
+        $doc_type = trim($_POST['doc_type'] ?? 'privacy');
+        $idx      = (int)($_POST['section_index'] ?? -1);
+        $dir      = (int)($_POST['direction'] ?? 0);
+        if (move_legal_section($doc_type, $idx, $dir)) {
+            $doc_name = ($doc_type === 'terms') ? 'Syarat & Ketentuan' : 'Kebijakan Privasi';
+            $msg = "Urutan poin pada $doc_name berhasil diubah!";
+            $msg_type = "success";
+        }
+    } elseif ($action === 'reset_legal_data') {
+        $doc_type = trim($_POST['doc_type'] ?? 'privacy');
+        reset_legal_data($doc_type);
+        $doc_name = ($doc_type === 'terms') ? 'Syarat & Ketentuan' : 'Kebijakan Privasi';
+        $msg = "Seluruh isi $doc_name berhasil dikembalikan ke standar awal!";
         $msg_type = "success";
 
     } elseif ($action === 'add_user') {
@@ -749,6 +821,10 @@ $sop_data = get_sop_data();
                     <button type="button" id="nav-btn-about" onclick="switchSuperadminTab('about')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high">
                         <span class="material-symbols-outlined text-lg">info</span>
                         <span>Set Tentang</span>
+                    </button>
+                    <button type="button" id="nav-btn-legal" onclick="switchSuperadminTab('legal')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high">
+                        <span class="material-symbols-outlined text-lg">policy</span>
+                        <span>Set Kebijakan & Syarat</span>
                     </button>
                     <button type="button" id="nav-btn-approval" onclick="switchSuperadminTab('approval')" class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-on-surface-variant hover:bg-surface-container-high relative">
                         <span class="material-symbols-outlined text-lg">workspace_premium</span>
@@ -1721,7 +1797,257 @@ $sop_data = get_sop_data();
                 </div>
 
                 </div>
-        <div class="mt-auto shrink-0 w-full">   <!-- ── Modal Tambah Seksi Tentang ── -->
+        <div class="mt-auto shrink-0 w-full">   
+            <!-- Section Legal: Pengaturan Kebijakan Privasi & Syarat Ketentuan -->
+            <div class="glass-card rounded-2xl border border-outline-variant p-6 shadow-sm hidden space-y-6" id="section-legal">
+                <!-- Header Card -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between pb-5 border-b border-outline-variant gap-4">
+                    <div>
+                        <div class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary bg-primary-container/30 px-3 py-1 rounded-full border border-primary/20 mb-2">
+                            <span class="material-symbols-outlined text-sm">policy</span>
+                            <span>Manajemen Dokumen Legal Platform</span>
+                        </div>
+                        <h3 class="font-headline-md font-bold text-on-surface">Kelola Kebijakan Privasi & Syarat Ketentuan</h3>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                            Di sini Super Admin dapat <strong>mengedit</strong>, <strong>menambah</strong>, dan <strong>mengurangi (menghapus)</strong> pasal/poin isi Kebijakan Privasi serta Syarat & Ketentuan.
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" onclick="openAddLegalSectionModal(currentLegalTab)" class="px-4 py-2.5 bg-primary hover:bg-primary-container text-on-primary font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                            <span class="material-symbols-outlined text-base">add_circle</span>
+                            <span>+ Tambah Poin Baru</span>
+                        </button>
+                        <button type="button" onclick="openEditLegalHeaderModal(currentLegalTab)" class="px-4 py-2.5 bg-surface-container-high hover:bg-surface-container border border-outline-variant text-on-surface font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                            <span class="material-symbols-outlined text-base">edit_note</span>
+                            <span>Edit Header Dokumen</span>
+                        </button>
+                        <button type="button" onclick="confirmResetLegal(currentLegalTab)" class="px-3 py-2.5 border border-outline-variant text-on-surface-variant hover:text-red-600 hover:bg-red-50 font-bold text-xs rounded-xl transition-all flex items-center gap-1 cursor-pointer" title="Kembalikan Dokumen ke Standar Awal">
+                            <span class="material-symbols-outlined text-base">restart_alt</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sub-tab Navigasi (Pilih Kebijakan Privasi vs Syarat & Ketentuan) -->
+                <div class="flex items-center gap-2 border-b border-outline-variant pb-2">
+                    <button type="button" id="subtab-legal-privacy" onclick="switchLegalSubtab('privacy')" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-primary text-on-primary shadow-xs cursor-pointer">
+                        <span class="material-symbols-outlined text-base">security</span>
+                        <span>Kebijakan Privasi (<?php echo count($privacy_data['sections'] ?? []); ?> Poin)</span>
+                    </button>
+                    <button type="button" id="subtab-legal-terms" onclick="switchLegalSubtab('terms')" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-high cursor-pointer">
+                        <span class="material-symbols-outlined text-base">gavel</span>
+                        <span>Syarat & Ketentuan (<?php echo count($terms_data['sections'] ?? []); ?> Poin)</span>
+                    </button>
+                </div>
+
+                <!-- Panel 1: Kebijakan Privasi -->
+                <div id="panel-legal-privacy" class="space-y-4">
+                    <!-- Info Header Box -->
+                    <div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div>
+                            <span class="text-[11px] font-bold text-blue-600 uppercase tracking-wider bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200"><?php echo htmlspecialchars($privacy_data['badge'] ?? 'Privasi'); ?></span>
+                            <h4 class="font-bold text-sm text-on-surface mt-1"><?php echo htmlspecialchars($privacy_data['title'] ?? 'Kebijakan Privasi'); ?></h4>
+                            <p class="text-xs text-on-surface-variant mt-0.5"><?php echo htmlspecialchars($privacy_data['intro'] ?? ''); ?></p>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <a href="../privacy-policy.php" target="_blank" class="px-3 py-1.5 bg-surface-container-lowest border border-outline-variant text-on-surface hover:text-primary font-bold text-xs rounded-lg transition flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">open_in_new</span>
+                                <span>Preview Halaman</span>
+                            </a>
+                            <button type="button" onclick="openEditLegalHeaderModal('privacy')" class="px-3 py-1.5 bg-surface-container-lowest border border-outline-variant text-on-surface hover:text-amber-600 font-bold text-xs rounded-lg transition flex items-center gap-1 cursor-pointer">
+                                <span class="material-symbols-outlined text-sm">edit</span>
+                                <span>Edit Teks Header</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- List Poin Kebijakan Privasi -->
+                    <div class="overflow-x-auto bg-surface-container-lowest rounded-xl border border-outline-variant">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="border-b border-outline-variant bg-surface-container-low text-on-surface-variant uppercase font-bold text-[11px]">
+                                    <th class="py-3 px-3 w-14 text-center">Urutan</th>
+                                    <th class="py-3 px-3 w-52">Ikon & Judul Poin</th>
+                                    <th class="py-3 px-3">Isi Ketentuan / Penjelasan</th>
+                                    <th class="py-3 px-3 w-36 text-center">Aksi (Kurangi / Edit)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline-variant/60">
+                                <?php 
+                                $priv_list = $privacy_data['sections'] ?? [];
+                                if (!empty($priv_list)):
+                                    foreach ($priv_list as $p_idx => $item): 
+                                ?>
+                                    <tr class="hover:bg-surface-container-high/40 transition">
+                                        <td class="py-3 px-3 text-center">
+                                            <div class="flex flex-col items-center gap-0.5">
+                                                <?php if ($p_idx > 0): ?>
+                                                <form method="POST" action="superadmin.php" class="inline">
+                                                    <input type="hidden" name="action" value="move_legal_section"/>
+                                                    <input type="hidden" name="doc_type" value="privacy"/>
+                                                    <input type="hidden" name="section_index" value="<?php echo $p_idx; ?>"/>
+                                                    <input type="hidden" name="direction" value="-1"/>
+                                                    <button type="submit" title="Pindah ke Atas" class="p-0.5 rounded text-on-surface-variant hover:text-primary transition cursor-pointer">
+                                                        <span class="material-symbols-outlined text-[16px]">arrow_upward</span>
+                                                    </button>
+                                                </form>
+                                                <?php endif; ?>
+                                                <span class="font-bold text-xs text-on-surface">#<?php echo ($p_idx + 1); ?></span>
+                                                <?php if ($p_idx < count($priv_list) - 1): ?>
+                                                <form method="POST" action="superadmin.php" class="inline">
+                                                    <input type="hidden" name="action" value="move_legal_section"/>
+                                                    <input type="hidden" name="doc_type" value="privacy"/>
+                                                    <input type="hidden" name="section_index" value="<?php echo $p_idx; ?>"/>
+                                                    <input type="hidden" name="direction" value="1"/>
+                                                    <button type="submit" title="Pindah ke Bawah" class="p-0.5 rounded text-on-surface-variant hover:text-primary transition cursor-pointer">
+                                                        <span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+                                                    </button>
+                                                </form>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-3">
+                                            <div class="flex items-center gap-1.5 font-bold text-on-surface">
+                                                <span class="material-symbols-outlined text-blue-600 text-base"><?php echo htmlspecialchars($item['icon'] ?? 'security'); ?></span>
+                                                <span><?php echo htmlspecialchars($item['title'] ?? ''); ?></span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-3">
+                                            <div class="text-on-surface-variant leading-relaxed"><?php echo nl2br(htmlspecialchars($item['content'] ?? '')); ?></div>
+                                        </td>
+                                        <td class="py-3 px-3 text-center">
+                                            <div class="flex items-center justify-center gap-1.5">
+                                                <button type="button" onclick="openEditLegalSectionModal('privacy', <?php echo $p_idx; ?>)" class="px-2.5 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-on-surface font-bold text-[11px] flex items-center gap-1 cursor-pointer">
+                                                    <span class="material-symbols-outlined text-[14px]">edit</span>
+                                                    <span>Edit</span>
+                                                </button>
+                                                <button type="button" onclick="confirmDeleteLegalSection('privacy', <?php echo $p_idx; ?>, '<?php echo htmlspecialchars(addslashes($item['title'] ?? 'Poin'), ENT_QUOTES, 'UTF-8'); ?>')" class="px-2.5 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] flex items-center gap-1 cursor-pointer">
+                                                    <span class="material-symbols-outlined text-[14px]">delete</span>
+                                                    <span>Hapus</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php 
+                                    endforeach; 
+                                else: 
+                                ?>
+                                    <tr>
+                                        <td colspan="4" class="py-8 text-center text-on-surface-variant text-xs">
+                                            Belum ada poin kebijakan privasi. Klik tombol "+ Tambah Poin Baru" di atas untuk menambahkan.
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Panel 2: Syarat & Ketentuan -->
+                <div id="panel-legal-terms" class="hidden space-y-4">
+                    <!-- Info Header Box -->
+                    <div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div>
+                            <span class="text-[11px] font-bold text-indigo-600 uppercase tracking-wider bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200"><?php echo htmlspecialchars($terms_data['badge'] ?? 'Ketentuan'); ?></span>
+                            <h4 class="font-bold text-sm text-on-surface mt-1"><?php echo htmlspecialchars($terms_data['title'] ?? 'Syarat & Ketentuan'); ?></h4>
+                            <p class="text-xs text-on-surface-variant mt-0.5"><?php echo htmlspecialchars($terms_data['intro'] ?? ''); ?></p>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <a href="../terms-conditions.php" target="_blank" class="px-3 py-1.5 bg-surface-container-lowest border border-outline-variant text-on-surface hover:text-indigo-600 font-bold text-xs rounded-lg transition flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">open_in_new</span>
+                                <span>Preview Halaman</span>
+                            </a>
+                            <button type="button" onclick="openEditLegalHeaderModal('terms')" class="px-3 py-1.5 bg-surface-container-lowest border border-outline-variant text-on-surface hover:text-amber-600 font-bold text-xs rounded-lg transition flex items-center gap-1 cursor-pointer">
+                                <span class="material-symbols-outlined text-sm">edit</span>
+                                <span>Edit Teks Header</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- List Poin Syarat & Ketentuan -->
+                    <div class="overflow-x-auto bg-surface-container-lowest rounded-xl border border-outline-variant">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="border-b border-outline-variant bg-surface-container-low text-on-surface-variant uppercase font-bold text-[11px]">
+                                    <th class="py-3 px-3 w-14 text-center">Urutan</th>
+                                    <th class="py-3 px-3 w-52">Ikon & Judul Poin</th>
+                                    <th class="py-3 px-3">Isi Ketentuan / Penjelasan</th>
+                                    <th class="py-3 px-3 w-36 text-center">Aksi (Kurangi / Edit)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline-variant/60">
+                                <?php 
+                                $term_list = $terms_data['sections'] ?? [];
+                                if (!empty($term_list)):
+                                    foreach ($term_list as $t_idx => $t_item): 
+                                ?>
+                                    <tr class="hover:bg-surface-container-high/40 transition">
+                                        <td class="py-3 px-3 text-center">
+                                            <div class="flex flex-col items-center gap-0.5">
+                                                <?php if ($t_idx > 0): ?>
+                                                <form method="POST" action="superadmin.php" class="inline">
+                                                    <input type="hidden" name="action" value="move_legal_section"/>
+                                                    <input type="hidden" name="doc_type" value="terms"/>
+                                                    <input type="hidden" name="section_index" value="<?php echo $t_idx; ?>"/>
+                                                    <input type="hidden" name="direction" value="-1"/>
+                                                    <button type="submit" title="Pindah ke Atas" class="p-0.5 rounded text-on-surface-variant hover:text-primary transition cursor-pointer">
+                                                        <span class="material-symbols-outlined text-[16px]">arrow_upward</span>
+                                                    </button>
+                                                </form>
+                                                <?php endif; ?>
+                                                <span class="font-bold text-xs text-on-surface">#<?php echo ($t_idx + 1); ?></span>
+                                                <?php if ($t_idx < count($term_list) - 1): ?>
+                                                <form method="POST" action="superadmin.php" class="inline">
+                                                    <input type="hidden" name="action" value="move_legal_section"/>
+                                                    <input type="hidden" name="doc_type" value="terms"/>
+                                                    <input type="hidden" name="section_index" value="<?php echo $t_idx; ?>"/>
+                                                    <input type="hidden" name="direction" value="1"/>
+                                                    <button type="submit" title="Pindah ke Bawah" class="p-0.5 rounded text-on-surface-variant hover:text-primary transition cursor-pointer">
+                                                        <span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+                                                    </button>
+                                                </form>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-3">
+                                            <div class="flex items-center gap-1.5 font-bold text-on-surface">
+                                                <span class="material-symbols-outlined text-indigo-600 text-base"><?php echo htmlspecialchars($t_item['icon'] ?? 'gavel'); ?></span>
+                                                <span><?php echo htmlspecialchars($t_item['title'] ?? ''); ?></span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-3">
+                                            <div class="text-on-surface-variant leading-relaxed"><?php echo nl2br(htmlspecialchars($t_item['content'] ?? '')); ?></div>
+                                        </td>
+                                        <td class="py-3 px-3 text-center">
+                                            <div class="flex items-center justify-center gap-1.5">
+                                                <button type="button" onclick="openEditLegalSectionModal('terms', <?php echo $t_idx; ?>)" class="px-2.5 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-on-surface font-bold text-[11px] flex items-center gap-1 cursor-pointer">
+                                                    <span class="material-symbols-outlined text-[14px]">edit</span>
+                                                    <span>Edit</span>
+                                                </button>
+                                                <button type="button" onclick="confirmDeleteLegalSection('terms', <?php echo $t_idx; ?>, '<?php echo htmlspecialchars(addslashes($t_item['title'] ?? 'Poin'), ENT_QUOTES, 'UTF-8'); ?>')" class="px-2.5 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] flex items-center gap-1 cursor-pointer">
+                                                    <span class="material-symbols-outlined text-[14px]">delete</span>
+                                                    <span>Hapus</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php 
+                                    endforeach; 
+                                else: 
+                                ?>
+                                    <tr>
+                                        <td colspan="4" class="py-8 text-center text-on-surface-variant text-xs">
+                                            Belum ada poin syarat & ketentuan. Klik tombol "+ Tambah Poin Baru" di atas untuk menambahkan.
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+    <!-- ── Modal Tambah Seksi Tentang ── -->
     <div id="modal-add-about-section" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
         <div class="bg-surface-container-lowest rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-outline-variant max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center pb-3 border-b border-outline-variant mb-4 sticky top-0 bg-surface-container-lowest z-10">
@@ -2269,6 +2595,150 @@ $sop_data = get_sop_data();
         </div>
     </div>
 
+    
+    <!-- ── Modal Tambah Poin Legal ── -->
+    <div id="modal-add-legal-section" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
+        <div class="bg-surface-container-lowest rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-outline-variant max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-outline-variant mb-4 sticky top-0 bg-surface-container-lowest z-10">
+                <h3 class="font-headline-md font-bold text-primary flex items-center gap-2" id="add-legal-modal-title">
+                    <span class="material-symbols-outlined text-xl">add_circle</span>
+                    <span>Tambah Poin Baru</span>
+                </h3>
+                <button type="button" onclick="closeAddLegalSectionModal()" class="text-on-surface-variant hover:text-on-surface">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form action="superadmin.php" method="POST" class="space-y-4">
+                <input type="hidden" name="action" value="add_legal_section"/>
+                <input type="hidden" id="add-legal-doc-type" name="doc_type" value="privacy"/>
+
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Target Dokumen</label>
+                    <select id="add-legal-doc-type-select" onchange="document.getElementById('add-legal-doc-type').value = this.value" class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none">
+                        <option value="privacy">Kebijakan Privasi</option>
+                        <option value="terms">Syarat & Ketentuan</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Judul Poin / Pasal <span class="text-red-500">*</span></label>
+                    <input type="text" name="title" required placeholder="Contoh: 6. Batasan Penggunaan Data" class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none"/>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Icon Material Symbol</label>
+                    <input type="text" name="icon" value="security" placeholder="security, gavel, lock, verified_user, badge" class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none"/>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Isi Ketentuan / Penjelasan <span class="text-red-500">*</span></label>
+                    <textarea name="content" rows="4" required placeholder="Tuliskan isi aturan atau penjelasan detail..." class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none leading-relaxed"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-outline-variant">
+                    <button type="button" onclick="closeAddLegalSectionModal()" class="px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold hover:bg-surface-container transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-primary text-on-primary rounded-xl text-xs font-bold hover:bg-primary-container transition shadow-md">Simpan Poin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── Modal Edit Poin Legal ── -->
+    <div id="modal-edit-legal-section" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
+        <div class="bg-surface-container-lowest rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-outline-variant max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center pb-3 border-b border-outline-variant mb-4 sticky top-0 bg-surface-container-lowest z-10">
+                <h3 class="font-headline-md font-bold text-amber-600 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-xl">edit</span>
+                    <span>Edit Poin Dokumen</span>
+                </h3>
+                <button type="button" onclick="closeEditLegalSectionModal()" class="text-on-surface-variant hover:text-on-surface">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form action="superadmin.php" method="POST" class="space-y-4">
+                <input type="hidden" name="action" value="edit_legal_section"/>
+                <input type="hidden" id="edit-legal-doc-type" name="doc_type" value="privacy"/>
+                <input type="hidden" id="edit-legal-section-idx" name="section_index" value=""/>
+
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Judul Poin / Pasal <span class="text-red-500">*</span></label>
+                    <input type="text" id="edit-legal-title" name="title" required class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-amber-600 focus:outline-none"/>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Icon Material Symbol</label>
+                    <input type="text" id="edit-legal-icon" name="icon" class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-amber-600 focus:outline-none"/>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Isi Ketentuan / Penjelasan <span class="text-red-500">*</span></label>
+                    <textarea id="edit-legal-content" name="content" rows="4" required class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-amber-600 focus:outline-none leading-relaxed"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-outline-variant">
+                    <button type="button" onclick="closeEditLegalSectionModal()" class="px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold hover:bg-surface-container transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-amber-600 text-white rounded-xl text-xs font-bold hover:bg-amber-700 transition shadow-md">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── Modal Edit Header Legal ── -->
+    <div id="modal-edit-legal-header" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
+        <div class="bg-surface-container-lowest rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-outline-variant">
+            <div class="flex justify-between items-center pb-3 border-b border-outline-variant mb-4 sticky top-0 bg-surface-container-lowest z-10">
+                <h3 class="font-headline-md font-bold text-primary flex items-center gap-2">
+                    <span class="material-symbols-outlined text-xl">edit_note</span>
+                    <span>Edit Header Dokumen</span>
+                </h3>
+                <button type="button" onclick="closeEditLegalHeaderModal()" class="text-on-surface-variant hover:text-on-surface">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form action="superadmin.php" method="POST" class="space-y-4">
+                <input type="hidden" name="action" value="save_legal_header"/>
+                <input type="hidden" id="edit-legal-hdr-doc-type" name="doc_type" value="privacy"/>
+
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Label Badge Kategori</label>
+                    <input type="text" id="edit-legal-hdr-badge" name="badge" class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none"/>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Judul Utama Dokumen <span class="text-red-500">*</span></label>
+                    <input type="text" id="edit-legal-hdr-title" name="title" required class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none"/>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Paragraf Pembuka / Intro</label>
+                    <textarea id="edit-legal-hdr-intro" name="intro" rows="3" class="w-full px-3.5 py-2 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:outline-none leading-relaxed"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-outline-variant">
+                    <button type="button" onclick="closeEditLegalHeaderModal()" class="px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold hover:bg-surface-container transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-primary text-on-primary rounded-xl text-xs font-bold hover:bg-primary-container transition shadow-md">Simpan Header</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── Modal Konfirmasi Hapus Legal ── -->
+    <div id="modal-delete-legal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
+        <div class="bg-surface-container-lowest rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-outline-variant text-center space-y-4">
+            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+                <span class="material-symbols-outlined text-2xl">delete_forever</span>
+            </div>
+            <div>
+                <h3 class="font-headline-sm font-bold text-on-surface" id="delete-legal-modal-title">Kurangi / Hapus Poin?</h3>
+                <p class="text-xs text-on-surface-variant mt-1" id="delete-legal-modal-desc">Apakah Anda yakin ingin menghapus poin ini?</p>
+            </div>
+            <form id="delete-legal-form" action="superadmin.php" method="POST" class="flex justify-center gap-2 pt-2">
+                <input type="hidden" name="action" value="delete_legal_section"/>
+                <input type="hidden" id="delete-legal-doc-type" name="doc_type" value="privacy"/>
+                <input type="hidden" id="delete-legal-idx" name="section_index" value=""/>
+                <button type="button" onclick="closeDeleteLegalModal()" class="px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold hover:bg-surface-container transition">Batal</button>
+                <button type="submit" class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition shadow-md">Ya, Hapus</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hidden Reset Legal Form -->
+    <form id="reset-legal-form" action="superadmin.php" method="POST" class="hidden">
+        <input type="hidden" name="action" value="reset_legal_data"/>
+        <input type="hidden" id="reset-legal-doc-type" name="doc_type" value="privacy"/>
+    </form>
+
+
     <?php include '../partials/confirm-modal.php'; ?>
 
     <script>
@@ -2811,6 +3281,7 @@ $sop_data = get_sop_data();
             const sectionPositions = document.getElementById('section-positions');
             const sectionApproval = document.getElementById('section-approval');
             const sectionAbout = document.getElementById('section-about');
+            const sectionLegal = document.getElementById('section-legal');
             const btnLocation = document.getElementById('nav-btn-location');
             const btnFooter = document.getElementById('nav-btn-footer');
             const btnSop = document.getElementById('nav-btn-sop');
@@ -2820,7 +3291,8 @@ $sop_data = get_sop_data();
             const activeLabel = document.getElementById('tab-active-label');
 
             const btnAbout = document.getElementById('nav-btn-about');
-            const allBtns = [btnLocation, btnFooter, btnSop, btnAbout, btnAccount, btnApproval, btnAll];
+            const btnLegal = document.getElementById('nav-btn-legal');
+            const allBtns = [btnLocation, btnFooter, btnSop, btnAbout, btnLegal, btnAccount, btnApproval, btnAll];
             allBtns.forEach(btn => {
                 if (!btn) return;
                 btn.classList.remove('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -2836,6 +3308,7 @@ $sop_data = get_sop_data();
                 if (sectionApproval) sectionApproval.classList.add('hidden');
 
                 if (sectionAbout) sectionAbout.classList.add('hidden');
+                if (sectionLegal) sectionLegal.classList.add('hidden');
 
                 if (btnLocation) {
                     btnLocation.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -2858,6 +3331,7 @@ $sop_data = get_sop_data();
                 if (sectionApproval) sectionApproval.classList.add('hidden');
 
                 if (sectionAbout) sectionAbout.classList.add('hidden');
+                if (sectionLegal) sectionLegal.classList.add('hidden');
 
                 if (btnFooter) {
                     btnFooter.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -2874,6 +3348,7 @@ $sop_data = get_sop_data();
                 if (sectionApproval) sectionApproval.classList.add('hidden');
 
                 if (sectionAbout) sectionAbout.classList.add('hidden');
+                if (sectionLegal) sectionLegal.classList.add('hidden');
 
                 if (btnSop) {
                     btnSop.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -2889,6 +3364,7 @@ $sop_data = get_sop_data();
                 if (sectionPositions) sectionPositions.classList.add('hidden');
                 if (sectionApproval) sectionApproval.classList.add('hidden');
                 if (sectionAbout) sectionAbout.classList.remove('hidden');
+                if (sectionLegal) sectionLegal.classList.remove('hidden');
 
                 if (btnAbout) {
                     btnAbout.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -2896,6 +3372,23 @@ $sop_data = get_sop_data();
                 }
                 if (activeLabel) activeLabel.textContent = 'Mode: Set Tentang';
                 history.replaceState(null, null, '#about');
+            } else if (tab === 'legal') {
+                if (sectionLocation) sectionLocation.classList.add('hidden');
+                if (sectionFooter) sectionFooter.classList.add('hidden');
+                if (sectionSop) sectionSop.classList.add('hidden');
+                if (sectionAccount) sectionAccount.classList.add('hidden');
+                if (sectionPositions) sectionPositions.classList.add('hidden');
+                if (sectionApproval) sectionApproval.classList.add('hidden');
+                if (sectionAbout) sectionAbout.classList.add('hidden');
+                if (sectionLegal) sectionLegal.classList.add('hidden');
+                if (sectionLegal) sectionLegal.classList.remove('hidden');
+
+                if (btnLegal) {
+                    btnLegal.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
+                    btnLegal.classList.remove('text-on-surface-variant', 'hover:bg-surface-container-high');
+                }
+                if (activeLabel) activeLabel.textContent = 'Mode: Set Kebijakan & Syarat';
+                history.replaceState(null, null, '#legal');
 } else if (tab === 'approval') {
                 if (sectionLocation) sectionLocation.classList.add('hidden');
                 if (sectionFooter) sectionFooter.classList.add('hidden');
@@ -2905,6 +3398,7 @@ $sop_data = get_sop_data();
                 if (sectionApproval) sectionApproval.classList.remove('hidden');
 
                 if (sectionAbout) sectionAbout.classList.add('hidden');
+                if (sectionLegal) sectionLegal.classList.add('hidden');
 
                 if (btnApproval) {
                     btnApproval.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -2920,6 +3414,7 @@ $sop_data = get_sop_data();
                 if (sectionPositions) sectionPositions.classList.remove('hidden');
                 if (sectionApproval) sectionApproval.classList.remove('hidden');
                 if (sectionAbout) sectionAbout.classList.remove('hidden');
+                if (sectionLegal) sectionLegal.classList.remove('hidden');
 
                 if (btnAll) {
                     btnAll.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -2941,6 +3436,7 @@ $sop_data = get_sop_data();
                 if (sectionPositions) sectionPositions.classList.remove('hidden');
                 if (sectionApproval) sectionApproval.classList.add('hidden');
                 if (sectionAbout) sectionAbout.classList.add('hidden');
+                if (sectionLegal) sectionLegal.classList.add('hidden');
 
                 if (btnAccount) {
                     btnAccount.classList.add('bg-primary', 'text-on-primary', 'shadow-xs');
@@ -3205,6 +3701,8 @@ $sop_data = get_sop_data();
                 defaultTab = 'sop';
             } else if (actionSubmitted.indexOf('about') !== -1) {
                 defaultTab = 'about';
+            } else if (actionSubmitted.indexOf('legal') !== -1) {
+                defaultTab = 'legal';
             } else if (window.location.hash === '#location') {
                 defaultTab = 'location';
             } else if (window.location.hash === '#footer') {
@@ -3213,6 +3711,8 @@ $sop_data = get_sop_data();
                 defaultTab = 'sop';
             } else if (window.location.hash === '#about') {
                 defaultTab = 'about';
+            } else if (window.location.hash === '#legal') {
+                defaultTab = 'legal';
             } else if (window.location.hash === '#approval') {
                 defaultTab = 'approval';
             } else if (window.location.hash === '#all') {
@@ -3387,6 +3887,145 @@ $sop_data = get_sop_data();
                     form.appendChild(input);
                     document.body.appendChild(form);
                     form.submit();
+                }
+            }
+        }
+
+    
+        // ===== SET KEBIJAKAN PRIVASI & SYARAT KETENTUAN =====
+        let currentLegalTab = 'privacy';
+        const legalPrivacyData = <?php echo json_encode($privacy_data ?? []); ?>;
+        const legalTermsData   = <?php echo json_encode($terms_data ?? []); ?>;
+
+        function switchLegalSubtab(tab) {
+            currentLegalTab = tab;
+            const pnlPriv = document.getElementById('panel-legal-privacy');
+            const pnlTerms = document.getElementById('panel-legal-terms');
+            const btnPriv = document.getElementById('subtab-legal-privacy');
+            const btnTerms = document.getElementById('subtab-legal-terms');
+
+            if (tab === 'privacy') {
+                if (pnlPriv) pnlPriv.classList.remove('hidden');
+                if (pnlTerms) pnlTerms.classList.add('hidden');
+                if (btnPriv) {
+                    btnPriv.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-primary text-on-primary shadow-xs cursor-pointer';
+                }
+                if (btnTerms) {
+                    btnTerms.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-high cursor-pointer';
+                }
+            } else {
+                if (pnlPriv) pnlPriv.classList.add('hidden');
+                if (pnlTerms) pnlTerms.classList.remove('hidden');
+                if (btnTerms) {
+                    btnTerms.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-primary text-on-primary shadow-xs cursor-pointer';
+                }
+                if (btnPriv) {
+                    btnPriv.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-high cursor-pointer';
+                }
+            }
+        }
+
+        function openAddLegalSectionModal(docType) {
+            const dt = docType || currentLegalTab || 'privacy';
+            document.getElementById('add-legal-doc-type').value = dt;
+            const sel = document.getElementById('add-legal-doc-type-select');
+            if (sel) sel.value = dt;
+
+            const modal = document.getElementById('modal-add-legal-section');
+            if (modal) {
+                const titleEl = document.getElementById('add-legal-modal-title');
+                if (titleEl) {
+                    titleEl.innerHTML = '<span class="material-symbols-outlined text-xl">add_circle</span><span>Tambah Poin ' + (dt === 'terms' ? 'Syarat & Ketentuan' : 'Kebijakan Privasi') + '</span>';
+                }
+                modal.querySelector('form')?.reset();
+                document.getElementById('add-legal-doc-type').value = dt;
+                if (sel) sel.value = dt;
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeAddLegalSectionModal() {
+            const modal = document.getElementById('modal-add-legal-section');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function openEditLegalSectionModal(docType, index) {
+            const dt = docType || 'privacy';
+            const dataObj = (dt === 'terms') ? legalTermsData : legalPrivacyData;
+            const item = dataObj.sections ? dataObj.sections[index] : null;
+            if (!item) return;
+
+            document.getElementById('edit-legal-doc-type').value = dt;
+            document.getElementById('edit-legal-section-idx').value = index;
+            document.getElementById('edit-legal-title').value = item.title || '';
+            document.getElementById('edit-legal-icon').value = item.icon || (dt === 'terms' ? 'gavel' : 'security');
+            document.getElementById('edit-legal-content').value = item.content || '';
+
+            const modal = document.getElementById('modal-edit-legal-section');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeEditLegalSectionModal() {
+            const modal = document.getElementById('modal-edit-legal-section');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function openEditLegalHeaderModal(docType) {
+            const dt = docType || currentLegalTab || 'privacy';
+            const dataObj = (dt === 'terms') ? legalTermsData : legalPrivacyData;
+
+            document.getElementById('edit-legal-hdr-doc-type').value = dt;
+            document.getElementById('edit-legal-hdr-badge').value = dataObj.badge || '';
+            document.getElementById('edit-legal-hdr-title').value = dataObj.title || '';
+            document.getElementById('edit-legal-hdr-intro').value = dataObj.intro || '';
+
+            const modal = document.getElementById('modal-edit-legal-header');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeEditLegalHeaderModal() {
+            const modal = document.getElementById('modal-edit-legal-header');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function confirmDeleteLegalSection(docType, index, title) {
+            const modal = document.getElementById('modal-delete-legal');
+            if (!modal) return;
+            const dt = docType || 'privacy';
+            const docName = (dt === 'terms') ? 'Syarat & Ketentuan' : 'Kebijakan Privasi';
+
+            document.getElementById('delete-legal-doc-type').value = dt;
+            document.getElementById('delete-legal-idx').value = index;
+            document.getElementById('delete-legal-modal-title').textContent = 'Hapus Poin dari ' + docName + '?';
+            document.getElementById('delete-legal-modal-desc').textContent = 'Apakah Anda yakin ingin menghapus poin "' + title + '" dari ' + docName + '?';
+            modal.classList.remove('hidden');
+        }
+
+        function closeDeleteLegalModal() {
+            const modal = document.getElementById('modal-delete-legal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function confirmResetLegal(docType) {
+            const dt = docType || currentLegalTab || 'privacy';
+            const docName = (dt === 'terms') ? 'Syarat & Ketentuan' : 'Kebijakan Privasi';
+
+            if (typeof window.showConfirmModal === 'function') {
+                const confirmed = await window.showConfirmModal({
+                    title: 'Reset ' + docName + '?',
+                    message: 'Apakah Anda yakin ingin mengembalikan seluruh isi ' + docName + ' ke standar awal Kedayweb? Seluruh poin kustom akan direset.',
+                    confirmText: 'Ya, Reset',
+                    cancelText: 'Batal',
+                    type: 'danger'
+                });
+                if (confirmed) {
+                    document.getElementById('reset-legal-doc-type').value = dt;
+                    document.getElementById('reset-legal-form').submit();
+                }
+            } else {
+                if (confirm('Apakah Anda yakin ingin mengembalikan seluruh isi ' + docName + ' ke standar awal?')) {
+                    document.getElementById('reset-legal-doc-type').value = dt;
+                    document.getElementById('reset-legal-form').submit();
                 }
             }
         }

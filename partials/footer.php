@@ -36,6 +36,11 @@ if (!function_exists('get_footer_settings')) {
 
 $footer_settings = get_footer_settings();
 $wa_digits = preg_replace('/[^0-9]/', '', $footer_settings['whatsapp'] ?? '');
+
+require_once __DIR__ . '/../legal_helper.php';
+$footer_privacy_data = get_legal_data('privacy');
+$footer_terms_data   = get_legal_data('terms');
+$footer_is_superadmin = function_exists('is_superadmin') && is_superadmin();
 ?>
 <!-- Premium Light Multi-Column Footer -->
 <footer class="relative w-full bg-white text-slate-600 mt-auto border-t border-slate-200/80 shrink-0 z-20 font-inter">
@@ -240,57 +245,93 @@ $wa_digits = preg_replace('/[^0-9]/', '', $footer_settings['whatsapp'] ?? '');
 
 <!-- Modals for Privacy & Terms -->
 <div id="privacyModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-    <div
-        class="bg-white border border-slate-200 text-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-xl relative max-h-[85vh] flex flex-col">
+    <div class="bg-white border border-slate-200 text-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-xl relative max-h-[85vh] flex flex-col">
         <div class="flex items-center justify-between pb-3 border-b border-slate-100">
             <h3 class="text-base font-bold text-slate-900 font-geist flex items-center gap-2">
-                <span class="material-symbols-outlined text-blue-600">security</span> Kebijakan Privasi
+                <span class="material-symbols-outlined text-blue-600">security</span> <?php echo htmlspecialchars($footer_privacy_data['title'] ?? 'Kebijakan Privasi', ENT_QUOTES, 'UTF-8'); ?>
             </h3>
-            <button onclick="closePrivacyModal()"
-                class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+            <button onclick="closePrivacyModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors">
                 <span class="material-symbols-outlined text-lg">close</span>
             </button>
         </div>
         <div class="py-4 space-y-3 text-xs text-slate-600 leading-relaxed overflow-y-auto pr-1">
-            <p class="font-semibold text-slate-800">Privasi Anda sangat penting bagi Kedayweb Platform.</p>
-            <p>1. <strong>Pengumpulkan Data:</strong> Data yang dikumpulkan pada platform ini hanya digunakan untuk
-                kepentingan administrasi program magang, verifikasi sertifikat, dan presensi harian.</p>
-            <p>2. <strong>Keamanan Data:</strong> Kedayweb berkomitmen menjaga kerahasiaan informasi personal peserta
-                intern dan tidak membagikan data kepada pihak ketiga tanpa izin.</p>
-            <p>3. <strong>Sertifikasi Digital:</strong> Data sertifikat yang diterbitkan bersifat publik untuk
-                memfasilitasi verifikasi oleh pihak perekrut atau kampus mitra.</p>
+            <?php if (!empty($footer_privacy_data['intro'])): ?>
+                <p class="font-semibold text-slate-800 bg-slate-50 p-2.5 rounded-xl border border-slate-100"><?php echo htmlspecialchars($footer_privacy_data['intro'], ENT_QUOTES, 'UTF-8'); ?></p>
+            <?php endif; ?>
+
+            <?php if (!empty($footer_privacy_data['sections'])): ?>
+                <?php foreach ($footer_privacy_data['sections'] as $p_sec): ?>
+                    <div class="p-3 bg-slate-50/70 rounded-xl border border-slate-100 space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-blue-600 text-sm"><?php echo htmlspecialchars($p_sec['icon'] ?? 'security', ENT_QUOTES, 'UTF-8'); ?></span>
+                            <h4 class="font-bold text-slate-800 text-xs"><?php echo htmlspecialchars($p_sec['title'] ?? '', ENT_QUOTES, 'UTF-8'); ?></h4>
+                        </div>
+                        <p class="text-slate-600 pl-6 leading-relaxed whitespace-pre-line"><?php echo nl2br(htmlspecialchars($p_sec['content'] ?? '', ENT_QUOTES, 'UTF-8')); ?></p>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p class="text-slate-400 italic text-center py-4">Belum ada ketentuan kebijakan privasi.</p>
+            <?php endif; ?>
         </div>
-        <div class="pt-3 border-t border-slate-100 text-right">
-            <button onclick="closePrivacyModal()"
-                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition-colors">Tutup</button>
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+            <?php if ($footer_is_superadmin): ?>
+                <a href="<?php echo $footer_root; ?>admin/superadmin.php#legal" class="text-[11px] text-blue-600 hover:text-blue-800 font-bold hover:underline flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs">tune</span>
+                    <span>Kelola di Super Admin</span>
+                </a>
+            <?php else: ?>
+                <a href="<?php echo $footer_root; ?>privacy-policy.php" class="text-[11px] text-slate-500 hover:text-blue-600 font-medium hover:underline flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs">open_in_new</span>
+                    <span>Halaman Penuh</span>
+                </a>
+            <?php endif; ?>
+            <button onclick="closePrivacyModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition-colors">Tutup</button>
         </div>
     </div>
 </div>
 
 <div id="termsModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-    <div
-        class="bg-white border border-slate-200 text-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-xl relative max-h-[85vh] flex flex-col">
+    <div class="bg-white border border-slate-200 text-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-xl relative max-h-[85vh] flex flex-col">
         <div class="flex items-center justify-between pb-3 border-b border-slate-100">
             <h3 class="text-base font-bold text-slate-900 font-geist flex items-center gap-2">
-                <span class="material-symbols-outlined text-blue-600">gavel</span> Syarat & Ketentuan
+                <span class="material-symbols-outlined text-blue-600">gavel</span> <?php echo htmlspecialchars($footer_terms_data['title'] ?? 'Syarat & Ketentuan', ENT_QUOTES, 'UTF-8'); ?>
             </h3>
-            <button onclick="closeTermsModal()"
-                class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+            <button onclick="closeTermsModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors">
                 <span class="material-symbols-outlined text-lg">close</span>
             </button>
         </div>
         <div class="py-4 space-y-3 text-xs text-slate-600 leading-relaxed overflow-y-auto pr-1">
-            <p class="font-semibold text-slate-800">Ketentuan Penggunaan Kedayweb Platform:</p>
-            <p>1. <strong>Kode Etik Intern:</strong> Seluruh peserta magang wajib mematuhi SOP kerja, menjaga etika
-                profesionalisme, dan memenuhi jam kerja yang ditentukan.</p>
-            <p>2. <strong>Hak Cipta Hasil Kerja:</strong> Seluruh hasil karya, kode program, dan aset proyek yang dibuat
-                selama masa magang merupakan hak milik Kedayweb Platform.</p>
-            <p>3. <strong>Kerahasiaan:</strong> Peserta magang dilarang menyebarkan informasi sensitif atau kode sumber
-                privat milik Kedayweb kepada pihak luar.</p>
+            <?php if (!empty($footer_terms_data['intro'])): ?>
+                <p class="font-semibold text-slate-800 bg-slate-50 p-2.5 rounded-xl border border-slate-100"><?php echo htmlspecialchars($footer_terms_data['intro'], ENT_QUOTES, 'UTF-8'); ?></p>
+            <?php endif; ?>
+
+            <?php if (!empty($footer_terms_data['sections'])): ?>
+                <?php foreach ($footer_terms_data['sections'] as $t_sec): ?>
+                    <div class="p-3 bg-slate-50/70 rounded-xl border border-slate-100 space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-blue-600 text-sm"><?php echo htmlspecialchars($t_sec['icon'] ?? 'gavel', ENT_QUOTES, 'UTF-8'); ?></span>
+                            <h4 class="font-bold text-slate-800 text-xs"><?php echo htmlspecialchars($t_sec['title'] ?? '', ENT_QUOTES, 'UTF-8'); ?></h4>
+                        </div>
+                        <p class="text-slate-600 pl-6 leading-relaxed whitespace-pre-line"><?php echo nl2br(htmlspecialchars($t_sec['content'] ?? '', ENT_QUOTES, 'UTF-8')); ?></p>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p class="text-slate-400 italic text-center py-4">Belum ada syarat dan ketentuan.</p>
+            <?php endif; ?>
         </div>
-        <div class="pt-3 border-t border-slate-100 text-right">
-            <button onclick="closeTermsModal()"
-                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition-colors">Tutup</button>
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+            <?php if ($footer_is_superadmin): ?>
+                <a href="<?php echo $footer_root; ?>admin/superadmin.php#legal" class="text-[11px] text-blue-600 hover:text-blue-800 font-bold hover:underline flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs">tune</span>
+                    <span>Kelola di Super Admin</span>
+                </a>
+            <?php else: ?>
+                <a href="<?php echo $footer_root; ?>terms-conditions.php" class="text-[11px] text-slate-500 hover:text-blue-600 font-medium hover:underline flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs">open_in_new</span>
+                    <span>Halaman Penuh</span>
+                </a>
+            <?php endif; ?>
+            <button onclick="closeTermsModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition-colors">Tutup</button>
         </div>
     </div>
 </div>

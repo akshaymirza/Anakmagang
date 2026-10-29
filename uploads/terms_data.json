@@ -1,0 +1,39 @@
+{
+    "type": "terms",
+    "badge": "Ketentuan Layanan",
+    "title": "Syarat & Ketentuan Kedayweb Platform",
+    "intro": "Ketentuan Penggunaan Kedayweb Platform bagi seluruh peserta magang, mentor, dan pengguna:",
+    "updated_at": "2026-10-29 04:04:42",
+    "sections": [
+        {
+            "id": "term-1",
+            "title": "1. Kode Etik & Disiplin Peserta Magang",
+            "icon": "badge",
+            "content": "Seluruh peserta magang wajib mematuhi SOP kerja yang berlaku, menjaga etika profesionalisme, menghormati sesama rekan dan mentor, serta memenuhi jadwal kerja dan presensi harian sesuai ketentuan."
+        },
+        {
+            "id": "term-2",
+            "title": "2. Hak Cipta & Kepemilikan Hasil Kerja",
+            "icon": "copyright",
+            "content": "Seluruh hasil karya, kode program, dokumentasi teknis, dan aset proyek yang dibuat selama masa magang merupakan hak milik intelektual Kedayweb Platform dan mitra terkait."
+        },
+        {
+            "id": "term-3",
+            "title": "3. Kerahasiaan Informasi & Non-Disclosure (NDA)",
+            "icon": "lock",
+            "content": "Peserta magang dilarang membocorkan atau menyebarkan informasi sensitif, data klien, kredensial server, atau kode sumber privat milik Kedayweb kepada pihak luar tanpa izin tertulis."
+        },
+        {
+            "id": "term-4",
+            "title": "4. Penggunaan Fasilitas & Akun Platform",
+            "icon": "devices",
+            "content": "Akun login dan fasilitas kerja hanya boleh digunakan untuk keperluan tugas kedinasan magang. Dilarang menyalahgunakan hak akses atau meminjamkan akun kepada pihak lain."
+        },
+        {
+            "id": "term-5",
+            "title": "5. Evaluasi, Sertifikasi, & Sanksi Pelanggaran",
+            "icon": "gavel",
+            "content": "Pelanggaran terhadap tata tertib dapat berakibat pada pemberian surat peringatan, pembatalan hak penerbitan sertifikat magang, hingga penghentian program magang secara sepihak oleh manajemen."
+        }
+    ]
+}
