@@ -87,6 +87,35 @@ require_login(); ?>
             color: #991b1b;
         }
 
+        .cal-cell.status-permit, .cal-cell.status-dispen, .cal-cell.status-sakit, .cal-cell.status-izin {
+            background: #ede9fe;
+            color: #5b21b6;
+        }
+
+        .badge-permit, .badge-dispen {
+            background: #ede9fe;
+            color: #5b21b6;
+            border: 1px solid #ddd6fe;
+        }
+
+        .badge-sakit {
+            background: #f5f3ff;
+            color: #6d28d9;
+            border: 1px solid #ddd6fe;
+        }
+
+        .badge-izin {
+            background: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fde68a;
+        }
+
+        .badge-lainnya {
+            background: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+        }
+
         .cal-cell.weekend {
             background: #f8fafc;
             color: #94a3b8;
@@ -714,6 +743,17 @@ require_login(); ?>
                         </p>
                     </div>
                 </div>
+
+                <!-- Admin Action Buttons in Detail Modal -->
+                <div id="detail-admin-actions" class="pt-3 border-t border-outline-variant flex gap-2 hidden">
+                    <button type="button" onclick="editFromDetail()" class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition shadow-sm cursor-pointer">
+                        <span class="material-symbols-outlined text-[16px]">edit</span>
+                        <span>Ubah / Set Kehadiran</span>
+                    </button>
+                    <button type="button" onclick="deleteFromDetail()" class="py-2 px-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition border border-red-200 cursor-pointer" title="Hapus catatan hari ini">
+                        <span class="material-symbols-outlined text-[16px]">delete</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -904,6 +944,7 @@ require_login(); ?>
         const attParams = new URLSearchParams(window.location.search);
         const attInternParam = attParams.get('intern') ? decodeURIComponent(attParams.get('intern')) : null;
         const isAdminPreview = !!attInternParam;
+        const isAdminRole = <?php echo is_admin() ? 'true' : 'false'; ?>;
         const activeInternName = attInternParam || (window.InternStore ? InternStore.getCurrentUser() : 'Alex Doe');
 
         // Sumber data sebenarnya adalah tabel `attendance` di database (lewat
@@ -987,15 +1028,19 @@ require_login(); ?>
 
         function applyAdminPreviewMode() {
             if (!isAdminPreview) return;
-            document.getElementById('page-eyebrow').textContent = 'Admin \u2013 Mode Lihat';
+            document.getElementById('page-eyebrow').textContent = isAdminRole ? 'Admin \u2013 Kelola Kehadiran Intern' : 'Admin \u2013 Mode Lihat';
             document.getElementById('page-title').textContent = `Kehadiran ${activeInternName}`;
-            document.getElementById('page-subtitle').textContent = 'Data kehadiran intern ini, dilihat oleh Admin.';
+            document.getElementById('page-subtitle').textContent = isAdminRole
+                ? 'Data kehadiran intern ini. Anda dapat mengedit, menghapus, atau mengatur status kehadiran & dispensasi.'
+                : 'Data kehadiran intern ini, dilihat oleh Admin.';
             document.getElementById('admin-preview-banner').classList.remove('hidden');
             document.getElementById('admin-preview-name').textContent = activeInternName;
             document.getElementById('main-input-btn')?.classList.add('hidden');
             document.getElementById('main-clockout-btn')?.classList.add('hidden');
             document.getElementById('main-leave-btn')?.classList.add('hidden');
-            document.querySelectorAll('.att-add-trigger').forEach(el => el.classList.add('hidden'));
+            if (!isAdminRole) {
+                document.querySelectorAll('.att-add-trigger').forEach(el => el.classList.add('hidden'));
+            }
         }
 
         // ============================================================
@@ -1073,7 +1118,9 @@ require_login(); ?>
                 } else if (isFuture) {
                     cell.classList.add('future');
                 } else if (rec) {
-                    if (rec.status === 'absent' && rec.leaveType) {
+                    if (rec.status === 'permit') {
+                        cell.classList.add('status-permit');
+                    } else if (rec.status === 'absent' && rec.leaveType) {
                         cell.classList.add(`status-${rec.leaveType}`);
                     } else {
                         cell.classList.add(`status-${rec.status}`);
@@ -1096,7 +1143,9 @@ require_login(); ?>
                 if (currentStatus && !isWeekend) {
                     const dot = document.createElement('div');
                     dot.className = 'status-dot';
-                    if (rec && rec.status === 'absent' && rec.leaveType) {
+                    if (rec && rec.status === 'permit') {
+                        dot.style.background = '#8b5cf6';
+                    } else if (rec && rec.status === 'absent' && rec.leaveType) {
                         dot.style.background = rec.leaveType === 'sakit' ? '#7c3aed' : '#d97706';
                     } else {
                         dot.style.background = currentStatus === 'present' ? '#16a34a' : currentStatus === 'late' ? '#d97706' : '#dc2626';
@@ -1201,7 +1250,11 @@ require_login(); ?>
                 tr.addEventListener('click', () => openDetailModal(rec.date));
 
                 let statusHtml;
-                if (rec.status === 'absent' && rec.leaveType) {
+                if (rec.status === 'permit') {
+                    const lt = rec.leaveType || 'dispen';
+                    const label = lt === 'dispen' ? 'Dispensasi Instansi' : (lt === 'izin' ? 'Izin' : (lt === 'sakit' ? 'Sakit' : 'Tugas Dinas'));
+                    statusHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold badge-permit"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1;">assignment_turned_in</span>${label}</span>`;
+                } else if (rec.status === 'absent' && rec.leaveType) {
                     const lt = rec.leaveType;
                     if (lt === 'sakit') {
                         statusHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold badge-sakit"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1;">medication</span>Sakit</span>`;
@@ -1344,7 +1397,10 @@ require_login(); ?>
 
         async function saveAttendance(e) {
             e.preventDefault();
-            if (isAdminPreview) { showToast('Mode Admin hanya untuk melihat.', 'warning'); return; }
+            if (isAdminPreview && !isAdminRole) {
+                showToast('Mode Admin hanya untuk melihat.', 'warning');
+                return;
+            }
             const date = document.getElementById('att-date').value;
             const clockIn = document.getElementById('att-clock-in').value;
             const clockOut = document.getElementById('att-clock-out').value;
@@ -1360,18 +1416,35 @@ require_login(); ?>
             }
 
             try {
-                const res = await fetch('attendance-api.php?action=upsert', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        date, status,
-                        clockIn: status === 'absent' ? '' : (clockIn || ''),
-                        clockOut: status === 'absent' ? '' : (clockOut || ''),
-                        reason
-                    })
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data.error || 'Gagal menyimpan');
+                if (isAdminPreview && isAdminRole) {
+                    const res = await fetch('attendance-api.php?action=admin_set_attendance', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: activeInternName,
+                            date: date,
+                            status: status,
+                            clock_in: status === 'absent' ? '' : (clockIn || ''),
+                            clock_out: status === 'absent' ? '' : (clockOut || ''),
+                            reason: reason
+                        })
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) throw new Error(data.error || 'Gagal menyimpan kehadiran intern');
+                } else {
+                    const res = await fetch('attendance-api.php?action=upsert', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            date, status,
+                            clockIn: status === 'absent' ? '' : (clockIn || ''),
+                            clockOut: status === 'absent' ? '' : (clockOut || ''),
+                            reason
+                        })
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) throw new Error(data.error || 'Gagal menyimpan');
+                }
                 await fetchServerData();
                 closeInputModal();
                 refreshAll();
@@ -1399,7 +1472,12 @@ require_login(); ?>
             detailDate = dateStr;
 
             let statusLabel, badgeClass, iconName;
-            if (rec.status === 'absent' && rec.leaveType) {
+            if (rec.status === 'permit') {
+                const lt = rec.leaveType || 'dispen';
+                statusLabel = lt === 'dispen' ? 'Dispensasi Instansi' : (lt === 'izin' ? 'Izin' : (lt === 'sakit' ? 'Sakit' : 'Tugas Dinas'));
+                badgeClass = 'badge-permit';
+                iconName = 'assignment_turned_in';
+            } else if (rec.status === 'absent' && rec.leaveType) {
                 const lt = rec.leaveType;
                 if (lt === 'sakit') {
                     statusLabel = 'Izin (Sakit)';
@@ -1523,6 +1601,16 @@ require_login(); ?>
                 outBlock.classList.add('hidden');
             }
 
+            // Tampilkan tombol aksi jika dibuka oleh admin atau user sendiri
+            const adminActions = document.getElementById('detail-admin-actions');
+            if (adminActions) {
+                if (isAdminRole) {
+                    adminActions.classList.remove('hidden');
+                } else {
+                    adminActions.classList.add('hidden');
+                }
+            }
+
             const modal = document.getElementById('detail-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -1535,17 +1623,23 @@ require_login(); ?>
         }
 
         function editFromDetail() {
-            if (isAdminPreview) { showToast('Mode Admin hanya untuk melihat.', 'warning'); return; }
+            if (isAdminPreview && !isAdminRole) { showToast('Mode Admin hanya untuk melihat.', 'warning'); return; }
             const d = detailDate;
             closeDetailModal();
             openInputModal(d);
         }
 
         async function deleteAttendanceOnServer(dateStr) {
-            const res = await fetch('attendance-api.php?action=delete', {
+            const endpoint = (isAdminPreview && isAdminRole)
+                ? 'attendance-api.php?action=admin_delete_attendance'
+                : 'attendance-api.php?action=delete';
+            const body = (isAdminPreview && isAdminRole)
+                ? { username: activeInternName, date: dateStr }
+                : { date: dateStr };
+            const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ date: dateStr })
+                body: JSON.stringify(body)
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.error || 'Gagal menghapus data');
@@ -1553,7 +1647,7 @@ require_login(); ?>
 
         async function deleteFromDetail() {
             if (!detailDate) return;
-            if (isAdminPreview) { showToast('Mode Admin hanya untuk melihat.', 'warning'); return; }
+            if (isAdminPreview && !isAdminRole) { showToast('Mode Admin hanya untuk melihat.', 'warning'); return; }
             if (!confirm(`Hapus catatan kehadiran tanggal ${formatDateDisplay(detailDate)}?`)) return;
             try {
                 await deleteAttendanceOnServer(detailDate);
@@ -1570,12 +1664,12 @@ require_login(); ?>
         // TABLE ROW ACTIONS
         // ============================================================
         function handleEditRow(dateStr) {
-            if (isAdminPreview) { showToast('Mode Admin hanya untuk melihat.', 'warning'); return; }
+            if (isAdminPreview && !isAdminRole) { showToast('Mode Admin hanya untuk melihat.', 'warning'); return; }
             openInputModal(dateStr);
         }
 
         async function handleDeleteRow(dateStr) {
-            if (isAdminPreview) { showToast('Mode Admin hanya untuk melihat.', 'warning'); return; }
+            if (isAdminPreview && !isAdminRole) { showToast('Mode Admin hanya untuk melihat.', 'warning'); return; }
             if (!confirm(`Hapus catatan kehadiran tanggal ${formatDateDisplay(dateStr)}?`)) return;
             try {
                 await deleteAttendanceOnServer(dateStr);

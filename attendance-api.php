@@ -55,6 +55,8 @@ ensure_attendance_column($conn, 'location_out', 'TEXT DEFAULT NULL');
 ensure_attendance_column($conn, 'photo_out', 'LONGTEXT DEFAULT NULL');
 ensure_attendance_column($conn, 'lat_out', 'DECIMAL(11,8) DEFAULT NULL');
 ensure_attendance_column($conn, 'lng_out', 'DECIMAL(11,8) DEFAULT NULL');
+ensure_attendance_column($conn, 'leave_type', 'VARCHAR(50) DEFAULT NULL');
+ensure_attendance_column($conn, 'override_by', 'VARCHAR(50) DEFAULT NULL');
 
 // Auto-migrate kolom photo_in & photo_out dari VARCHAR(255) ke LONGTEXT jika masih kecil
 // Railway ephemeral filesystem: simpan base64 langsung di DB agar tidak hilang saat container restart
@@ -177,7 +179,7 @@ if ($action === 'all_summary' && $method === 'GET') {
 
     // 2. Ambil semua data presensi di database
     $attendanceMap = [];
-    $resAtt = mysqli_query($conn, "SELECT username, date, status, clock_in, clock_out, reason, location_in, photo_in, lat_in, lng_in, location_out, photo_out, lat_out, lng_out FROM attendance");
+    $resAtt = mysqli_query($conn, "SELECT username, date, status, clock_in, clock_out, reason, location_in, photo_in, lat_in, lng_in, location_out, photo_out, lat_out, lng_out, leave_type, override_by FROM attendance");
     if ($resAtt) {
         while ($row = mysqli_fetch_assoc($resAtt)) {
             $uName = $row['username'];
@@ -199,6 +201,8 @@ if ($action === 'all_summary' && $method === 'GET') {
                 'photoOut'    => $row['photo_out'] ?? null,
                 'latOut'      => isset($row['lat_out']) ? (float) $row['lat_out'] : null,
                 'lngOut'      => isset($row['lng_out']) ? (float) $row['lng_out'] : null,
+                'leaveType'   => $row['leave_type'] ?? null,
+                'overrideBy'  => $row['override_by'] ?? null,
             ];
         }
     }
@@ -544,7 +548,7 @@ if ($action === 'save_out' && $method === 'POST') {
 //    Dipakai oleh attendance.php (kalender + tabel riwayat milik intern sendiri)
 // --------------------------------------------------------------
 if ($action === 'history' && $method === 'GET') {
-    $sql = "SELECT date, status, clock_in, clock_out, reason, location_in, photo_in, lat_in, lng_in, location_out, photo_out, lat_out, lng_out
+    $sql = "SELECT date, status, clock_in, clock_out, reason, location_in, photo_in, lat_in, lng_in, location_out, photo_out, lat_out, lng_out, leave_type, override_by
             FROM attendance WHERE username = ? ORDER BY date DESC";
     $stmt = mysqli_prepare($conn, $sql);
     if (!$stmt) {
@@ -654,6 +658,164 @@ if ($action === 'delete' && $method === 'POST') {
 }
 
 // --------------------------------------------------------------
+
+// --------------------------------------------------------------
+// SET KEHADIRAN / OVERRIDE STATUS INTERN OLEH ADMIN
+// (?action=admin_set_attendance, POST)
+// --------------------------------------------------------------
+if ($action === 'admin_set_attendance' && $method === 'POST') {
+    $userRole = $_SESSION['role'] ?? 'intern';
+    if (!in_array($userRole, ['admin', 'superadmin'], true)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Akses ditolak: Hanya Admin/Superadmin yang dapat mengatur status kehadiran']);
+        exit;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $targetUsername = trim($input['username'] ?? $input['target_username'] ?? '');
+    $date           = trim($input['date'] ?? '');
+    $status         = trim($input['status'] ?? 'present');
+    $leaveType      = trim($input['leave_type'] ?? '');
+    $clockIn        = trim($input['clock_in'] ?? $input['clockIn'] ?? '');
+    $clockOut       = trim($input['clock_out'] ?? $input['clockOut'] ?? '');
+    $reason         = trim($input['reason'] ?? '');
+
+    if (empty($targetUsername) || empty($date)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Nama intern dan tanggal kehadiran wajib diisi']);
+        exit;
+    }
+
+    $allowedStatuses = ['present', 'late', 'permit', 'absent'];
+    if (!in_array($status, $allowedStatuses, true)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Status tidak valid (pilih: present, late, permit, absent)']);
+        exit;
+    }
+
+    // Default jam jika hadir/telat
+    if ($status === 'present' && empty($clockIn)) {
+        $clockIn = '08:00';
+    } elseif ($status === 'late' && empty($clockIn)) {
+        $clockIn = '09:15';
+    } elseif ($status === 'permit' || $status === 'absent') {
+        if (empty($clockIn)) $clockIn = null;
+        if (empty($clockOut)) $clockOut = null;
+    }
+
+    if ($status === 'permit' && empty($leaveType)) {
+        $leaveType = 'dispen';
+    }
+
+    $adminActor = $_SESSION['username'] ?? 'admin';
+
+    $sqlChk = "SELECT id FROM attendance WHERE username = ? AND date = ? LIMIT 1";
+    $stmtChk = mysqli_prepare($conn, $sqlChk);
+    mysqli_stmt_bind_param($stmtChk, "ss", $targetUsername, $date);
+    mysqli_stmt_execute($stmtChk);
+    $existing = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtChk));
+
+    if ($existing) {
+        $sqlUpd = "UPDATE attendance SET status = ?, leave_type = ?, clock_in = ?, clock_out = ?, reason = ?, override_by = ? WHERE id = ?";
+        $stmtUpd = mysqli_prepare($conn, $sqlUpd);
+        mysqli_stmt_bind_param($stmtUpd, "ssssssi", $status, $leaveType, $clockIn, $clockOut, $reason, $adminActor, $existing['id']);
+        $ok = mysqli_stmt_execute($stmtUpd);
+    } else {
+        $sqlIns = "INSERT INTO attendance (username, date, status, leave_type, clock_in, clock_out, reason, override_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmtIns = mysqli_prepare($conn, $sqlIns);
+        mysqli_stmt_bind_param($stmtIns, "ssssssss", $targetUsername, $date, $status, $leaveType, $clockIn, $clockOut, $reason, $adminActor);
+        $ok = mysqli_stmt_execute($stmtIns);
+    }
+
+    if (!$ok) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Gagal menyimpan status kehadiran ke database: ' . mysqli_error($conn)]);
+        exit;
+    }
+
+    echo json_encode([
+        'success' => true,
+        'message' => "Status kehadiran {$targetUsername} pada {$date} berhasil diatur menjadi {$status}"
+    ]);
+    exit;
+}
+
+// --------------------------------------------------------------
+// HAPUS CATATAN KEHADIRAN OLEH ADMIN
+// (?action=admin_delete_attendance, POST)
+// --------------------------------------------------------------
+if ($action === 'admin_delete_attendance' && $method === 'POST') {
+    $userRole = $_SESSION['role'] ?? 'intern';
+    if (!in_array($userRole, ['admin', 'superadmin'], true)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Akses ditolak: Hanya Admin yang dapat menghapus catatan presensi']);
+        exit;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $targetUsername = trim($input['username'] ?? '');
+    $date = trim($input['date'] ?? '');
+
+    if (empty($targetUsername) || empty($date)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Nama intern dan tanggal wajib diisi']);
+        exit;
+    }
+
+    $sql = "DELETE FROM attendance WHERE username = ? AND date = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ss", $targetUsername, $date);
+    mysqli_stmt_execute($stmt);
+
+    echo json_encode(['success' => true, 'message' => "Catatan kehadiran {$targetUsername} pada {$date} berhasil dihapus"]);
+    exit;
+}
+
+// --------------------------------------------------------------
+// KIRIM PENGAJUAN IZIN / DISPENSASI OLEH INTERN
+// (?action=submit_leave, POST)
+// --------------------------------------------------------------
+if ($action === 'submit_leave' && $method === 'POST') {
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $date = trim($input['date'] ?? '');
+    $leaveType = trim($input['leave_type'] ?? 'izin');
+    $reason = trim($input['reason'] ?? '');
+    $photoBase64 = $input['photo'] ?? null;
+
+    if (empty($date) || empty($reason)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Tanggal dan alasan izin wajib diisi']);
+        exit;
+    }
+
+    $status = 'permit';
+
+    $sqlCheck = "SELECT id FROM attendance WHERE username = ? AND date = ? LIMIT 1";
+    $stmtCheck = mysqli_prepare($conn, $sqlCheck);
+    mysqli_stmt_bind_param($stmtCheck, "ss", $username, $date);
+    mysqli_stmt_execute($stmtCheck);
+    $existing = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtCheck));
+
+    if ($existing) {
+        $sql = "UPDATE attendance SET status=?, leave_type=?, reason=?, photo_in=? WHERE id=?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ssssi", $status, $leaveType, $reason, $photoBase64, $existing['id']);
+    } else {
+        $sql = "INSERT INTO attendance (username, date, status, leave_type, reason, photo_in) VALUES (?, ?, ?, ?, ?, ?)";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ssssss", $username, $date, $status, $leaveType, $reason, $photoBase64);
+    }
+
+    if (!mysqli_stmt_execute($stmt)) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Gagal mengirim permohonan izin ke database: ' . mysqli_error($conn)]);
+        exit;
+    }
+
+    echo json_encode(['success' => true, 'message' => 'Permohonan izin/dispensasi berhasil dicatat']);
+    exit;
+}
+
 // Fallback
 // --------------------------------------------------------------
 http_response_code(404);

@@ -155,6 +155,29 @@ if ($db_query) {
             color: #92400e;
         }
 
+        .badge-dispen {
+            background: #ede9fe;
+            color: #5b21b6;
+            border: 1px solid #ddd6fe;
+        }
+
+        .badge-permit {
+            background: #ede9fe;
+            color: #5b21b6;
+            border: 1px solid #ddd6fe;
+        }
+
+        .badge-dinas {
+            background: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+        }
+
+        .cal-cell.status-permit {
+            background: #ede9fe;
+            color: #5b21b6;
+        }
+
         .badge-pending {
             background: #f1f5f9;
             color: #475569;
@@ -180,6 +203,12 @@ if ($db_query) {
                 </h2>
             </div>
             <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                <button onclick="openAdminSetAttendanceModal()"
+                    class="px-3 py-2 sm:px-3.5 sm:py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 flex items-center gap-1.5 shadow-sm active:scale-95 transition-all shrink-0 cursor-pointer">
+                    <span class="material-symbols-outlined text-[17px]">edit_calendar</span>
+                    <span class="hidden sm:inline">+ Set Kehadiran Intern</span>
+                    <span class="sm:hidden font-semibold">+ Set Absen</span>
+                </button>
                 <button onclick="exportAllAdminAttendanceCSV()"
                     class="px-3 py-2 sm:px-3.5 sm:py-2 bg-primary text-on-primary rounded-xl text-xs font-bold hover:opacity-90 flex items-center gap-1 shadow-sm active:scale-95 transition-all shrink-0">
                     <span class="material-symbols-outlined text-[16px]">download</span>
@@ -316,7 +345,8 @@ if ($db_query) {
                             <th class="px-3 py-2 text-left">Divisi</th>
                             <th class="px-3 py-2 text-center">Hadir</th>
                             <th class="px-3 py-2 text-center">Telat</th>
-                            <th class="px-3 py-2 text-center">Tidak Masuk</th>
+                            <th class="px-3 py-2 text-center text-purple-700">Dispen / Izin</th>
+                            <th class="px-3 py-2 text-center">Alpha</th>
                             <th class="px-3 py-2 text-center">Aksi</th>
                         </tr>
                     </thead>
@@ -329,6 +359,164 @@ if ($db_query) {
             <?php include '../partials/footer.php'; ?>
         </div>
     </main>
+
+    
+    <!-- Modal Set / Override Kehadiran Intern (Admin) -->
+    <div id="admin-set-attendance-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-outline-variant overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="p-5 border-b border-outline-variant flex justify-between items-center bg-slate-50">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-[20px]">edit_calendar</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline-md font-bold text-on-surface text-base">Atur Kehadiran Intern</h3>
+                        <p class="text-xs text-on-surface-variant">Atur status hadir, telat, dispen, atau alpha</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAdminSetAttendanceModal()" class="text-on-surface-variant hover:text-primary transition p-1 rounded-lg hover:bg-slate-200">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+            </div>
+
+            <form id="admin-set-att-form" onsubmit="handleAdminSetAttendanceSubmit(event)" class="p-5 space-y-4 overflow-y-auto flex-1">
+                <!-- Intern Selector -->
+                <div>
+                    <label class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1.5">
+                        Pilih Intern <span class="text-red-500">*</span>
+                    </label>
+                    <select id="admin-set-username" required class="w-full rounded-xl border border-outline-variant bg-surface-bright px-3 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-primary focus:outline-none">
+                        <option value="">-- Pilih Intern --</option>
+                        <?php foreach ($db_interns as $di): ?>
+                            <option value="<?php echo htmlspecialchars($di['username'], ENT_QUOTES, 'UTF-8'); ?>">
+                                <?php echo htmlspecialchars($di['username'], ENT_QUOTES, 'UTF-8'); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Tanggal Kehadiran -->
+                <div>
+                    <label class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1.5">
+                        Tanggal Kehadiran <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" id="admin-set-date" required class="w-full rounded-xl border border-outline-variant bg-surface-bright px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-primary focus:outline-none" />
+                </div>
+
+                <!-- Status Kehadiran Selector (4 Radio Cards) -->
+                <div>
+                    <label class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1.5">
+                        Status Kehadiran <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <!-- Present -->
+                        <label onclick="selectAdminStatus('present')" id="admin-status-card-present" class="flex items-center gap-2 border-2 border-emerald-400 bg-emerald-50/60 rounded-xl p-2.5 cursor-pointer transition select-none">
+                            <input type="radio" name="admin_status" value="present" checked class="sr-only" />
+                            <span class="material-symbols-outlined text-emerald-600 text-[20px]">check_circle</span>
+                            <div>
+                                <span class="block text-xs font-bold text-emerald-900">Hadir</span>
+                                <span class="block text-[10px] text-emerald-700/80">Tepat Waktu</span>
+                            </div>
+                        </label>
+
+                        <!-- Late -->
+                        <label onclick="selectAdminStatus('late')" id="admin-status-card-late" class="flex items-center gap-2 border-2 border-outline-variant bg-surface-container-lowest rounded-xl p-2.5 cursor-pointer transition select-none">
+                            <input type="radio" name="admin_status" value="late" class="sr-only" />
+                            <span class="material-symbols-outlined text-amber-500 text-[20px]">schedule</span>
+                            <div>
+                                <span class="block text-xs font-bold text-amber-900">Terlambat</span>
+                                <span class="block text-[10px] text-amber-700/80">Lewat batas</span>
+                            </div>
+                        </label>
+
+                        <!-- Permit / Dispen -->
+                        <label onclick="selectAdminStatus('permit')" id="admin-status-card-permit" class="flex items-center gap-2 border-2 border-outline-variant bg-surface-container-lowest rounded-xl p-2.5 cursor-pointer transition select-none">
+                            <input type="radio" name="admin_status" value="permit" class="sr-only" />
+                            <span class="material-symbols-outlined text-purple-600 text-[20px]">verified</span>
+                            <div>
+                                <span class="block text-xs font-bold text-purple-900">Izin</span>
+                                <span class="block text-[10px] text-purple-700/80">Izin resmi</span>
+                            </div>
+                        </label>
+
+                        <!-- Absent -->
+                        <label onclick="selectAdminStatus('absent')" id="admin-status-card-absent" class="flex items-center gap-2 border-2 border-outline-variant bg-surface-container-lowest rounded-xl p-2.5 cursor-pointer transition select-none">
+                            <input type="radio" name="admin_status" value="absent" class="sr-only" />
+                            <span class="material-symbols-outlined text-red-500 text-[20px]">cancel</span>
+                            <div>
+                                <span class="block text-xs font-bold text-red-900">Alpha</span>
+                                <span class="block text-[10px] text-red-700/80">Tidak Masuk</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Sub-type Dispensasi / Izin (Muncul saat status permit dipilih) -->
+                <div id="admin-leave-type-wrap" class="hidden p-3 rounded-xl bg-purple-50 border border-purple-200 space-y-2">
+                    <label class="block text-xs font-bold text-purple-900">
+                        Kategori Dispensasi / Izin <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center gap-1.5 font-medium cursor-pointer">
+                            <input type="radio" name="admin_leave_type" value="dispen" checked class="text-purple-600 focus:ring-purple-400" />
+                            <span>Dispensasi instansi</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 font-medium cursor-pointer">
+                            <input type="radio" name="admin_leave_type" value="izin" class="text-purple-600 focus:ring-purple-400" />
+                            <span>Izin Keperluan</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 font-medium cursor-pointer">
+                            <input type="radio" name="admin_leave_type" value="sakit" class="text-purple-600 focus:ring-purple-400" />
+                            <span>Sakit</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 font-medium cursor-pointer">
+                            <input type="radio" name="admin_leave_type" value="dinas" class="text-purple-600 focus:ring-purple-400" />
+                            <span>Tugas Luar / Dinas</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Jam Masuk & Jam Keluar (Untuk Present & Late) -->
+                <div id="admin-time-fields" class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1">Jam Masuk</label>
+                        <input type="time" id="admin-set-clock-in" value="08:00" class="w-full rounded-xl border border-outline-variant bg-surface-bright px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1">Jam Keluar (Opsional)</label>
+                        <input type="time" id="admin-set-clock-out" value="16:00" class="w-full rounded-xl border border-outline-variant bg-surface-bright px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                </div>
+
+                <!-- Alasan / Keterangan -->
+                <div>
+                    <label class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1.5">
+                        Alasan / Keterangan Dispensasi / Catatan
+                    </label>
+                    <textarea id="admin-set-reason" rows="2" placeholder="Contoh: Dispensasi kegiatan seminar kampus, atau lupa absen..." class="w-full rounded-xl border border-outline-variant bg-surface-bright px-3 py-2 text-xs leading-relaxed focus:ring-2 focus:ring-primary focus:outline-none resize-none"></textarea>
+                </div>
+
+                <div id="admin-set-msg" class="hidden text-xs font-semibold p-2.5 rounded-xl"></div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-between gap-2 pt-3 border-t border-outline-variant">
+                    <button type="button" id="admin-delete-att-btn" onclick="deleteCurrentDayAttendance()" class="px-3 py-2 border border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer hidden">
+                        <span class="material-symbols-outlined text-[15px]">delete</span>
+                        <span>Hapus Catatan</span>
+                    </button>
+                    <div class="flex items-center gap-2 ml-auto">
+                        <button type="button" onclick="closeAdminSetAttendanceModal()" class="px-3.5 py-2 border border-outline-variant rounded-xl text-xs font-semibold text-on-surface-variant hover:bg-slate-100 transition cursor-pointer">
+                            Batal
+                        </button>
+                        <button type="submit" id="admin-set-submit-btn" class="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:opacity-90 transition shadow-sm flex items-center gap-1 cursor-pointer">
+                            <span class="material-symbols-outlined text-[16px]">save</span>
+                            <span>Simpan Kehadiran</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Detail modal: rincian kehadiran per-intern pada satu tanggal -->
     <div id="detail-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
@@ -412,10 +600,11 @@ if ($db_query) {
 
             const present = entries.filter(e => e.record?.status === 'present').length;
             const late = entries.filter(e => e.record?.status === 'late').length;
+            const permit = entries.filter(e => e.record?.status === 'permit').length;
             const absent = entries.filter(e => e.record?.status === 'absent').length;
             const unmarked = entries.filter(e => !e.record).length;
 
-            return { entries, total: interns.length, present, late, absent, unmarked };
+            return { entries, total: interns.length, present, late, permit, absent, unmarked };
         }
 
         function changeMonth(dir) {
@@ -447,6 +636,7 @@ if ($db_query) {
             }
 
             if (summary.late > 0) return 'late';
+            if (summary.permit > 0) return 'permit';
             if (summary.unmarked > 0) return 'pending';
             return 'complete';
         }
@@ -551,13 +741,17 @@ if ($db_query) {
                         status = 'absent';
                     }
 
-                    let label = { present: 'Hadir Tepat Waktu', late: 'Terlambat', absent: 'Tidak Masuk', pending: 'Belum Absen' }[status] || 'Belum Absen';
-                    let badgeClass = { present: 'badge-present', late: 'badge-late', absent: 'badge-absent', pending: 'badge-pending' }[status] || 'badge-pending';
-                    let icon = { present: 'check_circle', late: 'schedule', absent: 'cancel', pending: 'help' }[status] || 'help';
+                    let label = { present: 'Hadir Tepat Waktu', late: 'Terlambat', permit: 'Izin', absent: 'Tidak Masuk', pending: 'Belum Absen' }[status] || 'Belum Absen';
+                    let badgeClass = { present: 'badge-present', late: 'badge-late', permit: 'badge-dispen', absent: 'badge-absent', pending: 'badge-pending' }[status] || 'badge-pending';
+                    let icon = { present: 'check_circle', late: 'schedule', permit: 'verified', absent: 'cancel', pending: 'help' }[status] || 'help';
 
-                    if (record && record.status === 'absent' && record.leaveType) {
-                        const lt = record.leaveType;
-                        if (lt === 'sakit') {
+                    if (record && (record.status === 'permit' || record.status === 'absent') && record.leaveType) {
+                        const lt = record.leaveType.toLowerCase();
+                        if (lt === 'dispen' || lt === 'dispensasi') {
+                            label = 'Dispensasi Instansi';
+                            badgeClass = 'badge-dispen';
+                            icon = 'verified';
+                        } else if (lt === 'sakit') {
                             label = 'Izin (Sakit)';
                             badgeClass = 'badge-sakit';
                             icon = 'medication';
@@ -565,10 +759,14 @@ if ($db_query) {
                             label = 'Izin Keperluan';
                             badgeClass = 'badge-izin';
                             icon = 'event_busy';
+                        } else if (lt === 'dinas') {
+                            label = 'Tugas Luar / Dinas';
+                            badgeClass = 'badge-dinas';
+                            icon = 'work';
                         } else {
-                            label = `Izin (${lt})`;
-                            badgeClass = 'badge-sakit';
-                            icon = 'more_horiz';
+                            label = `Dispen (${record.leaveType})`;
+                            badgeClass = 'badge-dispen';
+                            icon = 'verified';
                         }
                     }
 
@@ -581,7 +779,10 @@ if ($db_query) {
                                         ${escHtml(intern.name.charAt(0).toUpperCase())}
                                     </div>
                                     <div>
-                                        <div class="text-sm font-bold text-on-surface">${escHtml(intern.name)}</div>
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <span class="text-sm font-bold text-on-surface">${escHtml(intern.name)}</span>
+                                            ${record && record.overrideBy ? `<span class="text-[9.5px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200 font-semibold">Diset Admin</span>` : ''}
+                                        </div>
                                         <div class="text-xs text-on-surface-variant">${escHtml(intern.division || 'Intern Kedayweb')}</div>
                                     </div>
                                 </div>
@@ -650,8 +851,12 @@ if ($db_query) {
 
                             ${record && record.reason ? `<div class="mt-2 bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-xs text-amber-900"><strong>Alasan / Keterangan:</strong> ${escHtml(record.reason)}</div>` : ''}
                             ${!record ? '<p class="text-xs text-on-surface-variant italic mt-1.5">Intern ini belum melakukan absensi pada hari tersebut.</p>' : ''}
-                            <div class="mt-2 text-right border-t border-outline-variant/40 pt-2">
-                                <a href="../attendance.php?intern=${encodeURIComponent(intern.name)}" class="text-xs text-primary font-bold hover:underline">Lihat kalender intern &rarr;</a>
+                            <div class="mt-2.5 flex items-center justify-between border-t border-outline-variant/40 pt-2 flex-wrap gap-2">
+                                <button type="button" onclick="closeDetailModal(); openAdminSetAttendanceModal('${escHtml(intern.name)}', '${dateStr}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition shadow-2xs cursor-pointer">
+                                    <span class="material-symbols-outlined text-[14px]">edit_calendar</span>
+                                    <span>Set / Ubah Kehadiran</span>
+                                </button>
+                                <a href="../attendance.php?intern=${encodeURIComponent(intern.name)}" class="text-xs text-primary font-bold hover:underline">Lihat kalender &rarr;</a>
                             </div>
                         `;
                     list.appendChild(row);
@@ -706,7 +911,7 @@ if ($db_query) {
 
             interns.forEach(i => {
                 const dbUserAtt = dbAttendanceMap[i.name] || {};
-                let present = 0, late = 0, absent = 0;
+                let present = 0, late = 0, permit = 0, absent = 0;
 
                 // Tanggal mulai wajib absen intern (null = belum diset, semua hari dihitung)
                 const startDateStr = i.intern_start_date || null;
@@ -732,6 +937,7 @@ if ($db_query) {
                     if (r) {
                         if (r.status === 'present') present++;
                         else if (r.status === 'late') late++;
+                        else if (r.status === 'permit') permit++;
                         else if (r.status === 'absent') absent++;
                     } else if (!isFuture) {
                         // Jika hari kerja lalu atau hari ini sudah lewat batas jam 14:00 dan tidak ada absen -> dihitung tidak masuk (alpha)
@@ -756,9 +962,16 @@ if ($db_query) {
                     <td class="px-3 py-2 text-on-surface-variant">${escHtml(i.division || 'Intern Kedayweb')}</td>
                     <td class="px-3 py-2 text-center text-green-700 font-bold">${present}</td>
                     <td class="px-3 py-2 text-center text-amber-700 font-bold">${late}</td>
+                    <td class="px-3 py-2 text-center text-purple-700 font-bold">${permit}</td>
                     <td class="px-3 py-2 text-center text-red-700 font-bold">${absent}</td>
                     <td class="px-3 py-2 text-center">
-                        <a href="../attendance.php?intern=${encodeURIComponent(i.name)}" class="text-primary hover:underline text-xs font-semibold">Lihat Kalender</a>
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="openAdminSetAttendanceModal('${escHtml(i.name)}')" class="px-2.5 py-1 bg-surface-container-high hover:bg-emerald-600 hover:text-white text-on-surface rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer" title="Atur kehadiran intern ini">
+                                <span class="material-symbols-outlined text-[14px]">edit_calendar</span>
+                                <span>Set Absen</span>
+                            </button>
+                            <a href="../attendance.php?intern=${encodeURIComponent(i.name)}" class="text-primary hover:underline text-xs font-semibold">Lihat Kalender</a>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -857,6 +1070,189 @@ if ($db_query) {
             await fetchDbAttendance();
             renderAll(); // re-render setelah data DB tersedia
         });
+    
+        // ============================================================
+        // FITUR ADMIN SET / OVERRIDE KEHADIRAN & DISPENSASI INTERN
+        // ============================================================
+        let currentAdminSelectedStatus = 'present';
+
+        function selectAdminStatus(status) {
+            currentAdminSelectedStatus = status;
+            const cards = ['present', 'late', 'permit', 'absent'];
+            cards.forEach(s => {
+                const card = document.getElementById(`admin-status-card-${s}`);
+                if (!card) return;
+                const radio = card.querySelector('input[type="radio"]');
+                if (s === status) {
+                    if (radio) radio.checked = true;
+                    if (s === 'present') card.className = 'flex items-center gap-2 border-2 border-emerald-400 bg-emerald-50/70 rounded-xl p-2.5 cursor-pointer transition select-none';
+                    else if (s === 'late') card.className = 'flex items-center gap-2 border-2 border-amber-400 bg-amber-50/70 rounded-xl p-2.5 cursor-pointer transition select-none';
+                    else if (s === 'permit') card.className = 'flex items-center gap-2 border-2 border-purple-400 bg-purple-50/70 rounded-xl p-2.5 cursor-pointer transition select-none';
+                    else if (s === 'absent') card.className = 'flex items-center gap-2 border-2 border-red-400 bg-red-50/70 rounded-xl p-2.5 cursor-pointer transition select-none';
+                } else {
+                    if (radio) radio.checked = false;
+                    card.className = 'flex items-center gap-2 border-2 border-outline-variant bg-surface-container-lowest rounded-xl p-2.5 cursor-pointer transition select-none';
+                }
+            });
+
+            // Toggle sub-type dispensasi & jam
+            const leaveWrap = document.getElementById('admin-leave-type-wrap');
+            const timeFields = document.getElementById('admin-time-fields');
+            if (status === 'permit') {
+                if (leaveWrap) leaveWrap.classList.remove('hidden');
+                if (timeFields) timeFields.classList.add('hidden');
+            } else if (status === 'absent') {
+                if (leaveWrap) leaveWrap.classList.add('hidden');
+                if (timeFields) timeFields.classList.add('hidden');
+            } else {
+                if (leaveWrap) leaveWrap.classList.add('hidden');
+                if (timeFields) timeFields.classList.remove('hidden');
+            }
+        }
+
+        function openAdminSetAttendanceModal(optUsername = '', optDate = '') {
+            const modal = document.getElementById('admin-set-attendance-modal');
+            if (!modal) return;
+
+            const userInput = document.getElementById('admin-set-username');
+            const dateInput = document.getElementById('admin-set-date');
+            const msgEl = document.getElementById('admin-set-msg');
+            const deleteBtn = document.getElementById('admin-delete-att-btn');
+            if (msgEl) { msgEl.className = 'hidden'; msgEl.textContent = ''; }
+
+            const todayStr = fmt(new Date());
+            const targetDate = optDate || todayStr;
+            if (dateInput) dateInput.value = targetDate;
+            if (userInput) userInput.value = optUsername || (dbInternsList[0]?.name || '');
+
+            // Cek apakah sudah ada data kehadiran untuk intern & tanggal tersebut
+            let existingRecord = null;
+            if (optUsername && dbAttendanceMap[optUsername] && dbAttendanceMap[optUsername][targetDate]) {
+                existingRecord = dbAttendanceMap[optUsername][targetDate];
+            }
+
+            if (existingRecord) {
+                selectAdminStatus(existingRecord.status || 'present');
+                if (existingRecord.clockIn) document.getElementById('admin-set-clock-in').value = existingRecord.clockIn;
+                if (existingRecord.clockOut) document.getElementById('admin-set-clock-out').value = existingRecord.clockOut;
+                if (existingRecord.reason) document.getElementById('admin-set-reason').value = existingRecord.reason;
+                if (existingRecord.leaveType) {
+                    const rdo = document.querySelector(`input[name="admin_leave_type"][value="${existingRecord.leaveType}"]`);
+                    if (rdo) rdo.checked = true;
+                }
+                if (deleteBtn) deleteBtn.classList.remove('hidden');
+            } else {
+                selectAdminStatus('present');
+                document.getElementById('admin-set-clock-in').value = '08:00';
+                document.getElementById('admin-set-clock-out').value = '';
+                document.getElementById('admin-set-reason').value = '';
+                if (deleteBtn) deleteBtn.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeAdminSetAttendanceModal() {
+            const modal = document.getElementById('admin-set-attendance-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        async function handleAdminSetAttendanceSubmit(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('admin-set-submit-btn');
+            const msgEl = document.getElementById('admin-set-msg');
+            const username = document.getElementById('admin-set-username').value.trim();
+            const date = document.getElementById('admin-set-date').value.trim();
+            const status = currentAdminSelectedStatus;
+            const clockIn = document.getElementById('admin-set-clock-in').value.trim();
+            const clockOut = document.getElementById('admin-set-clock-out').value.trim();
+            const reason = document.getElementById('admin-set-reason').value.trim();
+            const leaveType = document.querySelector('input[name="admin_leave_type"]:checked')?.value || 'dispen';
+
+            if (!username || !date) {
+                alert('Nama intern dan tanggal kehadiran wajib diisi!');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">refresh</span> Menyimpan...';
+
+            try {
+                const res = await fetch('../attendance-api.php?action=admin_set_attendance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username,
+                        date,
+                        status,
+                        leave_type: (status === 'permit') ? leaveType : null,
+                        clock_in: (status === 'present' || status === 'late') ? clockIn : null,
+                        clock_out: (status === 'present' || status === 'late') ? clockOut : null,
+                        reason
+                    })
+                });
+
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || 'Gagal menyimpan status kehadiran');
+
+                // Tampilkan sukses
+                msgEl.className = 'text-xs font-semibold p-2.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 block';
+                msgEl.textContent = data.message || 'Status kehadiran berhasil diperbarui!';
+
+                // Refresh data
+                await fetchDbAttendance();
+                renderAll();
+
+                setTimeout(() => {
+                    closeAdminSetAttendanceModal();
+                    // Jika modal detail sedang terbuka, refresh kontennya
+                    const detailModal = document.getElementById('detail-modal');
+                    if (detailModal && !detailModal.classList.contains('hidden')) {
+                        openDetailModal(date);
+                    }
+                }, 600);
+            } catch (err) {
+                msgEl.className = 'text-xs font-semibold p-2.5 rounded-xl bg-red-50 text-red-800 border border-red-200 block';
+                msgEl.textContent = err.message || 'Terjadi kesalahan saat menyimpan.';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">save</span> Simpan Kehadiran';
+            }
+        }
+
+        async function deleteCurrentDayAttendance() {
+            const username = document.getElementById('admin-set-username').value.trim();
+            const date = document.getElementById('admin-set-date').value.trim();
+            if (!username || !date) return;
+
+            if (!confirm(`Hapus catatan kehadiran untuk ${username} pada tanggal ${date}?`)) return;
+
+            try {
+                const res = await fetch('../attendance-api.php?action=admin_delete_attendance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, date })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || 'Gagal menghapus catatan');
+
+                await fetchDbAttendance();
+                renderAll();
+                closeAdminSetAttendanceModal();
+
+                const detailModal = document.getElementById('detail-modal');
+                if (detailModal && !detailModal.classList.contains('hidden')) {
+                    openDetailModal(date);
+                }
+            } catch (err) {
+                alert(err.message || 'Gagal menghapus catatan');
+            }
+        }
+
     </script>
 </body>
 
