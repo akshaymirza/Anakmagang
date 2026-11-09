@@ -522,6 +522,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $late_threshold_time    = trim($_POST['late_threshold_time'] ?? '09:00');
         $cutoff_time            = trim($_POST['cutoff_time']         ?? '14:00');
         $check_out_time         = trim($_POST['check_out_time']      ?? '16:00');
+
+        // Normalisasi format selalu HH:mm
+        $check_in_time          = !empty($check_in_time) ? date('H:i', strtotime($check_in_time)) : '08:00';
+        $late_threshold_time    = !empty($late_threshold_time) ? date('H:i', strtotime($late_threshold_time)) : '09:00';
+        $cutoff_time            = !empty($cutoff_time) ? date('H:i', strtotime($cutoff_time)) : '14:00';
+        $check_out_time         = !empty($check_out_time) ? date('H:i', strtotime($check_out_time)) : '16:00';
+
+        // Normalisasi format selalu HH:mm
+        $check_in_time          = !empty($check_in_time) ? date('H:i', strtotime($check_in_time)) : '08:00';
+        $late_threshold_time    = !empty($late_threshold_time) ? date('H:i', strtotime($late_threshold_time)) : '09:00';
+        $cutoff_time            = !empty($cutoff_time) ? date('H:i', strtotime($cutoff_time)) : '14:00';
+        $check_out_time         = !empty($check_out_time) ? date('H:i', strtotime($check_out_time)) : '16:00';
         $attendance_days_arr    = $_POST['attendance_days'] ?? [];
         $attendance_days        = implode(',', array_map('trim', (array)$attendance_days_arr));
 
@@ -662,10 +674,10 @@ if ($conn) {
         $att_settings['longitude']             = (float) ($rAtt['longitude']       ?? $att_settings['longitude']);
         $att_settings['radius_meters']         = (int)   ($rAtt['radius_meters']   ?? $att_settings['radius_meters']);
         $att_settings['is_strict']             = (int)   ($rAtt['is_strict']       ?? $att_settings['is_strict']);
-        $att_settings['check_in_time']         = $rAtt['check_in_time']         ?? $att_settings['check_in_time'];
-        $att_settings['late_threshold_time']   = $rAtt['late_threshold_time']   ?? $att_settings['late_threshold_time'];
-        $att_settings['cutoff_time']           = $rAtt['cutoff_time']           ?? $att_settings['cutoff_time'];
-        $att_settings['check_out_time']        = $rAtt['check_out_time']        ?? $att_settings['check_out_time'];
+        $att_settings['check_in_time']         = !empty($rAtt['check_in_time']) ? date('H:i', strtotime($rAtt['check_in_time'])) : $att_settings['check_in_time'];
+        $att_settings['late_threshold_time']   = !empty($rAtt['late_threshold_time']) ? date('H:i', strtotime($rAtt['late_threshold_time'])) : $att_settings['late_threshold_time'];
+        $att_settings['cutoff_time']           = !empty($rAtt['cutoff_time']) ? date('H:i', strtotime($rAtt['cutoff_time'])) : $att_settings['cutoff_time'];
+        $att_settings['check_out_time']        = !empty($rAtt['check_out_time']) ? date('H:i', strtotime($rAtt['check_out_time'])) : $att_settings['check_out_time'];
         $att_settings['attendance_days']       = $rAtt['attendance_days']       ?? $att_settings['attendance_days'];
     }
 }
@@ -965,53 +977,53 @@ $sop_data = get_sop_data();
                             <label class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Jam Kerja, Batas Telat &amp; Hari Wajib Hadir</label>
 
                             <!-- Grid 4 Kolom untuk Jam & Batas Absen -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                                 <!-- 1. Jam Masuk (Hijau) -->
-                                <div class="bg-surface-container-lowest p-2.5 rounded-xl border border-emerald-300">
-                                    <label class="block text-xs font-semibold text-emerald-900 mb-1 flex items-center gap-1">
-                                        <span class="material-symbols-outlined text-sm text-emerald-600">schedule</span>
-                                        Jam Masuk
+                                <div class="bg-surface-container-lowest p-3 rounded-xl border border-emerald-300 min-w-0 shadow-2xs">
+                                    <label class="block text-xs font-bold text-emerald-900 mb-1.5 flex items-center gap-1.5">
+                                        <span class="material-symbols-outlined text-base text-emerald-600">schedule</span>
+                                        <span>Jam Masuk</span>
                                     </label>
                                     <input type="time" name="check_in_time" id="att-check-in-time"
-                                        value="<?php echo htmlspecialchars($att_settings['check_in_time'], ENT_QUOTES, 'UTF-8'); ?>"
-                                        class="w-full px-2.5 py-1.5 bg-emerald-50/50 border border-emerald-300 rounded-lg text-sm font-bold text-emerald-950 focus:ring-2 focus:ring-emerald-400 focus:outline-none"/>
-                                    <p class="text-[10px] text-emerald-700/80 mt-1">Mulai jam kerja normal.</p>
+                                        value="<?php echo htmlspecialchars(date('H:i', strtotime($att_settings['check_in_time'] ?? '08:00')), ENT_QUOTES, 'UTF-8'); ?>"
+                                        class="w-full px-3 py-2 bg-emerald-50/70 border border-emerald-300 rounded-lg text-sm font-bold text-emerald-950 focus:ring-2 focus:ring-emerald-400 focus:outline-none min-w-0"/>
+                                    <p class="text-[11px] text-emerald-700/90 mt-1.5 leading-snug">Mulai jam kerja normal.</p>
                                 </div>
 
                                 <!-- 2. Batas Jam Telat (Kuning) -->
-                                <div class="bg-surface-container-lowest p-2.5 rounded-xl border border-amber-300">
-                                    <label class="block text-xs font-semibold text-amber-900 mb-1 flex items-center gap-1">
-                                        <span class="material-symbols-outlined text-sm text-amber-500">timer_off</span>
-                                        Batas Telat
+                                <div class="bg-surface-container-lowest p-3 rounded-xl border border-amber-300 min-w-0 shadow-2xs">
+                                    <label class="block text-xs font-bold text-amber-900 mb-1.5 flex items-center gap-1.5">
+                                        <span class="material-symbols-outlined text-base text-amber-500">timer_off</span>
+                                        <span>Batas Telat</span>
                                     </label>
                                     <input type="time" name="late_threshold_time" id="att-late-threshold-time"
-                                        value="<?php echo htmlspecialchars($att_settings['late_threshold_time'], ENT_QUOTES, 'UTF-8'); ?>"
-                                        class="w-full px-2.5 py-1.5 bg-amber-50/60 border border-amber-300 rounded-lg text-sm font-bold text-amber-950 focus:ring-2 focus:ring-amber-400 focus:outline-none"/>
-                                    <p class="text-[10px] text-amber-700 mt-1">Lewat jam ini = <strong>Terlambat</strong>.</p>
+                                        value="<?php echo htmlspecialchars(date('H:i', strtotime($att_settings['late_threshold_time'] ?? '09:00')), ENT_QUOTES, 'UTF-8'); ?>"
+                                        class="w-full px-3 py-2 bg-amber-50/70 border border-amber-300 rounded-lg text-sm font-bold text-amber-950 focus:ring-2 focus:ring-amber-400 focus:outline-none min-w-0"/>
+                                    <p class="text-[11px] text-amber-700/90 mt-1.5 leading-snug">Lewat jam ini = <strong>Terlambat</strong>.</p>
                                 </div>
 
                                 <!-- 3. Batas Akhir Absen (Merah ke Pink / Rose) -->
-                                <div class="bg-surface-container-lowest p-2.5 rounded-xl border border-rose-300">
-                                    <label class="block text-xs font-semibold text-rose-900 mb-1 flex items-center gap-1">
-                                        <span class="material-symbols-outlined text-sm text-rose-500">do_not_disturb_on</span>
-                                        Batas Akhir Absen
+                                <div class="bg-surface-container-lowest p-3 rounded-xl border border-rose-300 min-w-0 shadow-2xs">
+                                    <label class="block text-xs font-bold text-rose-900 mb-1.5 flex items-center gap-1.5">
+                                        <span class="material-symbols-outlined text-base text-rose-500">do_not_disturb_on</span>
+                                        <span>Batas Akhir Absen</span>
                                     </label>
                                     <input type="time" name="cutoff_time" id="att-cutoff-time"
-                                        value="<?php echo htmlspecialchars($att_settings['cutoff_time'], ENT_QUOTES, 'UTF-8'); ?>"
-                                        class="w-full px-2.5 py-1.5 bg-rose-50/60 border border-rose-300 rounded-lg text-sm font-bold text-rose-950 focus:ring-2 focus:ring-rose-400 focus:outline-none"/>
-                                    <p class="text-[10px] text-rose-700 mt-1">Lewat jam ini = <strong>Terkunci &amp; Tidak Masuk</strong>.</p>
+                                        value="<?php echo htmlspecialchars(date('H:i', strtotime($att_settings['cutoff_time'] ?? '14:00')), ENT_QUOTES, 'UTF-8'); ?>"
+                                        class="w-full px-3 py-2 bg-rose-50/70 border border-rose-300 rounded-lg text-sm font-bold text-rose-950 focus:ring-2 focus:ring-rose-400 focus:outline-none min-w-0"/>
+                                    <p class="text-[11px] text-rose-700/90 mt-1.5 leading-snug">Lewat jam ini = <strong>Terkunci &amp; Tidak Masuk</strong>.</p>
                                 </div>
 
                                 <!-- 4. Jam Clock Out (Merah) -->
-                                <div class="bg-surface-container-lowest p-2.5 rounded-xl border border-red-300">
-                                    <label class="block text-xs font-semibold text-red-900 mb-1 flex items-center gap-1">
-                                        <span class="material-symbols-outlined text-sm text-red-600">logout</span>
-                                        Jam Clock Out
+                                <div class="bg-surface-container-lowest p-3 rounded-xl border border-red-300 min-w-0 shadow-2xs">
+                                    <label class="block text-xs font-bold text-red-900 mb-1.5 flex items-center gap-1.5">
+                                        <span class="material-symbols-outlined text-base text-red-600">logout</span>
+                                        <span>Jam Clock Out</span>
                                     </label>
                                     <input type="time" name="check_out_time" id="att-check-out-time"
-                                        value="<?php echo htmlspecialchars($att_settings['check_out_time'], ENT_QUOTES, 'UTF-8'); ?>"
-                                        class="w-full px-2.5 py-1.5 bg-red-50/60 border border-red-300 rounded-lg text-sm font-bold text-red-950 focus:ring-2 focus:ring-red-400 focus:outline-none"/>
-                                    <p class="text-[10px] text-red-700 mt-1">Target jam pulang intern.</p>
+                                        value="<?php echo htmlspecialchars(date('H:i', strtotime($att_settings['check_out_time'] ?? '16:00')), ENT_QUOTES, 'UTF-8'); ?>"
+                                        class="w-full px-3 py-2 bg-red-50/70 border border-red-300 rounded-lg text-sm font-bold text-red-950 focus:ring-2 focus:ring-red-400 focus:outline-none min-w-0"/>
+                                    <p class="text-[11px] text-red-700/90 mt-1.5 leading-snug">Target jam pulang intern.</p>
                                 </div>
                             </div>
 
