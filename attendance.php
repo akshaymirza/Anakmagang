@@ -926,6 +926,15 @@ require_login(); ?>
 
     <script>
         function attPad(n) { return String(n).padStart(2, '0'); }
+        // Zona Waktu: Paksa mengikuti WIB (Asia/Jakarta, UTC+7)
+        function getNowWIB(d = new Date()) {
+            if (typeof window.getNowWIB === 'function') return window.getNowWIB(d);
+            try {
+                return new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+            } catch (e) {
+                return new Date(d.getTime() + (7 * 3600 * 1000) + (d.getTimezoneOffset() * 60000));
+            }
+        }
         const CUTOFF_HOUR = 9; // 09:00 = batas tepat waktu (fallback)
         function getCutoffTime() {
             return (typeof officeGeofenceConfig !== 'undefined' && officeGeofenceConfig && officeGeofenceConfig.cutoff_time)
@@ -933,7 +942,7 @@ require_login(); ?>
                 : '14:00';
         }
         function isPastCutoff() {
-            const now = new Date();
+            const now = getNowWIB();
             const nowTimeStr = `${attPad(now.getHours())}:${attPad(now.getMinutes())}`;
             return nowTimeStr >= getCutoffTime();
         }
@@ -1051,7 +1060,7 @@ require_login(); ?>
         let detailDate = null;
 
         function initCalendar() {
-            const now = new Date();
+            const now = getNowWIB();
             calYear = now.getFullYear();
             calMonth = now.getMonth(); // 0-indexed
         }
@@ -1065,7 +1074,7 @@ require_login(); ?>
         }
 
         function goToday() {
-            const now = new Date();
+            const now = getNowWIB();
             calYear = now.getFullYear();
             calMonth = now.getMonth();
             renderCalendar();
@@ -1088,7 +1097,7 @@ require_login(); ?>
 
             const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
             const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-            const today = new Date();
+            const today = getNowWIB();
             const todayStr = formatDate(today);
 
             // Empty cells before first day
@@ -1190,7 +1199,7 @@ require_login(); ?>
             if (!workdays.length) return 0;
 
             let streak = 0;
-            let checkDate = new Date();
+            let checkDate = getNowWIB();
             checkDate.setHours(0, 0, 0, 0);
 
             for (let i = 0; i < 60; i++) {
@@ -1310,12 +1319,12 @@ require_login(); ?>
             form.reset();
             clearStatusSelection();
 
-            const today = formatDate(new Date());
+            const today = formatDate(getNowWIB());
             document.getElementById('att-date').value = preDate || today;
             document.getElementById('input-modal-title').textContent = 'Catat Kehadiran';
 
             // Pre-fill time
-            const now = new Date();
+            const now = getNowWIB();
             document.getElementById('att-clock-in').value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
             document.getElementById('att-clock-out').value = '';
             document.getElementById('att-reason').value = '';
@@ -1460,7 +1469,7 @@ require_login(); ?>
         function openDetailModal(dateStr) {
             let rec = getRecord(dateStr);
             if (!rec) {
-                const todayStr = formatDate(new Date());
+                const todayStr = formatDate(getNowWIB());
                 const isTodayPastCutoff = (dateStr === todayStr) && isPastCutoff();
                 const isPastDay = dateStr < todayStr;
                 if (isPastDay || isTodayPastCutoff) {
@@ -1809,7 +1818,7 @@ require_login(); ?>
                 return;
             }
             const modal = document.getElementById('leave-modal');
-            const todayStr = formatDate(new Date());
+            const todayStr = formatDate(getNowWIB());
             document.getElementById('leave-date').value = todayStr;
             document.getElementById('leave-reason').value = '';
             clearLeavePhoto();
@@ -2006,7 +2015,7 @@ require_login(); ?>
             }
 
             const isClockOut = (currentAttType === 'out');
-            const now = new Date();
+            const now = getNowWIB();
             const todayStr = formatDate(now);
             const todayRecord = getRecord(todayStr);
 
@@ -2223,7 +2232,7 @@ require_login(); ?>
             canvas.height = Math.round(img.height * scale);
             const ctx = canvas.getContext('2d');
 
-            const now = new Date();
+            const now = getNowWIB();
             const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
             const timeStr = `${attPad(now.getHours())}:${attPad(now.getMinutes())}`;
@@ -2438,7 +2447,7 @@ require_login(); ?>
             if (!attPendingDataUrl) return;
             const confirmBtn = document.getElementById('att-confirm-btn');
             const statusEl = document.getElementById('att-modal-status');
-            const now = new Date();
+            const now = getNowWIB();
             const timeStr = `${attPad(now.getHours())}:${attPad(now.getMinutes())}`;
             const lateThresh = (typeof officeGeofenceConfig !== 'undefined' && officeGeofenceConfig && officeGeofenceConfig.late_threshold_time)
                 ? officeGeofenceConfig.late_threshold_time
@@ -2503,7 +2512,7 @@ require_login(); ?>
             const leaveBtn = document.getElementById('main-leave-btn');
             if (!inBtn || !outBtn) return;
 
-            const todayStr = formatDate(new Date());
+            const todayStr = formatDate(getNowWIB());
             const rec = getRecord(todayStr);
 
             // Jika hari ini sedang izin (sakit / izin / lainnya)

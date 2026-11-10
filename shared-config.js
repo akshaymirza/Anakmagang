@@ -102,3 +102,27 @@ tailwind.config = {
     }
   }
 };
+
+// ============================================================
+// Timezone Helper: Memaksa waktu selalu mengikuti zona waktu WIB (Asia/Jakarta, UTC+7)
+// ============================================================
+window.getNowWIB = function(d = new Date()) {
+  try {
+    return new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+  } catch (e) {
+    return new Date(d.getTime() + (7 * 3600 * 1000) + (d.getTimezoneOffset() * 60000));
+  }
+};
+
+window.formatDateWIB = function(d = new Date()) {
+  const w = window.getNowWIB(d);
+  return `${w.getFullYear()}-${String(w.getMonth() + 1).padStart(2, '0')}-${String(w.getDate()).padStart(2, '0')}`;
+};
+
+window.formatTimeWIB = function(d = new Date(), withSeconds = false) {
+  const w = window.getNowWIB(d);
+  const pad = n => String(n).padStart(2, '0');
+  return withSeconds
+    ? `${pad(w.getHours())}:${pad(w.getMinutes())}:${pad(w.getSeconds())}`
+    : `${pad(w.getHours())}:${pad(w.getMinutes())}`;
+};

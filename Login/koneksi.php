@@ -1,4 +1,7 @@
 <?php
+// Paksa zona waktu default PHP ke Asia/Jakarta (WIB / UTC+7)
+date_default_timezone_set('Asia/Jakarta');
+
 // Nonaktifkan mysqli strict exception agar PHP 8.1+ tidak melempar Uncaught mysqli_sql_exception
 mysqli_report(MYSQLI_REPORT_OFF);
 
@@ -55,4 +58,7 @@ if (!$conn) {
     $errorMsg = mysqli_connect_error() ? mysqli_connect_error() : "Pastikan layanan MySQL (XAMPP / Laragon) sudah berjalan.";
     die("Koneksi database gagal: " . $errorMsg);
 }
+
+// Paksa zona waktu MySQL session ke WIB (UTC+7)
+@mysqli_query($conn, "SET time_zone = '+07:00'");
 ?>

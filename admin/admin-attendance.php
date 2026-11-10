@@ -542,6 +542,16 @@ if ($db_query) {
         let dbInternsList = [];
         let dbAttendanceMap = {}; // { username: { date: record } }
 
+        // Zona Waktu: Paksa mengikuti WIB (Asia/Jakarta, UTC+7)
+        function getNowWIB(d = new Date()) {
+            if (typeof window.getNowWIB === 'function') return window.getNowWIB(d);
+            try {
+                return new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+            } catch (e) {
+                return new Date(d.getTime() + (7 * 3600 * 1000) + (d.getTimezoneOffset() * 60000));
+            }
+        }
+
         function fmt(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
 
         function formatDateDisplay(ds) {
@@ -561,7 +571,7 @@ if ($db_query) {
         }
 
         function initCalendar() {
-            const now = new Date();
+            const now = getNowWIB();
             calYear = now.getFullYear();
             calMonth = now.getMonth();
         }
@@ -615,7 +625,7 @@ if ($db_query) {
         }
 
         function goToday() {
-            const now = new Date();
+            const now = getNowWIB();
             calYear = now.getFullYear();
             calMonth = now.getMonth();
             renderAll();
@@ -626,7 +636,7 @@ if ($db_query) {
             if (summary.total === 0) return 'pending';
 
             // Pengecekan apakah hari ini sudah lewat jam 14:00
-            const now = new Date();
+            const now = getNowWIB();
             const isTodayPastCutoff = isToday && (now.getHours() >= 14);
             const isPastDay = !isFuture && !isToday;
 
@@ -650,7 +660,7 @@ if ($db_query) {
 
             const firstDay = new Date(calYear, calMonth, 1).getDay();
             const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-            const today = new Date();
+            const today = getNowWIB();
             const todayStr = fmt(today);
 
             for (let i = 0; i < firstDay; i++) {
@@ -730,8 +740,8 @@ if ($db_query) {
             if (summary.entries.length === 0) {
                 list.innerHTML = '<p class="text-sm text-on-surface-variant italic">Belum ada intern terdaftar.</p>';
             } else {
-                const todayStr = fmt(new Date());
-                const now = new Date();
+                const todayStr = fmt(getNowWIB());
+                const now = getNowWIB();
                 const isTodayPastCutoff = (dateStr === todayStr) && (now.getHours() >= 14);
                 const isPastDay = dateStr < todayStr;
 
@@ -904,7 +914,7 @@ if ($db_query) {
                 return;
             }
 
-            const today = new Date();
+            const today = getNowWIB();
             const todayStr = fmt(today);
             const isTodayPastCutoff = today.getHours() >= 14;
             const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
@@ -1120,7 +1130,7 @@ if ($db_query) {
             const deleteBtn = document.getElementById('admin-delete-att-btn');
             if (msgEl) { msgEl.className = 'hidden'; msgEl.textContent = ''; }
 
-            const todayStr = fmt(new Date());
+            const todayStr = fmt(getNowWIB());
             const targetDate = optDate || todayStr;
             if (dateInput) dateInput.value = targetDate;
             if (userInput) userInput.value = optUsername || (dbInternsList[0]?.name || '');

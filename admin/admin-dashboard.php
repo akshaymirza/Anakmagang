@@ -542,7 +542,7 @@ include '../partials/sidebar-admin.php';
 
         /* ================= 1D. ATTENDANCE OVERVIEW ================= */
         function todayStr() {
-            const d = new Date();
+            const d = (typeof window.getNowWIB === 'function') ? window.getNowWIB() : new Date();
             return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         }
 
