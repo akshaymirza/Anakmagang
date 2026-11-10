@@ -67,21 +67,21 @@ if ($db_query) {
         .cal-cell.status-complete {
             background: #dcfce7;
             color: #166534;
+            border-color: #86efac;
         }
 
+        .cal-cell.status-incomplete,
         .cal-cell.status-late {
             background: #fef9c3;
             color: #854d0e;
+            border-color: #fde047;
         }
 
-        .cal-cell.status-absent {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
+        .cal-cell.status-empty,
         .cal-cell.status-pending {
-            background: #f1f5f9;
-            color: #475569;
+            background: #ffffff;
+            color: #334155;
+            border-color: #e2e8f0;
         }
 
         .cal-cell.weekend {
@@ -173,10 +173,7 @@ if ($db_query) {
             border: 1px solid #bae6fd;
         }
 
-        .cal-cell.status-permit {
-            background: #ede9fe;
-            color: #5b21b6;
-        }
+        
 
         .badge-pending {
             background: #f1f5f9;
@@ -241,12 +238,12 @@ if ($db_query) {
                 <div class="text-2xl font-bold mt-1 text-green-800" id="stat-days-complete">0</div>
             </div>
             <div class="p-3 rounded-lg border border-amber-200 bg-amber-50">
-                <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Hari Ada Keterlambatan</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Hari Tidak Lengkap</span>
                 <div class="text-2xl font-bold mt-1 text-amber-800" id="stat-days-late">0</div>
             </div>
-            <div class="p-3 rounded-lg border border-red-200 bg-red-50">
-                <span class="text-xs font-bold uppercase tracking-wider text-red-700">Hari Ada Yang Absen</span>
-                <div class="text-2xl font-bold mt-1 text-red-800" id="stat-days-absent">0</div>
+            <div class="p-3 rounded-lg border border-slate-200 bg-white">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-600">Hari Belum Terisi</span>
+                <div class="text-2xl font-bold mt-1 text-slate-800" id="stat-days-empty">0</div>
             </div>
         </section>
 
@@ -258,39 +255,24 @@ if ($db_query) {
                         Warna</h3>
                     <div class="space-y-2.5">
                         <div class="flex items-center gap-3">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-700 text-xs font-bold">
-                                12</div>
+                            <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-700 text-xs font-bold border border-green-300">12</div>
                             <div>
                                 <div class="text-sm font-semibold text-on-surface">Lengkap</div>
-                                <div class="text-xs text-on-surface-variant">Semua intern hadir tepat waktu</div>
+                                <div class="text-xs text-on-surface-variant">Semua intern sudah mengisi absensi</div>
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 text-xs font-bold">
-                                12</div>
+                            <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 text-xs font-bold border border-amber-300">12</div>
                             <div>
-                                <div class="text-sm font-semibold text-on-surface">Ada Keterlambatan</div>
-                                <div class="text-xs text-on-surface-variant">Semua tercatat, namun ada yang telat</div>
+                                <div class="text-sm font-semibold text-on-surface">Tidak Lengkap</div>
+                                <div class="text-xs text-on-surface-variant">Sebagian intern sudah mengisi absensi</div>
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-700 text-xs font-bold">
-                                12</div>
+                            <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-slate-700 text-xs font-bold border border-slate-300 shadow-2xs">12</div>
                             <div>
-                                <div class="text-sm font-semibold text-on-surface">Ada Yang Tidak Masuk</div>
-                                <div class="text-xs text-on-surface-variant">Minimal satu intern absen</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 text-xs font-bold">
-                                12</div>
-                            <div>
-                                <div class="text-sm font-semibold text-on-surface">Belum Lengkap Diisi</div>
-                                <div class="text-xs text-on-surface-variant">Masih ada intern yang belum absen</div>
+                                <div class="text-sm font-semibold text-on-surface">Belum Ada Yang Mengisi</div>
+                                <div class="text-xs text-on-surface-variant">Belum ada catatan kehadiran</div>
                             </div>
                         </div>
                     </div>
@@ -543,12 +525,12 @@ if ($db_query) {
         let dbAttendanceMap = {}; // { username: { date: record } }
 
         // Zona Waktu: Paksa mengikuti WIB (Asia/Jakarta, UTC+7)
-        function getNowWIB(d = new Date()) {
-            if (typeof window.getNowWIB === 'function') return window.getNowWIB(d);
+        function getNowWIB(d) {
+            const base = (d instanceof Date) ? d : new Date();
             try {
-                return new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+                return new Date(base.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
             } catch (e) {
-                return new Date(d.getTime() + (7 * 3600 * 1000) + (d.getTimezoneOffset() * 60000));
+                return new Date(base.getTime() + (7 * 3600 * 1000) + (base.getTimezoneOffset() * 60000));
             }
         }
 
@@ -633,22 +615,21 @@ if ($db_query) {
 
         function dayClass(summary, isFuture, isToday = false, dateStr = '') {
             if (isFuture) return 'future';
-            if (summary.total === 0) return 'pending';
+            if (!summary || summary.total === 0) return 'empty';
 
-            // Pengecekan apakah hari ini sudah lewat jam 14:00
-            const now = getNowWIB();
-            const isTodayPastCutoff = isToday && (now.getHours() >= 14);
-            const isPastDay = !isFuture && !isToday;
+            // Hitung berapa banyak intern yang sudah mengisi pada hari ini
+            const filledCount = summary.entries.filter(e => e.record !== null).length;
 
-            // Jika ada yang absen langsung MERAH, ATAU jika hari lalu / hari ini sudah lewat jam 14:00 dan masih ada yang belum absen (unmarked) -> MERAH
-            if (summary.absent > 0 || ((isPastDay || isTodayPastCutoff) && summary.unmarked > 0)) {
-                return 'absent';
+            if (filledCount === 0) {
+                // Belum ada yang mengisi sama sekali -> Putih
+                return 'empty';
+            } else if (filledCount >= summary.total || summary.unmarked === 0) {
+                // Semua intern sudah mengisi -> Hijau (Lengkap)
+                return 'complete';
+            } else {
+                // Baru sebagian yang mengisi -> Kuning (Tidak Lengkap)
+                return 'incomplete';
             }
-
-            if (summary.late > 0) return 'late';
-            if (summary.permit > 0) return 'permit';
-            if (summary.unmarked > 0) return 'pending';
-            return 'complete';
         }
 
         function renderCalendar() {
@@ -669,13 +650,12 @@ if ($db_query) {
                 grid.appendChild(cell);
             }
 
-            let daysComplete = 0, daysLate = 0, daysAbsent = 0;
+            let daysComplete = 0, daysIncomplete = 0, daysEmpty = 0;
 
             for (let d = 1; d <= daysInMonth; d++) {
                 const dateObj = new Date(calYear, calMonth, d);
                 const dateStr = fmt(dateObj);
                 const dow = dateObj.getDay();
-                const isWeekend = (dow === 0 || dow === 6);
                 const isFuture = dateObj > today && dateStr !== todayStr;
                 const isToday = dateStr === todayStr;
 
@@ -685,22 +665,17 @@ if ($db_query) {
                 const summary = getCombinedDaySummary(dateStr);
                 const hasRecords = summary.entries.some(e => e.record !== null);
 
-                // Sabtu (6) dan Minggu (0) keduanya abu-abu (weekend)
+                // Minggu (0) libur default
                 const isSunday = (dow === 0);
 
-                if ((isSunday) && !hasRecords) {
+                if (isSunday && !hasRecords) {
                     cell.classList.add('weekend');
-                } else if ((isSunday) && hasRecords) {
-                    // Akhir pekan tapi ada data absensi (lembur/khusus)
-                    const cls = dayClass(summary, isFuture, isToday, dateStr);
-                    cell.classList.add(`status-${cls}`);
-                    cell.addEventListener('click', () => openDetailModal(dateStr));
                 } else {
                     const cls = dayClass(summary, isFuture, isToday, dateStr);
-                    if (!isFuture) {
-                        if (cls === 'absent') daysAbsent++;
-                        else if (summary.late > 0) daysLate++;
-                        else if (summary.unmarked === 0 && summary.present > 0) daysComplete++;
+                    if (!isFuture && !isSunday) {
+                        if (cls === 'complete') daysComplete++;
+                        else if (cls === 'incomplete') daysIncomplete++;
+                        else if (cls === 'empty') daysEmpty++;
                     }
                     cell.classList.add(`status-${cls}`);
 
@@ -710,11 +685,11 @@ if ($db_query) {
                         cell.classList.add('future');
                     }
 
-                    // Tampilkan dot status (hanya jika ada record yang tercatat)
-                    if (!isFuture && hasRecords && cls !== 'pending') {
+                    // Tampilkan dot status: Hijau jika lengkap, Kuning jika tidak lengkap (tidak ada merah/putih)
+                    if (!isFuture && (cls === 'complete' || cls === 'incomplete')) {
                         const dot = document.createElement('div');
                         dot.className = 'status-dot';
-                        dot.style.background = cls === 'complete' ? '#16a34a' : cls === 'late' ? '#d97706' : '#dc2626';
+                        dot.style.background = (cls === 'complete') ? '#16a34a' : '#d97706';
                         cell.appendChild(dot);
                     }
                 }
@@ -726,9 +701,9 @@ if ($db_query) {
                 grid.appendChild(cell);
             }
 
-            document.getElementById('stat-days-complete').textContent = daysComplete;
-            document.getElementById('stat-days-late').textContent = daysLate;
-            document.getElementById('stat-days-absent').textContent = daysAbsent;
+            if (document.getElementById('stat-days-complete')) document.getElementById('stat-days-complete').textContent = daysComplete;
+            if (document.getElementById('stat-days-late')) document.getElementById('stat-days-late').textContent = daysIncomplete;
+            if (document.getElementById('stat-days-empty')) document.getElementById('stat-days-empty').textContent = daysEmpty;
         }
 
         function openDetailModal(dateStr) {

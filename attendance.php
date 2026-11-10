@@ -927,12 +927,12 @@ require_login(); ?>
     <script>
         function attPad(n) { return String(n).padStart(2, '0'); }
         // Zona Waktu: Paksa mengikuti WIB (Asia/Jakarta, UTC+7)
-        function getNowWIB(d = new Date()) {
-            if (typeof window.getNowWIB === 'function') return window.getNowWIB(d);
+        function getNowWIB(d) {
+            const base = (d instanceof Date) ? d : new Date();
             try {
-                return new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+                return new Date(base.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
             } catch (e) {
-                return new Date(d.getTime() + (7 * 3600 * 1000) + (d.getTimezoneOffset() * 60000));
+                return new Date(base.getTime() + (7 * 3600 * 1000) + (base.getTimezoneOffset() * 60000));
             }
         }
         const CUTOFF_HOUR = 9; // 09:00 = batas tepat waktu (fallback)
