@@ -94,13 +94,39 @@ $userName = current_user_name();
     <!-- Dashboard Content -->
     <div class="w-full max-w-container-max mx-auto p-md md:p-gutter flex flex-col gap-xl flex-1">
         
+        <!-- Admin Preview Mode Banner -->
+        <div id="admin-preview-banner" class="hidden bg-amber-50 border border-amber-300 text-amber-900 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-200 text-amber-800 flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-[24px]">visibility</span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-200 text-amber-900">Mode Pratinjau Admin</span>
+                        <span class="text-xs text-amber-700 font-medium">Hanya Baca</span>
+                    </div>
+                    <p class="text-sm font-semibold text-amber-950 mt-0.5">
+                        Melihat dashboard personal milik <strong id="admin-preview-intern-name" class="underline"></strong>
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <a id="admin-preview-att-btn" href="#" class="px-3.5 py-2 bg-white border border-amber-300 text-amber-900 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors flex items-center gap-1.5 shadow-2xs">
+                    <span class="material-symbols-outlined text-[16px] text-amber-700">calendar_month</span> Lihat Kehadiran
+                </a>
+                <a href="admin/admin-dashboard.php" class="px-3.5 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary-container transition-colors flex items-center gap-1.5 shadow-2xs">
+                    <span class="material-symbols-outlined text-[16px]">arrow_back</span> Kembali ke Admin
+                </a>
+            </div>
+        </div>
+
         <!-- Page Header -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface font-bold">
-                    Selamat Datang, <span id="intern-name"><?php echo htmlspecialchars($userName, ENT_QUOTES, 'UTF-8'); ?></span>! 👋
+                    <span id="welcome-label">Selamat Datang</span>, <span id="intern-name"><?php echo htmlspecialchars($userName, ENT_QUOTES, 'UTF-8'); ?></span>! 👋
                 </h2>
-                <p class="font-body-md text-body-md text-on-surface-variant mt-xs">Berikut ringkasan aktivitas project dan tugas Kanban Anda hari ini.</p>
+                <p id="dashboard-subtitle" class="font-body-md text-body-md text-on-surface-variant mt-xs">Berikut ringkasan aktivitas project dan tugas Kanban Anda hari ini.</p>
             </div>
             <div class="flex items-center gap-2">
                 <a href="tasks.php" class="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-container transition-all flex items-center gap-1.5 shadow-sm">
@@ -230,8 +256,31 @@ $userName = current_user_name();
 
     document.addEventListener('DOMContentLoaded', async () => {
         if (internParam) {
+            const rawName = decodeURIComponent(internParam);
             const nameElem = document.getElementById('intern-name');
-            if (nameElem) nameElem.textContent = decodeURIComponent(internParam);
+            if (nameElem) nameElem.textContent = rawName;
+
+            const welcomeLabel = document.getElementById('welcome-label');
+            if (welcomeLabel) welcomeLabel.textContent = 'Dashboard Intern';
+
+            const subElem = document.getElementById('dashboard-subtitle');
+            if (subElem) subElem.textContent = `Ringkasan aktivitas project dan tugas Kanban untuk intern ${rawName}.`;
+
+            // Tampilkan Admin Preview Banner
+            const banner = document.getElementById('admin-preview-banner');
+            if (banner) banner.classList.remove('hidden');
+            const previewName = document.getElementById('admin-preview-intern-name');
+            if (previewName) previewName.textContent = rawName;
+            const attBtn = document.getElementById('admin-preview-att-btn');
+            if (attBtn) attBtn.href = `attendance.php?intern=${encodeURIComponent(internParam)}`;
+
+            // Sesuaikan link Attendance di sidebar agar langsung mengarah ke intern yang sama
+            const sideAttLink = document.querySelector('a[href*="attendance.php"]');
+            if (sideAttLink) {
+                sideAttLink.href = `attendance.php?intern=${encodeURIComponent(internParam)}`;
+            }
+
+            document.title = `Dashboard Intern: ${rawName} - Portal PKL`;
         }
 
         if (window.ProjectStore) {
@@ -245,28 +294,28 @@ $userName = current_user_name();
 
         const myUsernameLower = String(CURRENT_USERNAME || '').toLowerCase().trim();
         const selectedIntern = internParam ? decodeURIComponent(internParam).toLowerCase().trim() : myUsernameLower;
-        let projects = ProjectStore.projects() || [];
+        const allProjects = ProjectStore.projects() || [];
 
         let completedTasksCount = 0;
         let progressTasksCount = 0;
-        let completedProjectsCount = 0;
         let allUserTasks = [];
+        let userProjects = [];
 
-        projects.forEach(p => {
+        allProjects.forEach(p => {
             const tasks = p.tasks || [];
-            let pDoneCount = 0;
+            // Filter ketat HANYA tugas yang ditugaskan ke intern yang dipilih
+            const assignedTasks = tasks.filter(t => {
+                const a = String(t.assignee || '').toLowerCase().trim();
+                return selectedIntern ? (a === selectedIntern) : true;
+            });
 
-            tasks.forEach(t => {
-                const assigneeLower = String(t.assignee || '').toLowerCase().trim();
-                const normStatus = ProjectStore.normalizeStatus ? ProjectStore.normalizeStatus(t.status) : t.status;
-
-                // Match assigned tasks or all if none assigned yet
-                const matchesUser = !selectedIntern || assigneeLower === selectedIntern || tasks.filter(x => String(x.assignee || '').toLowerCase().trim() === selectedIntern).length === 0;
-
-                if (matchesUser) {
+            if (assignedTasks.length > 0) {
+                let userDoneInProj = 0;
+                assignedTasks.forEach(t => {
+                    const normStatus = ProjectStore.normalizeStatus ? ProjectStore.normalizeStatus(t.status) : t.status;
                     if (normStatus === 'done') {
                         completedTasksCount++;
-                        pDoneCount++;
+                        userDoneInProj++;
                     } else if (normStatus === 'inprogress' || normStatus === 'underreview') {
                         progressTasksCount++;
                     }
@@ -276,28 +325,35 @@ $userName = current_user_name();
                         projectName: p.name || 'Untitled Project',
                         projectId: p.id
                     });
-                }
-            });
+                });
 
-            if (tasks.length > 0 && tasks.every(t => (ProjectStore.normalizeStatus ? ProjectStore.normalizeStatus(t.status) : t.status) === 'done')) {
-                completedProjectsCount++;
+                userProjects.push({
+                    ...p,
+                    userAssignedTasks: assignedTasks,
+                    userDoneCount: userDoneInProj,
+                    isUserProjectComplete: (userDoneInProj === assignedTasks.length && assignedTasks.length > 0)
+                });
             }
         });
 
-        // Filter search if query provided
+        const completedProjectsCount = userProjects.filter(p => p.isUserProjectComplete).length;
+
+        // Filter search jika ada input pencarian
         const q = (filterQuery || '').toLowerCase().trim();
-        let displayProjects = projects;
+        let displayProjects = userProjects;
         let displayTasks = allUserTasks;
 
         if (q) {
-            displayProjects = projects.filter(p => (p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
+            displayProjects = userProjects.filter(p => (p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
             displayTasks = allUserTasks.filter(t => (t.title || '').toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q));
         }
 
-        // Update Stat Cards
+        const internDisplayName = internParam ? decodeURIComponent(internParam) : 'Anda';
+
+        // Update Stat Cards (Sesuai tugas intern bersangkutan)
         document.getElementById('stat-tasks-done-val').textContent = completedTasksCount;
         document.getElementById('stat-tasks-progress-val').textContent = progressTasksCount;
-        document.getElementById('stat-total-proj-val').textContent = projects.length;
+        document.getElementById('stat-total-proj-val').textContent = userProjects.length;
         document.getElementById('stat-completed-proj-val').textContent = completedProjectsCount;
 
         // Render Active Projects List
@@ -306,15 +362,14 @@ $userName = current_user_name();
             if (displayProjects.length === 0) {
                 projectsContainer.innerHTML = `
                     <div class="bg-surface-container-lowest border border-dashed border-outline-variant rounded-2xl p-6 text-center text-xs text-slate-500">
-                        Tidak ada proyek yang sesuai dengan pencarian.
+                        Belum ada project atau tugas aktif yang ditugaskan kepada <strong>${escapeHtml(internDisplayName)}</strong>.
                     </div>
                 `;
             } else {
                 projectsContainer.innerHTML = displayProjects.map(p => {
-                    const prog = window.ProjectStore && ProjectStore.getProgress ? ProjectStore.getProgress(p) : null;
-                    const tasks = p.tasks || [];
-                    const doneCount = prog ? prog.done : tasks.filter(t => (ProjectStore.normalizeStatus ? ProjectStore.normalizeStatus(t.status) : t.status) === 'done').length;
-                    const percent = prog ? prog.percent : (tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0);
+                    const tasks = p.userAssignedTasks || [];
+                    const doneCount = p.userDoneCount || 0;
+                    const percent = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0;
                     const barColor = percent === 100 ? 'bg-emerald-500' : 'bg-primary';
 
                     return `
@@ -326,7 +381,7 @@ $userName = current_user_name();
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="text-xs font-bold ${percent === 100 ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-slate-600 bg-slate-100'} px-2.5 py-0.5 rounded-full">
-                                        ${percent === 100 ? 'Selesai' : `${tasks.length} tasks`}
+                                        ${percent === 100 ? 'Selesai' : `${tasks.length} tugas`}
                                     </span>
                                     <span class="material-symbols-outlined text-[16px] text-slate-400 group-hover:text-primary group-hover:translate-x-0.5 transition-all">chevron_right</span>
                                 </div>
@@ -334,7 +389,7 @@ $userName = current_user_name();
                             <p class="text-xs text-slate-500 mb-3 line-clamp-2">${escapeHtml(p.description || 'Proyek aktif Kanban')}</p>
                             <div class="space-y-1">
                                 <div class="flex justify-between text-[11px] font-semibold text-slate-600">
-                                    <span>Progress Selesai</span>
+                                    <span>Tugas Selesai</span>
                                     <span class="${percent === 100 ? 'text-emerald-700 font-bold' : ''}">${percent}% (${doneCount}/${tasks.length})</span>
                                 </div>
                                 <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
@@ -353,7 +408,7 @@ $userName = current_user_name();
             if (displayTasks.length === 0) {
                 tasksContainer.innerHTML = `
                     <div class="bg-surface-container-lowest border border-dashed border-outline-variant rounded-2xl p-6 text-center text-xs text-slate-500">
-                        Tidak ada tugas yang sesuai.
+                        Belum ada tugas yang ditugaskan kepada <strong>${escapeHtml(internDisplayName)}</strong>.
                     </div>
                 `;
             } else {
@@ -384,7 +439,7 @@ $userName = current_user_name();
                                 <p class="text-xs text-slate-500 line-clamp-2 mb-2">${escapeHtml(t.description || 'Tidak ada deskripsi.')}</p>
                             </div>
                             <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                                <span>Assignee: <strong>${escapeHtml(t.assignee || CURRENT_USERNAME)}</strong></span>
+                                <span>Assignee: <strong>${escapeHtml(t.assignee || 'Belum ditugaskan')}</strong></span>
                                 <a href="tasks.php?project=${encodeURIComponent(t.projectId)}" class="group font-bold text-primary flex items-center gap-1">
                                     <span class="group-hover:underline underline-offset-2">Buka</span>
                                     <span class="material-symbols-outlined text-[13px] no-underline transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 select-none">open_in_new</span>

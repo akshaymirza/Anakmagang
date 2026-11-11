@@ -601,7 +601,9 @@ if ($conn) {
     }
 
     // Auto sync certificates for any intern users
-    sync_all_intern_certificates($conn);
+    if (function_exists('sync_all_intern_certificates')) {
+        sync_all_intern_certificates($conn);
+    }
 
     // Ambil daftar tahun angkatan yang ada di certificates
     $qy = mysqli_query($conn, "SELECT DISTINCT CAST(COALESCE(NULLIF(REGEXP_SUBSTR(certificate_id, '[0-9]{4}'), ''), YEAR(start_date), YEAR(issue_date), YEAR(created_at)) AS UNSIGNED) as yr FROM certificates ORDER BY yr DESC");

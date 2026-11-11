@@ -47,6 +47,38 @@ const ProjectStore = {
     return this._cache; 
   },
 
+  tasksByAssignee(assigneeName) {
+    if (!assigneeName) return [];
+    const target = String(assigneeName).toLowerCase().trim();
+    const result = [];
+    (this._cache || []).forEach(p => {
+      (p.tasks || []).forEach(t => {
+        if (String(t.assignee || '').toLowerCase().trim() === target) {
+          result.push({
+            ...t,
+            project_name: p.name || 'Untitled Project',
+            status: this.normalizeStatus(t.status)
+          });
+        }
+      });
+    });
+    return result;
+  },
+
+  allTasks() {
+    const result = [];
+    (this._cache || []).forEach(p => {
+      (p.tasks || []).forEach(t => {
+        result.push({
+          ...t,
+          project_name: p.name || 'Untitled Project',
+          status: this.normalizeStatus(t.status)
+        });
+      });
+    });
+    return result;
+  },
+
   get(id) { 
     if (!id) return null;
     return this._cache.find(p => String(p.id) === String(id)) || null; 

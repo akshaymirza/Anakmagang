@@ -11,6 +11,44 @@ if ($db_query) {
         $db_interns[] = $row;
     }
 }
+
+// 1. Ambil statistik task (Selesai & Pending) per intern dari MySQL
+$task_stats = [];
+$task_query = mysqli_query($conn, "
+    SELECT 
+        LOWER(TRIM(assignee)) as intern_name,
+        SUM(CASE WHEN LOWER(status) = 'done' THEN 1 ELSE 0 END) as done_count,
+        SUM(CASE WHEN LOWER(status) != 'done' THEN 1 ELSE 0 END) as pending_count
+    FROM tasks 
+    WHERE assignee IS NOT NULL AND TRIM(assignee) != ''
+    GROUP BY LOWER(TRIM(assignee))
+");
+if ($task_query) {
+    while ($r = mysqli_fetch_assoc($task_query)) {
+        $task_stats[$r['intern_name']] = [
+            'done' => (int)$r['done_count'],
+            'pending' => (int)$r['pending_count']
+        ];
+    }
+}
+
+// 2. Ambil statistik kehadiran (Hadir) per intern dari MySQL HANYA untuk bulan berjalan saat ini
+$att_stats = [];
+$cur_month_prefix = date('Y-m');
+$att_query = mysqli_query($conn, "
+    SELECT 
+        LOWER(TRIM(username)) as intern_name,
+        COUNT(*) as present_count
+    FROM attendance 
+    WHERE status IN ('present', 'late')
+      AND date LIKE '{$cur_month_prefix}%'
+    GROUP BY LOWER(TRIM(username))
+");
+if ($att_query) {
+    while ($r = mysqli_fetch_assoc($att_query)) {
+        $att_stats[$r['intern_name']] = (int)$r['present_count'];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -21,6 +59,8 @@ if ($db_query) {
     <!-- Inject DB Interns to JS -->
     <script>
         window.DB_INTERNS = <?php echo json_encode($db_interns, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+        window.DB_TASK_STATS = <?php echo json_encode($task_stats, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+        window.DB_ATT_STATS = <?php echo json_encode($att_stats, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     </script>
     <!-- Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -85,7 +125,12 @@ include '../partials/sidebar-admin.php';
                     <?php if (empty($db_interns)): ?>
                         <!-- Fallback jika belum ada intern di DB MySQL, render via JS default -->
                     <?php else: ?>
-                        <?php foreach ($db_interns as $intern): ?>
+                        <?php foreach ($db_interns as $intern): 
+                            $uname_key = strtolower(trim($intern['username']));
+                            $done_count = $task_stats[$uname_key]['done'] ?? 0;
+                            $pending_count = $task_stats[$uname_key]['pending'] ?? 0;
+                            $present_count = $att_stats[$uname_key] ?? 0;
+                        ?>
                             <div class="p-4 rounded-xl border border-outline-variant bg-surface-container-low flex flex-col justify-between hover:shadow-md transition-all">
                                 <div>
                                     <div class="flex items-center gap-3 mb-3">
@@ -100,16 +145,16 @@ include '../partials/sidebar-admin.php';
 
                                     <div class="grid grid-cols-3 gap-2 my-3 text-center text-xs">
                                         <div class="p-2 bg-white/60 rounded border border-outline-variant/40">
-                                            <span class="block font-bold text-primary">0</span>
+                                            <span class="block font-bold text-primary"><?php echo $done_count; ?></span>
                                             <span class="text-[10px] text-on-surface-variant">Selesai</span>
                                         </div>
                                         <div class="p-2 bg-white/60 rounded border border-outline-variant/40">
-                                            <span class="block font-bold text-amber-700">0</span>
+                                            <span class="block font-bold text-amber-700"><?php echo $pending_count; ?></span>
                                             <span class="text-[10px] text-on-surface-variant">Pending</span>
                                         </div>
-                                        <div class="p-2 bg-white/60 rounded border border-outline-variant/40">
-                                            <span class="block font-bold text-green-700">0</span>
-                                            <span class="text-[10px] text-on-surface-variant">Hadir</span>
+                                        <div class="p-2 bg-white/60 rounded border border-outline-variant/40" title="Kehadiran bulan ini (<?php echo date('M Y'); ?>)">
+                                            <span class="block font-bold text-green-700"><?php echo $present_count; ?></span>
+                                            <span class="text-[10px] text-on-surface-variant">Hadir (Bln Ini)</span>
                                         </div>
                                     </div>
                                 </div>
@@ -119,7 +164,7 @@ include '../partials/sidebar-admin.php';
                                         <span class="material-symbols-outlined text-[16px]">visibility</span>
                                         <span>Lihat Dashboard</span>
                                     </a>
-                                    <a href="admin-attendance.php?intern=<?php echo urlencode($intern['username']); ?>" class="px-2.5 py-1.5 border border-outline-variant text-on-surface hover:bg-surface-container-high rounded-lg text-xs font-semibold text-center flex items-center justify-center" title="Absensi Intern">
+                                    <a href="../attendance.php?intern=<?php echo urlencode($intern['username']); ?>" class="px-2.5 py-1.5 border border-outline-variant text-on-surface hover:bg-surface-container-high rounded-lg text-xs font-semibold text-center flex items-center justify-center" title="Absensi Intern">
                                         <span class="material-symbols-outlined text-[16px]">calendar_month</span>
                                     </a>
                                 </div>
@@ -284,7 +329,13 @@ include '../partials/sidebar-admin.php';
 
             const assigneeSelect = document.getElementById('admin-task-assignee');
             assigneeSelect.innerHTML = '';
-            InternStore.list().forEach(i => {
+            let listForAssign = [];
+            if (window.DB_INTERNS && Array.isArray(window.DB_INTERNS) && window.DB_INTERNS.length) {
+                listForAssign = window.DB_INTERNS.map(u => ({ name: u.username }));
+            } else if (window.InternStore) {
+                listForAssign = InternStore.list();
+            }
+            listForAssign.forEach(i => {
                 const opt = document.createElement('option');
                 opt.value = i.name;
                 opt.textContent = `${i.name} (Intern)`;
@@ -443,43 +494,56 @@ include '../partials/sidebar-admin.php';
             const container = document.getElementById('admin-intern-cards-list');
             if (!container) return;
             
-            let interns = window.InternStore ? InternStore.list() : [];
-            
-            // Gabungkan akun intern dari Database MySQL (db_internspace.users) jika belum ada di InternStore
-            if (window.DB_INTERNS && Array.isArray(window.DB_INTERNS)) {
-                const existingNames = new Set(interns.map(i => i.name.toLowerCase()));
-                window.DB_INTERNS.forEach(dbUser => {
-                    const uname = dbUser.username;
-                    if (!existingNames.has(uname.toLowerCase())) {
-                        interns.push({
-                            id: 'db-' + dbUser.id,
-                            name: uname,
-                            email: uname,
-                            role: 'Intern',
-                            division: 'Intern Kedayweb'
-                        });
-                        existingNames.add(uname.toLowerCase());
-                    }
-                });
+            // Prioritaskan akun intern HANYA dari MySQL Database
+            let interns = [];
+            if (window.DB_INTERNS && Array.isArray(window.DB_INTERNS) && window.DB_INTERNS.length) {
+                interns = window.DB_INTERNS.map(u => ({
+                    id: u.id,
+                    name: u.username,
+                    division: 'Intern Kedayweb'
+                }));
+            } else if (window.InternStore) {
+                interns = InternStore.list();
             }
 
-            container.innerHTML = '';
-            
             if (interns.length === 0) {
                 container.innerHTML = `<div class="col-span-3 text-center py-6 text-on-surface-variant italic">Belum ada intern terdaftar di database.</div>`;
                 return;
             }
 
+            container.innerHTML = '';
+
             interns.forEach(intern => {
-                const tasks = window.ProjectStore ? ProjectStore.tasksByAssignee(intern.name) : [];
-                const completedTasks = tasks.filter(t => t.status === 'done').length;
-                const pendingTasks = tasks.filter(t => t.status !== 'done').length;
+                const unameLower = String(intern.name || '').toLowerCase().trim();
                 
+                // Ambil statistik task: dari ProjectStore (jika sudah terisi), atau fallback ke DB_TASK_STATS dari PHP
+                let completedTasks = 0;
+                let pendingTasks = 0;
+                if (window.ProjectStore && typeof ProjectStore.tasksByAssignee === 'function') {
+                    const tasks = ProjectStore.tasksByAssignee(intern.name);
+                    if (tasks.length > 0) {
+                        completedTasks = tasks.filter(t => t.status === 'done').length;
+                        pendingTasks = tasks.filter(t => t.status !== 'done').length;
+                    } else if (window.DB_TASK_STATS && window.DB_TASK_STATS[unameLower]) {
+                        completedTasks = window.DB_TASK_STATS[unameLower].done || 0;
+                        pendingTasks = window.DB_TASK_STATS[unameLower].pending || 0;
+                    }
+                } else if (window.DB_TASK_STATS && window.DB_TASK_STATS[unameLower]) {
+                    completedTasks = window.DB_TASK_STATS[unameLower].done || 0;
+                    pendingTasks = window.DB_TASK_STATS[unameLower].pending || 0;
+                }
+
+                // Ambil statistik kehadiran: HANYA untuk bulan berjalan saat ini (Bln Ini)
+                const nowWIB = (typeof getNowWIB === 'function') ? getNowWIB() : new Date();
+                const curMonthPrefix = `${nowWIB.getFullYear()}-${String(nowWIB.getMonth() + 1).padStart(2, '0')}`;
+
+                let presentCount = 0;
                 const dbUserAtt = dbAttendanceMap[intern.name] || {};
-                let presentCount = Object.values(dbUserAtt).filter(r => r.status === 'present' || r.status === 'late').length;
-                if (presentCount === 0) {
-                    const attendance = InternStore.getAttendance(intern.name);
-                    presentCount = attendance.filter(r => r.status === 'present' || r.status === 'late').length;
+                const attRecs = Object.values(dbUserAtt).filter(r => r.date && r.date.startsWith(curMonthPrefix));
+                if (attRecs.length > 0) {
+                    presentCount = attRecs.filter(r => r.status === 'present' || r.status === 'late').length;
+                } else if (window.DB_ATT_STATS && typeof window.DB_ATT_STATS[unameLower] !== 'undefined') {
+                    presentCount = window.DB_ATT_STATS[unameLower];
                 }
 
                 const card = document.createElement('div');
@@ -505,9 +569,9 @@ include '../partials/sidebar-admin.php';
                                 <span class="block font-bold text-amber-700">${pendingTasks}</span>
                                 <span class="text-[10px] text-on-surface-variant">Pending</span>
                             </div>
-                            <div class="p-2 bg-white/60 rounded border border-outline-variant/40">
+                            <div class="p-2 bg-white/60 rounded border border-outline-variant/40" title="Kehadiran bulan berjalan">
                                 <span class="block font-bold text-green-700">${presentCount}</span>
-                                <span class="text-[10px] text-on-surface-variant">Hadir</span>
+                                <span class="text-[10px] text-on-surface-variant">Hadir (Bln Ini)</span>
                             </div>
                         </div>
                     </div>
@@ -517,7 +581,7 @@ include '../partials/sidebar-admin.php';
                             <span class="material-symbols-outlined text-[16px]">visibility</span>
                             <span>Lihat Dashboard</span>
                         </a>
-                        <a href="admin-attendance.php?intern=${encodeURIComponent(intern.name)}" class="px-2.5 py-1.5 border border-outline-variant text-on-surface hover:bg-surface-container-high rounded-lg text-xs font-semibold text-center flex items-center justify-center" title="Absensi Intern">
+                        <a href="../attendance.php?intern=${encodeURIComponent(intern.name)}" class="px-2.5 py-1.5 border border-outline-variant text-on-surface hover:bg-surface-container-high rounded-lg text-xs font-semibold text-center flex items-center justify-center" title="Absensi Intern">
                             <span class="material-symbols-outlined text-[16px]">calendar_month</span>
                         </a>
                     </div>
@@ -612,8 +676,8 @@ include '../partials/sidebar-admin.php';
 
         /* ================= INIT ================= */
         async function renderEverything() {
-            if (window.InternStore && typeof InternStore.seedAllAttendance === 'function') {
-                InternStore.seedAllAttendance();
+            if (window.ProjectStore && typeof ProjectStore.init === 'function') {
+                try { await ProjectStore.init(); } catch (e) { console.warn('ProjectStore init warning:', e); }
             }
             await fetchDbAttendanceForDashboard();
             renderInternDashboardList();

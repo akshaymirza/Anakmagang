@@ -373,8 +373,7 @@ require_login(); ?>
                     class="lg:col-span-8 order-1 lg:order-2 bg-surface-container-lowest rounded-2xl border border-outline-variant p-3 sm:p-5 min-w-0 w-full overflow-hidden">
                     <!-- Calendar Header -->
                     <div class="flex justify-between items-center mb-3 sm:mb-5">
-                        <h3 id="cal-title" class="font-geist text-base sm:text-xl font-bold text-on-surface">September
-                            2026</h3>
+                        <h3 id="cal-title" class="font-geist text-base sm:text-xl font-bold text-on-surface"></h3>
                         <div class="flex items-center gap-1">
                             <button id="cal-prev" onclick="changeMonth(-1)"
                                 class="p-1.5 sm:p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-primary">
@@ -1028,7 +1027,8 @@ require_login(); ?>
         }
 
         function loadData() {
-            // Gabungkan catatan server dengan hari kerja lalu yang belum ada absensi (Alpha)
+            // Gabungkan catatan database dengan hari kerja yang terlewat (Alpha)
+            // Hanya aktif untuk bulan berjalan (saat ini) ATAU bulan yang memiliki data di database
             const result = [...attendanceData];
             const datesWithRec = new Set(result.map(r => r.date));
 
@@ -1036,32 +1036,40 @@ require_login(); ?>
             const todayStr = formatDate(today);
             const isTodayPastCutoff = isPastCutoff();
             const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+            const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+            const currentPrefix = todayStr.slice(0, 7);
 
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dateObj = new Date(calYear, calMonth, d);
-                const dateStr = formatDate(dateObj);
-                const dow = dateObj.getDay();
-                const isSunday = (dow === 0);
-                const isFuture = dateObj > today && dateStr !== todayStr;
-                const isToday = dateStr === todayStr;
-                const isPastDay = !isFuture && !isToday;
+            // Bulan dianggap aktif jika bulan berjalan ATAU ada riwayat absensi di bulan ini
+            const hasMonthRecords = attendanceData.some(r => r.date && r.date.startsWith(prefix));
+            const isMonthActive = (prefix === currentPrefix) || hasMonthRecords;
 
-                if (isSunday || isFuture) continue;
+            if (isMonthActive) {
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateObj = new Date(calYear, calMonth, d);
+                    const dateStr = formatDate(dateObj);
+                    const dow = dateObj.getDay();
+                    const isSunday = (dow === 0);
+                    const isFuture = dateObj > today && dateStr !== todayStr;
+                    const isToday = dateStr === todayStr;
+                    const isPastDay = !isFuture && !isToday;
 
-                if (!datesWithRec.has(dateStr)) {
-                    if (isPastDay || isTodayPastCutoff) {
-                        result.push({
-                            date: dateStr,
-                            status: 'absent',
-                            clockIn: '',
-                            clockOut: '',
-                            reason: 'Tidak melakukan absensi (Alpha)',
-                            leaveType: null,
-                            photoIn: '',
-                            locationIn: '',
-                            isAutoAbsent: true
-                        });
-                        datesWithRec.add(dateStr);
+                    if (isSunday || isFuture) continue;
+
+                    if (!datesWithRec.has(dateStr)) {
+                        if (isPastDay || isTodayPastCutoff) {
+                            result.push({
+                                date: dateStr,
+                                status: 'absent',
+                                clockIn: '',
+                                clockOut: '',
+                                reason: 'Tidak melakukan absensi (Alpha)',
+                                leaveType: null,
+                                photoIn: '',
+                                locationIn: '',
+                                isAutoAbsent: true
+                            });
+                            datesWithRec.add(dateStr);
+                        }
                     }
                 }
             }
@@ -1107,6 +1115,7 @@ require_login(); ?>
             if (calMonth > 11) { calMonth = 0; calYear++; }
             if (calMonth < 0) { calMonth = 11; calYear--; }
             renderCalendar();
+            renderStats();
             renderMonthlySummary();
         }
 
@@ -1115,6 +1124,7 @@ require_login(); ?>
             calYear = now.getFullYear();
             calMonth = now.getMonth();
             renderCalendar();
+            renderStats();
             renderMonthlySummary();
         }
 
@@ -1172,29 +1182,34 @@ require_login(); ?>
                         cell.classList.add(`status-${rec.status}`);
                     }
                     cell.addEventListener('click', () => openDetailModal(dateStr));
-                } else if (isPastDay || isTodayPastCutoff) {
-                    // Belum absen dan sudah lewat jam 14:00 atau hari lalu -> Merah (absent)
-                    cell.classList.add('status-absent');
-                    cell.addEventListener('click', () => openDetailModal(dateStr));
                 } else {
+                    // Hari kosong / belum ada catatan absensi (sesuai legend: Akhir Pekan / Kosong)
                     cell.style.background = '#f8fafc';
                     cell.style.color = '#64748b';
-                    cell.style.cursor = 'default';
+                    if (isAdminRole) {
+                        cell.style.cursor = 'pointer';
+                        cell.addEventListener('click', () => openDetailModal(dateStr));
+                    } else {
+                        cell.style.cursor = 'default';
+                    }
                 }
 
                 if (isToday) cell.classList.add('today');
 
                 cell.innerHTML = `<span>${d}</span>`;
-                const currentStatus = rec ? rec.status : ((isPastDay || isTodayPastCutoff) ? 'absent' : null);
-                if (currentStatus && !isWeekend) {
+                if (rec && !isWeekend) {
                     const dot = document.createElement('div');
                     dot.className = 'status-dot';
-                    if (rec && rec.status === 'permit') {
+                    if (rec.status === 'permit') {
                         dot.style.background = '#8b5cf6';
-                    } else if (rec && rec.status === 'absent' && rec.leaveType) {
+                    } else if (rec.status === 'absent' && rec.leaveType) {
                         dot.style.background = rec.leaveType === 'sakit' ? '#7c3aed' : '#d97706';
-                    } else {
-                        dot.style.background = currentStatus === 'present' ? '#16a34a' : currentStatus === 'late' ? '#d97706' : '#dc2626';
+                    } else if (rec.status === 'present') {
+                        dot.style.background = '#16a34a';
+                    } else if (rec.status === 'late') {
+                        dot.style.background = '#d97706';
+                    } else if (rec.status === 'absent') {
+                        dot.style.background = '#dc2626';
                     }
                     cell.appendChild(dot);
                 }
@@ -1206,10 +1221,13 @@ require_login(); ?>
         // RENDER STATS
         // ============================================================
         function renderStats() {
-            const data = loadData();
-            const present = data.filter(r => r.status === 'present').length;
-            const late = data.filter(r => r.status === 'late').length;
-            const absent = data.filter(r => r.status === 'absent').length;
+            // Hitung statistik sesuai dengan bulan & tahun yang sedang ditampilkan di kalender
+            const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+            const monthData = loadData().filter(r => r.date && r.date.startsWith(prefix));
+
+            const present = monthData.filter(r => r.status === 'present').length;
+            const late = monthData.filter(r => r.status === 'late').length;
+            const absent = monthData.filter(r => r.status === 'absent').length;
             const total = present + late + absent;
             const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
 
@@ -1218,8 +1236,8 @@ require_login(); ?>
             document.getElementById('stat-absent').textContent = absent;
             document.getElementById('stat-rate').textContent = rate + '%';
 
-            // Streak
-            const streak = calcStreak(data);
+            // Streak dihitung dari seluruh data kehadiran
+            const streak = calcStreak(loadData());
             document.getElementById('streak-count').textContent = streak;
             document.getElementById('streak-desc').textContent = streak > 0
                 ? `Anda hadir ${streak} hari berturut-turut!`
@@ -2671,9 +2689,18 @@ require_login(); ?>
         document.addEventListener('DOMContentLoaded', async () => {
             applyAdminPreviewMode();
             initCalendar();
-            await fetchGeofenceConfig();
-            await fetchServerData();
-            refreshAll();
+            refreshAll(); // Render kalender & stats langsung tanpa tunggu request selesai
+            try {
+                await fetchGeofenceConfig();
+            } catch (e) {
+                console.warn('Geofence config warn:', e);
+            }
+            try {
+                await fetchServerData();
+            } catch (e) {
+                console.warn('Fetch server data warn:', e);
+            }
+            refreshAll(); // Re-render setelah data dari database masuk
         });
     </script>
 </body>

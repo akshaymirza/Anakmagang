@@ -50,6 +50,21 @@ if (!empty($conn) && !empty($_SESSION['user_id'])) {
 
 $is_tugas_active = in_array($active, ['projects', 'tasks', 'internspace']);
 $is_media_active = in_array($active, ['galeri', 'events', 'article', 'gallery', 'events_history']);
+
+// Deteksi mode pratinjau intern atau impersonasi
+$current_intern_param = trim($_GET['intern'] ?? '');
+$intern_query_str = $current_intern_param !== '' ? '?intern=' . urlencode($current_intern_param) : '';
+
+$is_admin_user = (current_user_role() === 'admin' || current_user_role() === 'superadmin' || original_user_role() === 'admin' || original_user_role() === 'superadmin');
+$is_viewing_intern = ($current_intern_param !== '');
+
+// Tombol Dashboard di sidebar intern selalu mengarah ke dashboard intern
+$sidebar_dashboard_href = $root_prefix . 'dashboard.php' . $intern_query_str;
+
+$sidebar_attendance_href = $root_prefix . 'attendance.php' . $intern_query_str;
+$sidebar_projects_href = $root_prefix . 'projects.php' . $intern_query_str;
+$sidebar_tasks_href = $root_prefix . 'tasks.php' . $intern_query_str;
+$sidebar_internspace_href = $root_prefix . 'internspace.php' . $intern_query_str;
 ?>
 <!-- Mobile Sidebar Backdrop Overlay -->
 <div id="sidebar-backdrop" onclick="closeMobileSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity md:hidden"></div>
@@ -57,7 +72,7 @@ $is_media_active = in_array($active, ['galeri', 'events', 'article', 'gallery', 
 <!-- Sidebar Navigation -->
 <aside id="app-sidebar" class="fixed left-0 top-0 bottom-0 z-50 flex flex-col h-full w-[16.5rem] bg-surface-container-lowest border-r border-outline-variant p-md transform -translate-x-full md:translate-x-0 transition-transform duration-300 shadow-2xl md:shadow-none">
     <div class="flex items-center justify-between mb-xl px-sm">
-        <a href="<?php echo $root_prefix; ?>index.php" class="flex items-center gap-sm rounded-lg transition-all duration-200 hover:bg-surface-container-high group" title="Kembali ke Beranda" aria-label="Kembali ke Beranda">
+        <a href="<?php echo $sidebar_dashboard_href; ?>" class="flex items-center gap-sm rounded-lg transition-all duration-200 hover:bg-surface-container-high group" title="Dashboard Intern" aria-label="Dashboard Intern">
             <img src="<?php echo $root_prefix; ?>uploads/Icon/Anak_Magang_Icon.jpg.jpeg" alt="Logo Anak Magang" class="w-8 h-8 rounded-lg object-cover shadow-xs border border-outline-variant/30 shrink-0 group-hover:opacity-90 transition-opacity"/>
             <div>
                 <h1 class="font-headline-md text-headline-md text-primary font-bold group-hover:underline" data-i18n="brand_name">AnakMagang</h1>
@@ -71,13 +86,13 @@ $is_media_active = in_array($active, ['galeri', 'events', 'article', 'gallery', 
 
     <nav class="flex-1 space-y-xs overflow-y-auto pr-1">
         <!-- Dashboard -->
-        <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'dashboard') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>dashboard.php">
+        <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'dashboard') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $sidebar_dashboard_href; ?>">
             <span class="material-symbols-outlined"<?php echo ($active === 'dashboard') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>dashboard</span>
             <span data-i18n="nav_dashboard">Dashboard</span>
         </a>
 
         <!-- Attendance -->
-        <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'attendance') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>attendance.php">
+        <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'attendance') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $sidebar_attendance_href; ?>">
             <span class="material-symbols-outlined"<?php echo ($active === 'attendance') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>event_available</span>
             <span data-i18n="nav_attendance">Attendance</span>
         </a>
@@ -92,15 +107,15 @@ $is_media_active = in_array($active, ['galeri', 'events', 'article', 'gallery', 
                 <span id="arrow-dropdown-tugas-intern" class="material-symbols-outlined text-[18px] transition-transform duration-200 <?php echo $is_tugas_active ? 'rotate-180' : ''; ?>">expand_more</span>
             </button>
             <div id="dropdown-tugas-intern" class="<?php echo $is_tugas_active ? '' : 'hidden'; ?> pl-sm space-y-xs pt-xs border-l-2 border-outline-variant/40 ml-md my-xs">
-                <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'projects') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>projects.php">
+                <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'projects') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $sidebar_projects_href; ?>">
                     <span class="material-symbols-outlined text-[20px]"<?php echo ($active === 'projects') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>folder_open</span>
                     <span data-i18n="nav_projects">Projects</span>
                 </a>
-                <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'tasks') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>tasks.php">
+                <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'tasks') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $sidebar_tasks_href; ?>">
                     <span class="material-symbols-outlined text-[20px]"<?php echo ($active === 'tasks') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>view_kanban</span>
                     <span data-i18n="nav_tasks">Kanban Board</span>
                 </a>
-                <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'internspace') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $root_prefix; ?>internspace.php">
+                <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md transition-all duration-200 <?php echo ($active === 'internspace') ? 'bg-primary-container text-on-primary-container font-bold' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'; ?>" href="<?php echo $sidebar_internspace_href; ?>">
                     <span class="material-symbols-outlined text-[20px]"<?php echo ($active === 'internspace') ? ' style="font-variation-settings: \'FILL\' 1;"' : ''; ?>>history_edu</span>
                     <span data-i18n="nav_internspace">Riwayat Tugas</span>
                 </a>
@@ -151,14 +166,24 @@ $is_media_active = in_array($active, ['galeri', 'events', 'article', 'gallery', 
             <span data-i18n="nav_about">Tentang</span>
         </a>
 
-        <?php if ($show_admin_link || current_user_role() === 'admin' || current_user_role() === 'superadmin'): ?>
-            <a onclick="closeMobileSidebar()" class="flex items-center gap-md px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-label-md text-label-md active:scale-[0.98] transition-transform" href="<?php echo $admin_prefix; ?>admin-dashboard.php">
-                <span class="material-symbols-outlined">admin_panel_settings</span>
-                <span data-i18n="nav_admin_dashboard">Admin Dashboard</span>
-            </a>
-        <?php endif; ?>
+
     </nav>
     <div class="mt-auto border-t border-outline-variant pt-md space-y-xs">
+        <?php if ($current_intern_param !== ''): ?>
+            <div class="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-xs space-y-1">
+                <div class="flex items-center gap-1.5 text-blue-800 font-bold">
+                    <span class="material-symbols-outlined text-[16px]">visibility</span>
+                    <span>Memantau Intern</span>
+                </div>
+                <div class="text-[11px] text-blue-950 font-bold truncate">
+                    <?php echo htmlspecialchars($current_intern_param, ENT_QUOTES, 'UTF-8'); ?>
+                </div>
+                <a href="<?php echo $admin_prefix; ?>admin-dashboard.php" class="mt-1 block text-center py-1 px-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[11px] transition-colors shadow-2xs">
+                    Kembali ke Admin &rarr;
+                </a>
+            </div>
+        <?php endif; ?>
+
         <div class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-on-surface">
             <span class="material-symbols-outlined text-primary">account_circle</span>
             <span class="truncate font-semibold"><?php echo htmlspecialchars(current_user_name(), ENT_QUOTES, 'UTF-8'); ?></span>

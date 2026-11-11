@@ -4,7 +4,7 @@ require_admin();
 require_once __DIR__ . '/../Login/koneksi.php';
 
 // Auto sync certificates for all intern users
-if ($conn) {
+if ($conn && function_exists('sync_all_intern_certificates')) {
     sync_all_intern_certificates($conn);
 }
 

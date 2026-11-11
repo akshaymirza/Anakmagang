@@ -61,4 +61,9 @@ if (!$conn) {
 
 // Paksa zona waktu MySQL session ke WIB (UTC+7)
 @mysqli_query($conn, "SET time_zone = '+07:00'");
+
+// Muat helper fungsi sertifikat & kalkulator skor
+if (file_exists(__DIR__ . '/../score-calculator.php')) {
+    require_once __DIR__ . '/../score-calculator.php';
+}
 ?>

@@ -429,3 +429,98 @@ if (!function_exists('fallback_scores')) {
         ];
     }
 }
+
+if (!function_exists('sync_all_intern_certificates')) {
+    /**
+     * Memastikan setiap user dengan role 'intern' memiliki data sertifikat
+     * di tabel certificates dan memperbarui nilainya jika diperlukan.
+     *
+     * @param mysqli $conn
+     * @return int Jumlah sertifikat yang disinkronkan / ditambahkan
+     */
+    function sync_all_intern_certificates(mysqli $conn): int
+    {
+        if (!$conn) {
+            return 0;
+        }
+
+        // Pastikan tabel certificates dan users ada
+        $checkTbl = @mysqli_query($conn, "SHOW TABLES LIKE 'certificates'");
+        if (!$checkTbl || mysqli_num_rows($checkTbl) === 0) {
+            return 0;
+        }
+
+        // Ambil semua user bertipe 'intern'
+        $internQuery = @mysqli_query($conn, "SELECT id, username, intern_position, university, major, intern_start_date FROM users WHERE role = 'intern'");
+        if (!$internQuery) {
+            return 0;
+        }
+
+        $synced = 0;
+        while ($user = mysqli_fetch_assoc($internQuery)) {
+            $userId   = (int)$user['id'];
+            $username = trim($user['username'] ?? '');
+            if ($userId <= 0 || $username === '') {
+                continue;
+            }
+
+            // Cek apakah sertifikat untuk user ini sudah ada (berdasarkan user_id atau nama intern)
+            $escUsername = mysqli_real_escape_string($conn, $username);
+            $checkCert = @mysqli_query($conn, "SELECT id, user_id, start_date, end_date FROM certificates WHERE user_id = $userId OR LOWER(TRIM(intern_name)) = LOWER('$escUsername') LIMIT 1");
+
+            if ($checkCert && $certRow = mysqli_fetch_assoc($checkCert)) {
+                $certId = (int)$certRow['id'];
+                // Jika user_id belum terisi di certificates, hubungkan sekarang
+                if (empty($certRow['user_id']) || (int)$certRow['user_id'] !== $userId) {
+                    @mysqli_query($conn, "UPDATE certificates SET user_id = $userId WHERE id = $certId");
+                }
+                $synced++;
+            } else {
+                // Buat sertifikat baru otomatis untuk intern ini
+                $year = date('Y');
+                if (!empty($user['intern_start_date'])) {
+                    $year = date('Y', strtotime($user['intern_start_date']));
+                }
+
+                // Generate ID sertifikat unik seperti IS-2024-001 / IS-2026-006
+                $certNum = $userId;
+                $newCertId = sprintf("IS-%s-%03d", $year, $certNum);
+
+                // Cek jika ID tersebut sudah dipakai sertifikat lain
+                $chkId = @mysqli_query($conn, "SELECT id FROM certificates WHERE certificate_id = '" . mysqli_real_escape_string($conn, $newCertId) . "' LIMIT 1");
+                if ($chkId && mysqli_num_rows($chkId) > 0) {
+                    $newCertId = sprintf("IS-%s-%04d", $year, $certNum + 100);
+                }
+
+                $pos   = !empty($user['intern_position']) ? $user['intern_position'] : 'Intern Kedayweb';
+                $univ  = !empty($user['university']) ? $user['university'] : '-';
+                $major = !empty($user['major']) ? $user['major'] : '-';
+                $start = !empty($user['intern_start_date']) ? $user['intern_start_date'] : date('Y-m-01');
+                $end   = date('Y-m-d', strtotime('+3 months', strtotime($start)));
+                $issue = $end;
+
+                $escCertId = mysqli_real_escape_string($conn, $newCertId);
+                $escName   = mysqli_real_escape_string($conn, $username);
+                $escPos    = mysqli_real_escape_string($conn, $pos);
+                $escUniv   = mysqli_real_escape_string($conn, $univ);
+                $escMajor  = mysqli_real_escape_string($conn, $major);
+
+                $insQuery = "INSERT INTO certificates 
+                    (certificate_id, user_id, intern_name, intern_position, university, major, start_date, end_date, issue_date, supervisor_name, status)
+                    VALUES
+                    ('$escCertId', $userId, '$escName', '$escPos', '$escUniv', '$escMajor', '$start', '$end', '$issue', 'M. Lutfi Nur Fauzi, S.Kom.', 'active')";
+
+                if (@mysqli_query($conn, $insQuery)) {
+                    $newId = mysqli_insert_id($conn);
+                    if (function_exists('update_certificate_scores')) {
+                        update_certificate_scores($conn, $userId, true, $newId);
+                    }
+                    $synced++;
+                }
+            }
+        }
+
+        return $synced;
+    }
+}
+
