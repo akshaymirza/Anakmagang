@@ -1731,8 +1731,11 @@ require_login(); ?>
         // EXPORT CSV
         // ============================================================
         function exportAttendanceCSV() {
-            const data = loadData().sort((a, b) => b.date.localeCompare(a.date));
-            if (!data.length) { showToast('Belum ada data untuk diekspor.', 'warning'); return; }
+            const targetMonthPrefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
+            const data = loadData()
+                .filter(r => r.date && r.date.startsWith(targetMonthPrefix))
+                .sort((a, b) => b.date.localeCompare(a.date));
+            if (!data.length) { showToast('Belum ada data untuk diekspor pada bulan ini.', 'warning'); return; }
 
             const statusLabel = {
                 present: 'Hadir',
@@ -1782,7 +1785,8 @@ require_login(); ?>
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `Kehadiran_PKL_${calYear}_${String(calMonth + 1).padStart(2, '0')}.csv`;
+            const filePrefix = (typeof isAdminPreview !== 'undefined' && isAdminPreview && activeInternName) ? `${activeInternName}_` : 'PKL_';
+            link.download = `Kehadiran_${filePrefix}${calYear}_${String(calMonth + 1).padStart(2, '0')}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

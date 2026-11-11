@@ -983,6 +983,7 @@ if ($db_query) {
             const todayStr = fmt(today);
             const isTodayPastCutoff = today.getHours() >= 14;
             const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+            const targetMonthPrefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
 
             const statusLabel = {
                 present: 'Hadir',
@@ -993,7 +994,7 @@ if ($db_query) {
 
             const allRecords = [];
 
-            // 1. Kumpulkan data setiap hari kerja dalam bulan aktif untuk semua intern
+            // 1. Kumpulkan data setiap hari dalam bulan aktif untuk semua intern
             for (let d = 1; d <= daysInMonth; d++) {
                 const dateObj = new Date(calYear, calMonth, d);
                 const dateStr = fmt(dateObj);
@@ -1002,8 +1003,6 @@ if ($db_query) {
                 const isFuture = dateObj > today && dateStr !== todayStr;
                 const isToday = dateStr === todayStr;
                 const isPastDay = !isFuture && !isToday;
-
-                if (isFuture) continue;
 
                 interns.forEach(intern => {
                     const dbUserAtt = dbAttendanceMap[intern.name] || {};
@@ -1032,7 +1031,7 @@ if ($db_query) {
                             status: stLabel,
                             reason: r.reason || '-'
                         });
-                    } else if (!isSunday) {
+                    } else if (!isSunday && !isFuture) {
                         // Hari kerja tanpa presensi (Alpha / Belum Absen)
                         if (isPastDay || isTodayPastCutoff) {
                             allRecords.push({
@@ -1059,48 +1058,23 @@ if ($db_query) {
                 });
             }
 
-            // 2. Kumpulkan juga record yang tersimpan di luar hari kerja di atas (misal lembur hari Minggu atau record tanggal lain)
-            interns.forEach(intern => {
-                const dbUserAtt = dbAttendanceMap[intern.name] || {};
-                Object.values(dbUserAtt).forEach(r => {
-                    const alreadyAdded = allRecords.some(item => item.internName === intern.name && item.date === r.date);
-                    if (!alreadyAdded) {
-                        let stLabel = statusLabel[r.status] || r.status;
-                        if (r.status === 'permit') {
-                            const lt = (r.leaveType || '').toLowerCase();
-                            if (lt === 'dispen' || lt === 'dispensasi') stLabel = 'Dispensasi Instansi';
-                            else if (lt === 'sakit') stLabel = 'Sakit';
-                            else if (lt === 'izin') stLabel = 'Izin Keperluan';
-                            else if (lt === 'dinas') stLabel = 'Tugas Luar / Dinas';
-                            else stLabel = 'Izin / Dispensasi';
-                        }
-                        allRecords.push({
-                            internName: intern.name,
-                            division: intern.division || 'Intern Kedayweb',
-                            date: r.date,
-                            clockIn: r.clockIn || '--:--',
-                            clockOut: r.clockOut || '--:--',
-                            status: stLabel,
-                            reason: r.reason || '-'
-                        });
-                    }
-                });
-            });
+            // Filter ketat HANYA data pada bulan dan tahun yang sedang aktif
+            const exportRecords = allRecords.filter(item => item.date && item.date.startsWith(targetMonthPrefix));
 
-            if (!allRecords.length) {
-                alert('Belum ada data kehadiran untuk diekspor.');
+            if (!exportRecords.length) {
+                alert('Belum ada data kehadiran untuk bulan yang dipilih.');
                 return;
             }
 
             // Urutkan berdasarkan tanggal descending, lalu nama intern
-            allRecords.sort((a, b) => {
+            exportRecords.sort((a, b) => {
                 if (a.date !== b.date) return b.date.localeCompare(a.date);
                 return a.internName.localeCompare(b.internName);
             });
 
             const rows = [['Nama Intern', 'Divisi', 'Tanggal', 'Jam Masuk', 'Jam Keluar', 'Status', 'Alasan']];
 
-            allRecords.forEach(r => {
+            exportRecords.forEach(r => {
                 const [y, m, d] = r.date.split('-');
                 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
                 const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
