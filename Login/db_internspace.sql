@@ -291,7 +291,8 @@ CREATE TABLE `users` (
   `university` varchar(150) DEFAULT NULL,
   `major` varchar(150) DEFAULT NULL,
   `intern_start_date` date DEFAULT NULL,
-  `intern_end_date` date DEFAULT NULL
+  `intern_end_date` date DEFAULT NULL,
+  `entry_year` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --

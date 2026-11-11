@@ -11,7 +11,11 @@ if ($conn) {
         sync_all_intern_certificates($conn);
     }
 
-    $qy = mysqli_query($conn, "SELECT DISTINCT CAST(COALESCE(NULLIF(REGEXP_SUBSTR(certificate_id, '[0-9]{4}'), ''), YEAR(start_date), YEAR(issue_date), YEAR(created_at)) AS UNSIGNED) as yr FROM certificates ORDER BY yr DESC");
+    $qy = mysqli_query($conn, "SELECT DISTINCT yr FROM (
+        SELECT entry_year AS yr FROM users WHERE entry_year IS NOT NULL AND entry_year > 0
+        UNION
+        SELECT CAST(COALESCE(NULLIF(REGEXP_SUBSTR(certificate_id, '[0-9]{4}'), ''), YEAR(start_date), YEAR(issue_date), YEAR(created_at)) AS UNSIGNED) AS yr FROM certificates
+    ) t WHERE yr IS NOT NULL AND yr > 0 ORDER BY yr DESC");
     if ($qy) {
         while ($ry = mysqli_fetch_assoc($qy)) {
             if (!empty($ry['yr'])) $cohort_years[] = (int)$ry['yr'];
@@ -21,12 +25,14 @@ if ($conn) {
     $sql_users = "SELECT u.id, u.username, u.password, u.role, u.intern_position, u.university, u.major,
                          u.intern_start_date, u.intern_end_date,
                          COALESCE(
+                             u.entry_year,
                              (SELECT CAST(COALESCE(
                                  NULLIF(REGEXP_SUBSTR(c.certificate_id, '[0-9]{4}'), ''),
                                  YEAR(c.start_date),
                                  YEAR(c.issue_date),
                                  YEAR(c.created_at)
                              ) AS UNSIGNED) FROM certificates c WHERE c.user_id = u.id LIMIT 1),
+                             YEAR(u.intern_start_date),
                              CAST(YEAR(NOW()) AS UNSIGNED)
                          ) AS entry_year
                   FROM users u 

@@ -374,6 +374,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $major             = trim($_POST['major'] ?? '');
         $intern_start_date = !empty($_POST['intern_start_date']) ? trim($_POST['intern_start_date']) : null;
         $intern_end_date   = !empty($_POST['intern_end_date']) ? trim($_POST['intern_end_date']) : null;
+        $entry_year        = !empty($_POST['entry_year']) ? intval($_POST['entry_year']) : (int)date('Y');
 
         if (empty($username) || empty($password)) {
             $msg = "Username dan Password wajib diisi!";
@@ -389,9 +390,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $msg = "Username '{$username}' sudah terdaftar!";
                 $msg_type = "danger";
             } else {
-                $insert_stmt = mysqli_prepare($conn, "INSERT INTO users (username, password, role, intern_position, university, major, intern_start_date, intern_end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                $insert_stmt = mysqli_prepare($conn, "INSERT INTO users (username, password, role, intern_position, university, major, intern_start_date, intern_end_date, entry_year) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 if ($insert_stmt) {
-                    mysqli_stmt_bind_param($insert_stmt, "ssssssss", $username, $password, $role, $intern_position, $university, $major, $intern_start_date, $intern_end_date);
+                    mysqli_stmt_bind_param($insert_stmt, "ssssssssi", $username, $password, $role, $intern_position, $university, $major, $intern_start_date, $intern_end_date, $entry_year);
                     if (mysqli_stmt_execute($insert_stmt)) {
                         $new_user_id = mysqli_insert_id($conn);
                         if ($role === 'intern' && $new_user_id > 0) {
@@ -418,28 +419,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $major             = trim($_POST['major'] ?? '');
         $intern_start_date = !empty($_POST['intern_start_date']) ? trim($_POST['intern_start_date']) : null;
         $intern_end_date   = !empty($_POST['intern_end_date']) ? trim($_POST['intern_end_date']) : null;
+        $entry_year        = !empty($_POST['entry_year']) ? intval($_POST['entry_year']) : null;
 
         if ($conn && $user_id > 0) {
             if (!empty($password)) {
-                $stmt = mysqli_prepare($conn, "UPDATE users SET username=?, password=?, role=?, intern_position=?, university=?, major=?, intern_start_date=?, intern_end_date=? WHERE id=?");
+                $stmt = mysqli_prepare($conn, "UPDATE users SET username=?, password=?, role=?, intern_position=?, university=?, major=?, intern_start_date=?, intern_end_date=?, entry_year=? WHERE id=?");
                 if ($stmt) {
-                    mysqli_stmt_bind_param($stmt, "ssssssssi", $username, $password, $role, $intern_position, $university, $major, $intern_start_date, $intern_end_date, $user_id);
+                    mysqli_stmt_bind_param($stmt, "ssssssssii", $username, $password, $role, $intern_position, $university, $major, $intern_start_date, $intern_end_date, $entry_year, $user_id);
                     mysqli_stmt_execute($stmt);
                     mysqli_stmt_close($stmt);
                 }
             } else {
-                $stmt = mysqli_prepare($conn, "UPDATE users SET username=?, role=?, intern_position=?, university=?, major=?, intern_start_date=?, intern_end_date=? WHERE id=?");
+                $stmt = mysqli_prepare($conn, "UPDATE users SET username=?, role=?, intern_position=?, university=?, major=?, intern_start_date=?, intern_end_date=?, entry_year=? WHERE id=?");
                 if ($stmt) {
-                    mysqli_stmt_bind_param($stmt, "sssssssi", $username, $role, $intern_position, $university, $major, $intern_start_date, $intern_end_date, $user_id);
+                    mysqli_stmt_bind_param($stmt, "sssssssii", $username, $role, $intern_position, $university, $major, $intern_start_date, $intern_end_date, $entry_year, $user_id);
                     mysqli_stmt_execute($stmt);
                     mysqli_stmt_close($stmt);
                 }
             }
             if ($role === 'intern') {
                 ensure_intern_certificate($conn, $user_id, $username, $intern_position, $university, $major);
+                if ($entry_year && $entry_year >= 2000) {
+                    $chkCert = mysqli_query($conn, "SELECT id, certificate_id FROM certificates WHERE user_id = $user_id LIMIT 1");
+                    if ($chkCert && $cRow = mysqli_fetch_assoc($chkCert)) {
+                        $oldCertId = $cRow['certificate_id'];
+                        if (preg_match('/^(IS-)\d{4}(-\d+)$/', $oldCertId, $matches)) {
+                            $newCertId = $matches[1] . $entry_year . $matches[2];
+                            $upCert = mysqli_prepare($conn, "UPDATE certificates SET certificate_id = ? WHERE id = ?");
+                            if ($upCert) {
+                                mysqli_stmt_bind_param($upCert, "si", $newCertId, $cRow['id']);
+                                mysqli_stmt_execute($upCert);
+                                mysqli_stmt_close($upCert);
+                            }
+                        }
+                    }
+                }
             }
             $msg = "Data user ID #{$user_id} berhasil diperbarui!";
             $msg_type = "success";
+        }
+    } elseif ($action === 'update_user_cohort') {
+        $user_id    = intval($_POST['user_id'] ?? 0);
+        $entry_year = intval($_POST['entry_year'] ?? 0);
+        if ($conn && $user_id > 0 && $entry_year >= 2000 && $entry_year <= 2100) {
+            $stmt = mysqli_prepare($conn, "UPDATE users SET entry_year = ? WHERE id = ?");
+            if ($stmt) {
+                mysqli_stmt_bind_param($stmt, "ii", $entry_year, $user_id);
+                mysqli_stmt_execute($stmt);
+                mysqli_stmt_close($stmt);
+            }
+            // Sinkronkan juga tahun pada nomor sertifikat jika ada
+            $chkCert = mysqli_query($conn, "SELECT id, certificate_id FROM certificates WHERE user_id = $user_id LIMIT 1");
+            if ($chkCert && $cRow = mysqli_fetch_assoc($chkCert)) {
+                $oldCertId = $cRow['certificate_id'];
+                if (preg_match('/^(IS-)\d{4}(-\d+)$/', $oldCertId, $matches)) {
+                    $newCertId = $matches[1] . $entry_year . $matches[2];
+                    $upCert = mysqli_prepare($conn, "UPDATE certificates SET certificate_id = ? WHERE id = ?");
+                    if ($upCert) {
+                        mysqli_stmt_bind_param($upCert, "si", $newCertId, $cRow['id']);
+                        mysqli_stmt_execute($upCert);
+                        mysqli_stmt_close($upCert);
+                    }
+                }
+            }
+            $msg = "Tahun Angkatan user berhasil diubah menjadi Angkatan {$entry_year}!";
+            $msg_type = "success";
+        } else {
+            $msg = "Tahun Angkatan tidak valid (harus 4 digit antara 2000 - 2100)!";
+            $msg_type = "danger";
         }
     } elseif ($action === 'update_user_role') {
         $user_id = intval($_POST['user_id'] ?? 0);
@@ -590,13 +637,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $users = [];
 $cohort_years = [];
 if ($conn) {
-    // Auto migration: Ensure intern_position, university, major, intern_start_date, intern_end_date columns exist in users table
+    // Auto migration: Ensure intern_position, university, major, intern_start_date, intern_end_date, entry_year columns exist in users table
     $cols_to_check = [
         'intern_position'  => 'VARCHAR(150) DEFAULT NULL',
         'university'       => 'VARCHAR(150) DEFAULT NULL',
         'major'            => 'VARCHAR(150) DEFAULT NULL',
         'intern_start_date'=> 'DATE DEFAULT NULL COMMENT \'Tanggal mulai wajib absen intern\'',
-        'intern_end_date'  => 'DATE DEFAULT NULL COMMENT \'Tanggal selesai magang intern\''
+        'intern_end_date'  => 'DATE DEFAULT NULL COMMENT \'Tanggal selesai magang intern\'',
+        'entry_year'       => 'INT DEFAULT NULL COMMENT \'Tahun angkatan intern\''
     ];
     foreach ($cols_to_check as $col_name => $col_def) {
         $chk_col = @mysqli_query($conn, "SHOW COLUMNS FROM users LIKE '$col_name'");
@@ -610,8 +658,12 @@ if ($conn) {
         sync_all_intern_certificates($conn);
     }
 
-    // Ambil daftar tahun angkatan yang ada di certificates
-    $qy = mysqli_query($conn, "SELECT DISTINCT CAST(COALESCE(NULLIF(REGEXP_SUBSTR(certificate_id, '[0-9]{4}'), ''), YEAR(start_date), YEAR(issue_date), YEAR(created_at)) AS UNSIGNED) as yr FROM certificates ORDER BY yr DESC");
+    // Ambil daftar tahun angkatan yang ada di users dan certificates
+    $qy = mysqli_query($conn, "SELECT DISTINCT yr FROM (
+        SELECT entry_year AS yr FROM users WHERE entry_year IS NOT NULL AND entry_year > 0
+        UNION
+        SELECT CAST(COALESCE(NULLIF(REGEXP_SUBSTR(certificate_id, '[0-9]{4}'), ''), YEAR(start_date), YEAR(issue_date), YEAR(created_at)) AS UNSIGNED) AS yr FROM certificates
+    ) t WHERE yr IS NOT NULL AND yr > 0 ORDER BY yr DESC");
     if ($qy) {
         while ($ry = mysqli_fetch_assoc($qy)) {
             if (!empty($ry['yr'])) $cohort_years[] = (int)$ry['yr'];
@@ -619,14 +671,16 @@ if ($conn) {
     }
 
     $sql_users = "SELECT u.id, u.username, u.password, u.role, u.intern_position, u.university, u.major,
-                         u.intern_start_date, u.intern_end_date,
+                         u.intern_start_date, u.intern_end_date, u.entry_year AS custom_entry_year,
                          COALESCE(
+                             u.entry_year,
                              (SELECT CAST(COALESCE(
                                  NULLIF(REGEXP_SUBSTR(c.certificate_id, '[0-9]{4}'), ''),
                                  YEAR(c.start_date),
                                  YEAR(c.issue_date),
                                  YEAR(c.created_at)
                              ) AS UNSIGNED) FROM certificates c WHERE c.user_id = u.id LIMIT 1),
+                             YEAR(u.intern_start_date),
                              CAST(YEAR(NOW()) AS UNSIGNED)
                          ) AS entry_year
                   FROM users u 
@@ -1459,23 +1513,23 @@ $sop_data = get_sop_data();
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left">
                         <thead>
-                            <tr class="border-b border-outline-variant bg-surface-container-low text-on-surface-variant">
-                                <th class="py-3 px-4 font-semibold">ID</th>
-                                <th class="py-3 px-4 font-semibold">Username / Email</th>
-                                <th class="py-3 px-4 font-semibold">Password</th>
-                                <th class="py-3 px-4 font-semibold">Role</th>
-                                <th class="py-3 px-4 font-semibold">Angkatan</th>
-                                <th class="py-3 px-4 font-semibold">Periode Magang</th>
-                                <th class="py-3 px-4 font-semibold">Posisi Magang</th>
-                                <th class="py-3 px-4 font-semibold">Instansi / Universitas</th>
-                                <th class="py-3 px-4 font-semibold">Jurusan</th>
-                                <th class="py-3 px-4 font-semibold text-right">Kelola Akun</th>
+                            <tr class="border-b border-outline-variant bg-surface-container-low text-on-surface-variant text-xs">
+                                <th class="py-2.5 px-3 font-semibold">ID</th>
+                                <th class="py-2.5 px-3 font-semibold">Username / Email</th>
+                                <th class="py-2.5 px-3 font-semibold">Password</th>
+                                <th class="py-2.5 px-3 font-semibold">Role</th>
+                                <th class="py-2.5 px-3 font-semibold whitespace-nowrap">Angkatan</th>
+                                <th class="py-2.5 px-3 font-semibold whitespace-nowrap">Periode Magang</th>
+                                <th class="py-2.5 px-3 font-semibold">Posisi Magang</th>
+                                <th class="py-2.5 px-3 font-semibold">Instansi / Universitas</th>
+                                <th class="py-2.5 px-3 font-semibold">Jurusan</th>
+                                <th class="py-2.5 px-3 font-semibold text-right">Kelola Akun</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-outline-variant">
                             <?php if (empty($users)): ?>
                                 <tr id="no-superadmin-users-msg">
-                                    <td colspan="9" class="text-center py-6 text-on-surface-variant">Tidak ada data user di database.</td>
+                                    <td colspan="10" class="text-center py-6 text-on-surface-variant">Tidak ada data user di database.</td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($users as $u): ?>
@@ -1483,99 +1537,98 @@ $sop_data = get_sop_data();
                                         data-year="<?php echo (int)($u['entry_year'] ?? date('Y')); ?>"
                                         data-role="<?php echo htmlspecialchars($u['role'], ENT_QUOTES, 'UTF-8'); ?>"
                                         data-search="<?php echo htmlspecialchars(strtolower($u['username'] . ' ' . $u['role'] . ' ' . ($u['intern_position'] ?? '') . ' ' . ($u['university'] ?? '') . ' ' . ($u['major'] ?? '') . ' ' . ($u['entry_year'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>">
-                                        <td class="py-3 px-4 font-bold">#<?php echo (int) $u['id']; ?></td>
-                                        <td class="py-3 px-4 font-medium text-on-surface"><?php echo htmlspecialchars($u['username'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                        <td class="py-3 px-4 font-mono text-sm">
-                                            <div class="flex items-center gap-2">
+                                        <td class="py-2 px-3 font-bold text-xs whitespace-nowrap">#<?php echo (int) $u['id']; ?></td>
+                                        <td class="py-2 px-3 font-semibold text-on-surface text-xs whitespace-nowrap"><?php echo htmlspecialchars($u['username'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td class="py-2 px-3 font-mono text-xs whitespace-nowrap">
+                                            <div class="flex items-center gap-1.5">
                                                 <span class="password-text hidden bg-surface-container-high px-2 py-0.5 rounded text-xs text-primary font-bold select-all"><?php echo htmlspecialchars($u['password'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></span>
                                                 <span class="password-hidden text-xs text-on-surface-variant font-bold">••••••••</span>
-                                                <button type="button" onclick="togglePassword(this)" class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer p-1 rounded-lg hover:bg-surface-container-high" title="Lihat/Sembunyikan Password">
-                                                    <span class="material-symbols-outlined text-[18px]">visibility</span>
+                                                <button type="button" onclick="togglePassword(this)" class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer p-0.5 rounded hover:bg-surface-container-high" title="Lihat/Sembunyikan Password">
+                                                    <span class="material-symbols-outlined text-[16px]">visibility</span>
                                                 </button>
                                             </div>
                                         </td>
-                                        <td class="py-3 px-4">
-                                            <span class="px-2.5 py-1 text-xs rounded-full font-bold <?php echo $u['role'] === 'admin' || $u['role'] === 'superadmin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'; ?>">
+                                        <td class="py-2 px-3 whitespace-nowrap">
+                                            <span class="px-2 py-0.5 text-[11px] rounded-full font-bold <?php echo $u['role'] === 'admin' || $u['role'] === 'superadmin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'; ?>">
                                                 <?php echo strtoupper(htmlspecialchars($u['role'], ENT_QUOTES, 'UTF-8')); ?>
                                             </span>
                                         </td>
-                                        <td class="py-3 px-4">
-                                            <span class="px-2.5 py-1 text-xs rounded-full font-bold bg-amber-50 text-amber-900 border border-amber-200/80 flex items-center gap-1 w-fit shadow-2xs">
-                                                <span class="material-symbols-outlined text-[14px] text-amber-600">calendar_today</span>
-                                                <span>Angkatan <?php echo (int)($u['entry_year'] ?? date('Y')); ?></span>
-                                            </span>
+                                        <td class="py-2 px-3 whitespace-nowrap">
+                                            <div class="inline-flex items-center gap-1 whitespace-nowrap">
+                                                <span class="px-2 py-0.5 text-xs rounded-full font-bold bg-amber-50 text-amber-900 border border-amber-200/80 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
+                                                    <span class="material-symbols-outlined text-[13px] text-amber-600">calendar_today</span>
+                                                    <span class="whitespace-nowrap">Angkatan <?php echo (int)($u['entry_year'] ?? date('Y')); ?></span>
+                                                </span>
+                                                <button type="button"
+                                                    onclick="openEditCohortModal(<?php echo (int)$u['id']; ?>, '<?php echo htmlspecialchars($u['username'], ENT_QUOTES, 'UTF-8'); ?>', <?php echo (int)($u['entry_year'] ?? date('Y')); ?>)"
+                                                    class="text-amber-700 hover:text-amber-900 p-0.5 rounded hover:bg-amber-100 transition-colors cursor-pointer shrink-0 inline-flex items-center justify-center"
+                                                    title="Ubah Angkatan">
+                                                    <span class="material-symbols-outlined text-[14px]">edit</span>
+                                                </button>
+                                            </div>
                                         </td>
-                                        <td class="py-3 px-4">
+                                        <td class="py-2 px-3 whitespace-nowrap">
                                             <?php if ($u['role'] === 'intern'): 
                                                 $todayStr = date('Y-m-d');
                                                 $hasStart = !empty($u['intern_start_date']);
                                                 $hasEnd   = !empty($u['intern_end_date']);
                                                 $isEnded  = $hasEnd && ($todayStr > $u['intern_end_date']);
                                                 $isFuture = $hasStart && ($todayStr < $u['intern_start_date']);
+                                                $periodTooltip = ($hasStart ? 'Mulai: ' . date('d M Y', strtotime($u['intern_start_date'])) : '') . ($hasEnd ? ' | Selesai: ' . date('d M Y', strtotime($u['intern_end_date'])) : '');
                                             ?>
-                                                <div class="flex flex-col gap-1 min-w-[140px]">
-                                                    <div class="flex items-center gap-1.5 flex-wrap">
-                                                        <?php if ($isEnded): ?>
-                                                            <span class="px-2 py-0.5 text-xs rounded-full font-bold bg-slate-100 text-slate-700 border border-slate-300 flex items-center gap-1" title="Periode magang telah berakhir">
-                                                                <span class="material-symbols-outlined text-[13px] text-slate-500">task_alt</span>
-                                                                Selesai
-                                                            </span>
-                                                        <?php elseif ($isFuture): ?>
-                                                            <span class="px-2 py-0.5 text-xs rounded-full font-bold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1" title="Magang belum dimulai">
-                                                                <span class="material-symbols-outlined text-[13px] text-amber-600">hourglass_top</span>
-                                                                Belum Mulai
-                                                            </span>
-                                                        <?php elseif ($hasStart || $hasEnd): ?>
-                                                            <span class="px-2 py-0.5 text-xs rounded-full font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1" title="Sedang dalam masa magang aktif">
-                                                                <span class="material-symbols-outlined text-[13px] text-emerald-600">check_circle</span>
-                                                                Aktif
-                                                            </span>
-                                                        <?php else: ?>
-                                                            <span class="px-2 py-0.5 text-xs rounded-full font-semibold bg-slate-100 text-slate-500 border border-slate-200 italic">Belum diset</span>
-                                                        <?php endif; ?>
+                                                <div class="inline-flex items-center gap-1 whitespace-nowrap">
+                                                    <?php if ($isEnded): ?>
+                                                        <span class="px-2 py-0.5 text-xs rounded-full font-bold bg-slate-100 text-slate-700 border border-slate-300 inline-flex items-center gap-1" title="<?php echo $periodTooltip; ?>">
+                                                            <span class="material-symbols-outlined text-[12px] text-slate-500">task_alt</span>
+                                                            Selesai
+                                                        </span>
+                                                    <?php elseif ($isFuture): ?>
+                                                        <span class="px-2 py-0.5 text-xs rounded-full font-bold bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center gap-1" title="<?php echo $periodTooltip; ?>">
+                                                            <span class="material-symbols-outlined text-[12px] text-amber-600">hourglass_top</span>
+                                                            Belum Mulai
+                                                        </span>
+                                                    <?php elseif ($hasStart || $hasEnd): ?>
+                                                        <span class="px-2 py-0.5 text-xs rounded-full font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 inline-flex items-center gap-1" title="<?php echo $periodTooltip; ?>">
+                                                            <span class="material-symbols-outlined text-[12px] text-emerald-600">check_circle</span>
+                                                            Aktif
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <span class="px-2 py-0.5 text-xs rounded-full font-semibold bg-slate-100 text-slate-500 border border-slate-200 italic">Belum diset</span>
+                                                    <?php endif; ?>
 
-                                                        <button type="button"
-                                                            onclick="openStartDateModal(<?php echo (int)$u['id']; ?>, '<?php echo htmlspecialchars($u['username'], ENT_QUOTES, 'UTF-8'); ?>', '<?php echo htmlspecialchars($u['intern_start_date'] ?? '', ENT_QUOTES, 'UTF-8'); ?>', '<?php echo htmlspecialchars($u['intern_end_date'] ?? '', ENT_QUOTES, 'UTF-8'); ?>')"
-                                                            class="text-primary hover:text-primary/80 p-1 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer"
-                                                            title="Atur Periode Magang (Mulai & Selesai)">
-                                                            <span class="material-symbols-outlined text-[16px]">edit_calendar</span>
-                                                        </button>
-                                                    </div>
-                                                    <div class="text-[11px] text-on-surface-variant leading-tight">
-                                                        <?php if ($hasStart): ?>
-                                                            <div>Mulai: <strong><?php echo date('d M Y', strtotime($u['intern_start_date'])); ?></strong></div>
-                                                        <?php endif; ?>
-                                                        <?php if ($hasEnd): ?>
-                                                            <div>Selesai: <strong><?php echo date('d M Y', strtotime($u['intern_end_date'])); ?></strong></div>
-                                                        <?php endif; ?>
-                                                    </div>
+                                                    <button type="button"
+                                                        onclick="openStartDateModal(<?php echo (int)$u['id']; ?>, '<?php echo htmlspecialchars($u['username'], ENT_QUOTES, 'UTF-8'); ?>', '<?php echo htmlspecialchars($u['intern_start_date'] ?? '', ENT_QUOTES, 'UTF-8'); ?>', '<?php echo htmlspecialchars($u['intern_end_date'] ?? '', ENT_QUOTES, 'UTF-8'); ?>')"
+                                                        class="text-primary hover:text-primary/80 p-0.5 rounded hover:bg-primary/10 transition-colors cursor-pointer shrink-0 inline-flex items-center justify-center"
+                                                        title="Atur Periode Magang (Mulai & Selesai)">
+                                                        <span class="material-symbols-outlined text-[15px]">edit_calendar</span>
+                                                    </button>
                                                 </div>
                                             <?php else: ?>
                                                 <span class="text-slate-400 italic text-xs">N/A</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="py-3 px-4 font-medium text-on-surface">
-                                            <?php echo !empty($u['intern_position']) ? htmlspecialchars($u['intern_position'], ENT_QUOTES, 'UTF-8') : '<span class="text-slate-400 italic text-xs">-</span>'; ?>
+                                        <td class="py-2 px-3 text-xs text-on-surface whitespace-nowrap">
+                                            <?php echo !empty($u['intern_position']) ? htmlspecialchars($u['intern_position'], ENT_QUOTES, 'UTF-8') : '<span class="text-slate-400 italic">-</span>'; ?>
                                         </td>
-                                        <td class="py-3 px-4 font-medium text-on-surface">
-                                            <?php echo !empty($u['university']) ? htmlspecialchars($u['university'], ENT_QUOTES, 'UTF-8') : '<span class="text-slate-400 italic text-xs">-</span>'; ?>
+                                        <td class="py-2 px-3 text-xs text-on-surface whitespace-nowrap">
+                                            <?php echo !empty($u['university']) ? htmlspecialchars($u['university'], ENT_QUOTES, 'UTF-8') : '<span class="text-slate-400 italic">-</span>'; ?>
                                         </td>
-                                        <td class="py-3 px-4 font-medium text-on-surface">
-                                            <?php echo !empty($u['major']) ? htmlspecialchars($u['major'], ENT_QUOTES, 'UTF-8') : '<span class="text-slate-400 italic text-xs">-</span>'; ?>
+                                        <td class="py-2 px-3 text-xs text-on-surface whitespace-nowrap">
+                                            <?php echo !empty($u['major']) ? htmlspecialchars($u['major'], ENT_QUOTES, 'UTF-8') : '<span class="text-slate-400 italic">-</span>'; ?>
                                         </td>
-                                        <td class="py-3 px-4 text-right">
+                                        <td class="py-2 px-3 text-right whitespace-nowrap">
                                             <div class="inline-flex items-center gap-1.5">
                                                 <!-- Tombol Edit User -->
-                                                <button type="button" onclick='openEditUserModal(<?php echo json_encode($u, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)' class="px-2.5 py-1 text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white border border-indigo-200 rounded-lg font-bold transition-all flex items-center gap-1 cursor-pointer" title="Edit Detail User">
-                                                    <span class="material-symbols-outlined text-[14px]">edit</span> Edit
+                                                <button type="button" onclick='openEditUserModal(<?php echo json_encode($u, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)' class="px-2 py-0.5 text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white border border-indigo-200 rounded-lg font-bold transition-all flex items-center gap-1 cursor-pointer" title="Edit Detail User">
+                                                    <span class="material-symbols-outlined text-[13px]">edit</span> Edit
                                                 </button>
 
                                                 <!-- Form Hapus User -->
                                                 <form action="superadmin.php" method="POST" class="inline-block confirm-action-form" data-confirm-title="Hapus Akun User" data-confirm-message="PERINGATAN SUPERADMIN: Apakah Anda yakin ingin menghapus akun '<?php echo htmlspecialchars(addslashes($u['username']), ENT_QUOTES, 'UTF-8'); ?>' (ID #<?php echo (int) $u['id']; ?>)? Tindakan ini akan menghapus akun secara permanen!">
                                                     <input type="hidden" name="action" value="delete_user"/>
                                                     <input type="hidden" name="user_id" value="<?php echo (int) $u['id']; ?>"/>
-                                                    <button type="submit" class="px-2.5 py-1 text-xs bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg font-bold transition-all flex items-center gap-1 cursor-pointer" title="Hapus Akun">
-                                                        <span class="material-symbols-outlined text-[14px]">delete</span> Hapus
+                                                    <button type="submit" class="px-2 py-0.5 text-xs bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 rounded-lg font-bold transition-all flex items-center gap-1 cursor-pointer" title="Hapus Akun">
+                                                        <span class="material-symbols-outlined text-[13px]">delete</span> Hapus
                                                     </button>
                                                 </form>
                                             </div>
@@ -2248,6 +2301,49 @@ $sop_data = get_sop_data();
         <input type="hidden" name="action" value="reset_about_data"/>
     </form>
 
+    <!-- Modal Ubah Angkatan Intern -->
+    <div id="edit-cohort-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
+        <div class="bg-surface-container-lowest rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-outline-variant">
+            <div class="flex justify-between items-center pb-3 border-b border-outline-variant mb-4">
+                <h3 class="font-headline-md font-bold text-amber-700 flex items-center gap-2">
+                    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">calendar_today</span>
+                    <span>Ubah Tahun Angkatan</span>
+                </h3>
+                <button type="button" onclick="closeEditCohortModal()" class="text-on-surface-variant hover:text-on-surface p-1 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form action="superadmin.php" method="POST" class="space-y-4">
+                <input type="hidden" name="action" value="update_user_cohort"/>
+                <input type="hidden" name="user_id" id="cohort-user-id"/>
+
+                <div>
+                    <p class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">Intern</p>
+                    <p id="cohort-intern-name" class="font-bold text-on-surface text-base"></p>
+                </div>
+
+                <div>
+                    <label for="cohort-year-input" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                        Tahun Angkatan <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" name="entry_year" id="cohort-year-input" min="2000" max="2099" required
+                        class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-base font-bold text-amber-900 focus:ring-2 focus:ring-amber-500 focus:outline-none"/>
+                    <p class="text-[11px] text-slate-400 mt-1">Contoh: 2024, 2025, 2026. Menentukan filter angkatan dan nomor seri sertifikat.</p>
+                </div>
+
+                <div class="flex gap-2 pt-2 border-t border-outline-variant">
+                    <button type="button" onclick="closeEditCohortModal()" class="flex-1 py-2.5 px-4 bg-surface-container-low hover:bg-surface-container-high text-on-surface border border-outline-variant rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit" class="flex-1 py-2.5 px-4 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
+                        <span class="material-symbols-outlined text-[18px]">save</span>
+                        <span>Simpan Angkatan</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal Set Periode Magang Intern -->
     <div id="start-date-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
         <div class="bg-surface-container-lowest rounded-2xl max-w-md w-full p-6 shadow-2xl border border-outline-variant">
@@ -2360,6 +2456,10 @@ $sop_data = get_sop_data();
                             <label class="block text-xs font-semibold mb-1">Jurusan (major)</label>
                             <input type="text" name="major" placeholder="Contoh: Informatika / Sistem Informasi" class="w-full px-3 py-2 border border-outline-variant rounded-xl text-sm outline-none focus:border-indigo-600"/>
                         </div>
+                        <div>
+                            <label class="block text-xs font-semibold mb-1">Tahun Angkatan</label>
+                            <input type="number" name="entry_year" min="2000" max="2099" value="<?php echo date('Y'); ?>" placeholder="<?php echo date('Y'); ?>" class="w-full px-3 py-2 border border-outline-variant rounded-xl text-sm outline-none focus:border-indigo-600"/>
+                        </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-semibold mb-1">Mulai Magang</label>
@@ -2432,6 +2532,10 @@ $sop_data = get_sop_data();
                         <div>
                             <label class="block text-xs font-semibold mb-1">Jurusan (major)</label>
                             <input type="text" name="major" id="edit-major" placeholder="Contoh: Informatika / Sistem Informasi" class="w-full px-3 py-2 border border-outline-variant rounded-xl text-sm outline-none focus:border-indigo-600"/>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold mb-1">Tahun Angkatan</label>
+                            <input type="number" name="entry_year" id="edit-entry-year" min="2000" max="2099" placeholder="Contoh: 2024" class="w-full px-3 py-2 border border-outline-variant rounded-xl text-sm outline-none focus:border-indigo-600"/>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
@@ -2829,7 +2933,19 @@ $sop_data = get_sop_data();
             document.getElementById('edit-major').value = user.major || '';
             document.getElementById('edit-intern-start-date').value = user.intern_start_date || '';
             document.getElementById('edit-intern-end-date').value = user.intern_end_date || '';
+            document.getElementById('edit-entry-year').value = user.entry_year || user.custom_entry_year || '';
             document.getElementById('edit-user-modal').classList.remove('hidden');
+        }
+
+        function openEditCohortModal(userId, username, currentYear) {
+            document.getElementById('cohort-user-id').value = userId;
+            document.getElementById('cohort-intern-name').textContent = username;
+            document.getElementById('cohort-year-input').value = currentYear || new Date().getFullYear();
+            document.getElementById('edit-cohort-modal').classList.remove('hidden');
+        }
+
+        function closeEditCohortModal() {
+            document.getElementById('edit-cohort-modal').classList.add('hidden');
         }
 
         function togglePassword(btn) {

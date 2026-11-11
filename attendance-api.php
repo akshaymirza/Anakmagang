@@ -75,7 +75,7 @@ if ($conn) {
     }
 }
 
-// Auto-migrate kolom intern_start_date & intern_end_date di tabel users jika belum ada
+// Auto-migrate kolom intern_start_date, intern_end_date & entry_year di tabel users jika belum ada
 if ($conn) {
     $chk_isd = @mysqli_query($conn, "SHOW COLUMNS FROM `users` LIKE 'intern_start_date'");
     if ($chk_isd && mysqli_num_rows($chk_isd) === 0) {
@@ -84,6 +84,10 @@ if ($conn) {
     $chk_ied = @mysqli_query($conn, "SHOW COLUMNS FROM `users` LIKE 'intern_end_date'");
     if ($chk_ied && mysqli_num_rows($chk_ied) === 0) {
         @mysqli_query($conn, "ALTER TABLE `users` ADD COLUMN `intern_end_date` DATE DEFAULT NULL COMMENT 'Tanggal selesai magang intern'");
+    }
+    $chk_ey = @mysqli_query($conn, "SHOW COLUMNS FROM `users` LIKE 'entry_year'");
+    if ($chk_ey && mysqli_num_rows($chk_ey) === 0) {
+        @mysqli_query($conn, "ALTER TABLE `users` ADD COLUMN `entry_year` INT DEFAULT NULL COMMENT 'Tahun angkatan intern'");
     }
 }
 
