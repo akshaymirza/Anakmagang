@@ -366,12 +366,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $msg_type = "success";
 
     } elseif ($action === 'add_user') {
-        $username        = trim($_POST['username'] ?? '');
-        $password        = trim($_POST['password'] ?? '');
-        $role            = trim($_POST['role'] ?? 'intern');
-        $intern_position = trim($_POST['intern_position'] ?? '');
-        $university      = trim($_POST['university'] ?? '');
-        $major           = trim($_POST['major'] ?? '');
+        $username          = trim($_POST['username'] ?? '');
+        $password          = trim($_POST['password'] ?? '');
+        $role              = trim($_POST['role'] ?? 'intern');
+        $intern_position   = trim($_POST['intern_position'] ?? '');
+        $university        = trim($_POST['university'] ?? '');
+        $major             = trim($_POST['major'] ?? '');
+        $intern_start_date = !empty($_POST['intern_start_date']) ? trim($_POST['intern_start_date']) : null;
+        $intern_end_date   = !empty($_POST['intern_end_date']) ? trim($_POST['intern_end_date']) : null;
 
         if (empty($username) || empty($password)) {
             $msg = "Username dan Password wajib diisi!";
@@ -387,9 +389,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $msg = "Username '{$username}' sudah terdaftar!";
                 $msg_type = "danger";
             } else {
-                $insert_stmt = mysqli_prepare($conn, "INSERT INTO users (username, password, role, intern_position, university, major) VALUES (?, ?, ?, ?, ?, ?)");
+                $insert_stmt = mysqli_prepare($conn, "INSERT INTO users (username, password, role, intern_position, university, major, intern_start_date, intern_end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
                 if ($insert_stmt) {
-                    mysqli_stmt_bind_param($insert_stmt, "ssssss", $username, $password, $role, $intern_position, $university, $major);
+                    mysqli_stmt_bind_param($insert_stmt, "ssssssss", $username, $password, $role, $intern_position, $university, $major, $intern_start_date, $intern_end_date);
                     if (mysqli_stmt_execute($insert_stmt)) {
                         $new_user_id = mysqli_insert_id($conn);
                         if ($role === 'intern' && $new_user_id > 0) {
@@ -407,26 +409,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             mysqli_stmt_close($check_stmt);
         }
     } elseif ($action === 'update_user') {
-        $user_id         = intval($_POST['user_id'] ?? 0);
-        $username        = trim($_POST['username'] ?? '');
-        $password        = trim($_POST['password'] ?? '');
-        $role            = trim($_POST['role'] ?? 'intern');
-        $intern_position = trim($_POST['intern_position'] ?? '');
-        $university      = trim($_POST['university'] ?? '');
-        $major           = trim($_POST['major'] ?? '');
+        $user_id           = intval($_POST['user_id'] ?? 0);
+        $username          = trim($_POST['username'] ?? '');
+        $password          = trim($_POST['password'] ?? '');
+        $role              = trim($_POST['role'] ?? 'intern');
+        $intern_position   = trim($_POST['intern_position'] ?? '');
+        $university        = trim($_POST['university'] ?? '');
+        $major             = trim($_POST['major'] ?? '');
+        $intern_start_date = !empty($_POST['intern_start_date']) ? trim($_POST['intern_start_date']) : null;
+        $intern_end_date   = !empty($_POST['intern_end_date']) ? trim($_POST['intern_end_date']) : null;
 
         if ($conn && $user_id > 0) {
             if (!empty($password)) {
-                $stmt = mysqli_prepare($conn, "UPDATE users SET username=?, password=?, role=?, intern_position=?, university=?, major=? WHERE id=?");
+                $stmt = mysqli_prepare($conn, "UPDATE users SET username=?, password=?, role=?, intern_position=?, university=?, major=?, intern_start_date=?, intern_end_date=? WHERE id=?");
                 if ($stmt) {
-                    mysqli_stmt_bind_param($stmt, "ssssssi", $username, $password, $role, $intern_position, $university, $major, $user_id);
+                    mysqli_stmt_bind_param($stmt, "ssssssssi", $username, $password, $role, $intern_position, $university, $major, $intern_start_date, $intern_end_date, $user_id);
                     mysqli_stmt_execute($stmt);
                     mysqli_stmt_close($stmt);
                 }
             } else {
-                $stmt = mysqli_prepare($conn, "UPDATE users SET username=?, role=?, intern_position=?, university=?, major=? WHERE id=?");
+                $stmt = mysqli_prepare($conn, "UPDATE users SET username=?, role=?, intern_position=?, university=?, major=?, intern_start_date=?, intern_end_date=? WHERE id=?");
                 if ($stmt) {
-                    mysqli_stmt_bind_param($stmt, "sssssi", $username, $role, $intern_position, $university, $major, $user_id);
+                    mysqli_stmt_bind_param($stmt, "sssssssi", $username, $role, $intern_position, $university, $major, $intern_start_date, $intern_end_date, $user_id);
                     mysqli_stmt_execute($stmt);
                     mysqli_stmt_close($stmt);
                 }
@@ -586,12 +590,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $users = [];
 $cohort_years = [];
 if ($conn) {
-    // Auto migration: Ensure intern_position, university, major, intern_start_date columns exist in users table
+    // Auto migration: Ensure intern_position, university, major, intern_start_date, intern_end_date columns exist in users table
     $cols_to_check = [
         'intern_position'  => 'VARCHAR(150) DEFAULT NULL',
         'university'       => 'VARCHAR(150) DEFAULT NULL',
         'major'            => 'VARCHAR(150) DEFAULT NULL',
-        'intern_start_date'=> 'DATE DEFAULT NULL COMMENT \'Tanggal mulai wajib absen intern\''
+        'intern_start_date'=> 'DATE DEFAULT NULL COMMENT \'Tanggal mulai wajib absen intern\'',
+        'intern_end_date'  => 'DATE DEFAULT NULL COMMENT \'Tanggal selesai magang intern\''
     ];
     foreach ($cols_to_check as $col_name => $col_def) {
         $chk_col = @mysqli_query($conn, "SHOW COLUMNS FROM users LIKE '$col_name'");
@@ -614,7 +619,7 @@ if ($conn) {
     }
 
     $sql_users = "SELECT u.id, u.username, u.password, u.role, u.intern_position, u.university, u.major,
-                         u.intern_start_date,
+                         u.intern_start_date, u.intern_end_date,
                          COALESCE(
                              (SELECT CAST(COALESCE(
                                  NULLIF(REGEXP_SUBSTR(c.certificate_id, '[0-9]{4}'), ''),
@@ -1460,7 +1465,7 @@ $sop_data = get_sop_data();
                                 <th class="py-3 px-4 font-semibold">Password</th>
                                 <th class="py-3 px-4 font-semibold">Role</th>
                                 <th class="py-3 px-4 font-semibold">Angkatan</th>
-                                <th class="py-3 px-4 font-semibold">Tgl Mulai Absen</th>
+                                <th class="py-3 px-4 font-semibold">Periode Magang</th>
                                 <th class="py-3 px-4 font-semibold">Posisi Magang</th>
                                 <th class="py-3 px-4 font-semibold">Instansi / Universitas</th>
                                 <th class="py-3 px-4 font-semibold">Jurusan</th>
@@ -1501,22 +1506,49 @@ $sop_data = get_sop_data();
                                             </span>
                                         </td>
                                         <td class="py-3 px-4">
-                                            <?php if ($u['role'] === 'intern'): ?>
-                                                <div class="flex items-center gap-1.5">
-                                                    <?php if (!empty($u['intern_start_date'])): ?>
-                                                        <span class="px-2 py-0.5 text-xs rounded-full font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
-                                                            <span class="material-symbols-outlined text-[12px] text-emerald-600">event_available</span>
-                                                            <?php echo date('d M Y', strtotime($u['intern_start_date'])); ?>
-                                                        </span>
-                                                    <?php else: ?>
-                                                        <span class="px-2 py-0.5 text-xs rounded-full font-semibold bg-slate-100 text-slate-500 border border-slate-200 italic">Belum diset</span>
-                                                    <?php endif; ?>
-                                                    <button type="button"
-                                                        onclick="openStartDateModal(<?php echo (int)$u['id']; ?>, '<?php echo htmlspecialchars($u['username'], ENT_QUOTES, 'UTF-8'); ?>', '<?php echo htmlspecialchars($u['intern_start_date'] ?? '', ENT_QUOTES, 'UTF-8'); ?>')"
-                                                        class="text-primary hover:text-primary/80 p-1 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer"
-                                                        title="Set Tanggal Mulai Absen">
-                                                        <span class="material-symbols-outlined text-[16px]">edit_calendar</span>
-                                                    </button>
+                                            <?php if ($u['role'] === 'intern'): 
+                                                $todayStr = date('Y-m-d');
+                                                $hasStart = !empty($u['intern_start_date']);
+                                                $hasEnd   = !empty($u['intern_end_date']);
+                                                $isEnded  = $hasEnd && ($todayStr > $u['intern_end_date']);
+                                                $isFuture = $hasStart && ($todayStr < $u['intern_start_date']);
+                                            ?>
+                                                <div class="flex flex-col gap-1 min-w-[140px]">
+                                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                                        <?php if ($isEnded): ?>
+                                                            <span class="px-2 py-0.5 text-xs rounded-full font-bold bg-slate-100 text-slate-700 border border-slate-300 flex items-center gap-1" title="Periode magang telah berakhir">
+                                                                <span class="material-symbols-outlined text-[13px] text-slate-500">task_alt</span>
+                                                                Selesai
+                                                            </span>
+                                                        <?php elseif ($isFuture): ?>
+                                                            <span class="px-2 py-0.5 text-xs rounded-full font-bold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1" title="Magang belum dimulai">
+                                                                <span class="material-symbols-outlined text-[13px] text-amber-600">hourglass_top</span>
+                                                                Belum Mulai
+                                                            </span>
+                                                        <?php elseif ($hasStart || $hasEnd): ?>
+                                                            <span class="px-2 py-0.5 text-xs rounded-full font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1" title="Sedang dalam masa magang aktif">
+                                                                <span class="material-symbols-outlined text-[13px] text-emerald-600">check_circle</span>
+                                                                Aktif
+                                                            </span>
+                                                        <?php else: ?>
+                                                            <span class="px-2 py-0.5 text-xs rounded-full font-semibold bg-slate-100 text-slate-500 border border-slate-200 italic">Belum diset</span>
+                                                        <?php endif; ?>
+
+                                                        <button type="button"
+                                                            onclick="openStartDateModal(<?php echo (int)$u['id']; ?>, '<?php echo htmlspecialchars($u['username'], ENT_QUOTES, 'UTF-8'); ?>', '<?php echo htmlspecialchars($u['intern_start_date'] ?? '', ENT_QUOTES, 'UTF-8'); ?>', '<?php echo htmlspecialchars($u['intern_end_date'] ?? '', ENT_QUOTES, 'UTF-8'); ?>')"
+                                                            class="text-primary hover:text-primary/80 p-1 rounded-lg hover:bg-primary/10 transition-colors cursor-pointer"
+                                                            title="Atur Periode Magang (Mulai & Selesai)">
+                                                            <span class="material-symbols-outlined text-[16px]">edit_calendar</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="text-[11px] text-on-surface-variant leading-tight">
+                                                        <?php if ($hasStart): ?>
+                                                            <div>Mulai: <strong><?php echo date('d M Y', strtotime($u['intern_start_date'])); ?></strong></div>
+                                                        <?php endif; ?>
+                                                        <?php if ($hasEnd): ?>
+                                                            <div>Selesai: <strong><?php echo date('d M Y', strtotime($u['intern_end_date'])); ?></strong></div>
+                                                        <?php endif; ?>
+                                                    </div>
                                                 </div>
                                             <?php else: ?>
                                                 <span class="text-slate-400 italic text-xs">N/A</span>
@@ -2216,13 +2248,13 @@ $sop_data = get_sop_data();
         <input type="hidden" name="action" value="reset_about_data"/>
     </form>
 
-    <!-- Modal Set Tanggal Mulai Absen Intern -->
+    <!-- Modal Set Periode Magang Intern -->
     <div id="start-date-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 hidden backdrop-blur-sm">
         <div class="bg-surface-container-lowest rounded-2xl max-w-md w-full p-6 shadow-2xl border border-outline-variant">
             <div class="flex justify-between items-center pb-3 border-b border-outline-variant mb-5">
                 <h3 class="font-headline-md font-bold text-primary flex items-center gap-2">
-                    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">edit_calendar</span>
-                    <span>Set Tanggal Mulai Absen</span>
+                    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">date_range</span>
+                    <span>Atur Periode Magang Intern</span>
                 </h3>
                 <button onclick="closeStartDateModal()" class="text-on-surface-variant hover:text-on-surface p-1 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer">
                     <span class="material-symbols-outlined">close</span>
@@ -2231,9 +2263,10 @@ $sop_data = get_sop_data();
 
             <div class="mb-5 p-3.5 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-2.5">
                 <span class="material-symbols-outlined text-blue-600 text-lg shrink-0 mt-0.5">info</span>
-                <div class="text-xs text-blue-900">
-                    <p class="font-bold mb-0.5">Informasi</p>
-                    <p>Tanggal mulai absen menentukan kapan sistem mulai menghitung kehadiran intern. Hari sebelum tanggal ini <strong>tidak</strong> akan dihitung sebagai "tidak masuk".</p>
+                <div class="text-xs text-blue-900 leading-relaxed">
+                    <p class="font-bold mb-0.5">Ketentuan Periode Magang:</p>
+                    <p>• Hari <strong>sebelum</strong> tanggal mulai: intern belum aktif & tidak dihitung Alpha.</p>
+                    <p>• Hari <strong>setelah</strong> tanggal selesai: magang telah berakhir, intern <strong>tidak perlu absen lagi</strong> dan tidak akan dicatat bolos/Alpha.</p>
                 </div>
             </div>
 
@@ -2243,13 +2276,23 @@ $sop_data = get_sop_data();
                     <p id="start-date-intern-name" class="font-bold text-on-surface text-base"></p>
                 </div>
 
-                <div>
-                    <label for="start-date-input" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
-                        Tanggal Mulai Wajib Absen <span class="text-red-500">*</span>
-                    </label>
-                    <input type="date" id="start-date-input"
-                        class="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary focus:outline-none cursor-pointer"/>
-                    <p class="text-[11px] text-slate-400 mt-1">Kosongkan untuk menghapus tanggal mulai (semua hari akan dihitung).</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label for="start-date-input" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                            Mulai Magang
+                        </label>
+                        <input type="date" id="start-date-input"
+                            class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-xl text-xs sm:text-sm font-bold focus:ring-2 focus:ring-primary focus:outline-none cursor-pointer"/>
+                        <p class="text-[10px] text-slate-400 mt-1">Mulai wajib absen.</p>
+                    </div>
+                    <div>
+                        <label for="end-date-input" class="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                            Selesai Magang
+                        </label>
+                        <input type="date" id="end-date-input"
+                            class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-xl text-xs sm:text-sm font-bold focus:ring-2 focus:ring-primary focus:outline-none cursor-pointer"/>
+                        <p class="text-[10px] text-slate-400 mt-1">Batas akhir magang.</p>
+                    </div>
                 </div>
 
                 <div id="start-date-result-msg" class="hidden text-xs font-semibold p-3 rounded-xl"></div>
@@ -2261,7 +2304,7 @@ $sop_data = get_sop_data();
                     <button type="button" id="start-date-save-btn" onclick="saveStartDate()"
                         class="flex-1 py-2.5 px-4 bg-primary text-on-primary rounded-xl font-bold text-sm hover:bg-primary/90 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
                         <span class="material-symbols-outlined text-lg">save</span>
-                        <span>Simpan</span>
+                        <span>Simpan Periode</span>
                     </button>
                 </div>
             </div>
@@ -2316,6 +2359,16 @@ $sop_data = get_sop_data();
                         <div>
                             <label class="block text-xs font-semibold mb-1">Jurusan (major)</label>
                             <input type="text" name="major" placeholder="Contoh: Informatika / Sistem Informasi" class="w-full px-3 py-2 border border-outline-variant rounded-xl text-sm outline-none focus:border-indigo-600"/>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold mb-1">Mulai Magang</label>
+                                <input type="date" name="intern_start_date" class="w-full px-3 py-2 border border-outline-variant rounded-xl text-sm outline-none focus:border-indigo-600 cursor-pointer"/>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold mb-1">Selesai Magang</label>
+                                <input type="date" name="intern_end_date" class="w-full px-3 py-2 border border-outline-variant rounded-xl text-sm outline-none focus:border-indigo-600 cursor-pointer"/>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2379,6 +2432,16 @@ $sop_data = get_sop_data();
                         <div>
                             <label class="block text-xs font-semibold mb-1">Jurusan (major)</label>
                             <input type="text" name="major" id="edit-major" placeholder="Contoh: Informatika / Sistem Informasi" class="w-full px-3 py-2 border border-outline-variant rounded-xl text-sm outline-none focus:border-indigo-600"/>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold mb-1">Mulai Magang</label>
+                                <input type="date" name="intern_start_date" id="edit-intern-start-date" class="w-full px-3 py-2 border border-outline-variant rounded-xl text-sm outline-none focus:border-indigo-600 cursor-pointer"/>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold mb-1">Selesai Magang</label>
+                                <input type="date" name="intern_end_date" id="edit-intern-end-date" class="w-full px-3 py-2 border border-outline-variant rounded-xl text-sm outline-none focus:border-indigo-600 cursor-pointer"/>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2764,6 +2827,8 @@ $sop_data = get_sop_data();
             document.getElementById('edit-intern-position').value = user.intern_position || '';
             document.getElementById('edit-university').value = user.university || '';
             document.getElementById('edit-major').value = user.major || '';
+            document.getElementById('edit-intern-start-date').value = user.intern_start_date || '';
+            document.getElementById('edit-intern-end-date').value = user.intern_end_date || '';
             document.getElementById('edit-user-modal').classList.remove('hidden');
         }
 
@@ -3737,13 +3802,14 @@ $sop_data = get_sop_data();
             switchSuperadminTab(defaultTab);
         });
 
-        // ===== SET TANGGAL MULAI ABSEN INTERN =====
+        // ===== SET PERIODE MAGANG INTERN (MULAI & SELESAI) =====
         let _startDateUserId = null;
 
-        function openStartDateModal(userId, username, currentDate) {
+        function openStartDateModal(userId, username, startDate, endDate) {
             _startDateUserId = userId;
             document.getElementById('start-date-intern-name').textContent = username;
-            document.getElementById('start-date-input').value = currentDate || '';
+            document.getElementById('start-date-input').value = startDate || '';
+            document.getElementById('end-date-input').value = endDate || '';
             document.getElementById('start-date-result-msg').className = 'hidden text-xs font-semibold p-3 rounded-xl';
             document.getElementById('start-date-result-msg').textContent = '';
             document.getElementById('start-date-save-btn').disabled = false;
@@ -3759,8 +3825,15 @@ $sop_data = get_sop_data();
         async function saveStartDate() {
             if (!_startDateUserId) return;
             const startDate = document.getElementById('start-date-input').value.trim();
+            const endDate   = document.getElementById('end-date-input').value.trim();
             const btn = document.getElementById('start-date-save-btn');
             const msgEl = document.getElementById('start-date-result-msg');
+
+            if (startDate && endDate && startDate > endDate) {
+                msgEl.className = 'text-xs font-semibold p-3 rounded-xl bg-red-50 text-red-800 border border-red-200';
+                msgEl.textContent = '✗ Tanggal mulai magang tidak boleh lebih akhir daripada tanggal selesai magang.';
+                return;
+            }
 
             btn.disabled = true;
             btn.style.opacity = '0.6';
@@ -3771,13 +3844,13 @@ $sop_data = get_sop_data();
                 const res = await fetch('../attendance-api.php?action=update_start_date', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: _startDateUserId, start_date: startDate })
+                    body: JSON.stringify({ user_id: _startDateUserId, start_date: startDate, end_date: endDate })
                 });
                 const data = await res.json();
 
                 if (res.ok && data.success) {
                     msgEl.className = 'text-xs font-semibold p-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200';
-                    msgEl.textContent = '✓ ' + (data.message || 'Berhasil disimpan!');
+                    msgEl.textContent = '✓ ' + (data.message || 'Periode magang berhasil disimpan!');
                     setTimeout(() => location.reload(), 900);
                 } else {
                     msgEl.className = 'text-xs font-semibold p-3 rounded-xl bg-red-50 text-red-800 border border-red-200';

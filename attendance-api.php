@@ -75,11 +75,15 @@ if ($conn) {
     }
 }
 
-// Auto-migrate kolom intern_start_date di tabel users jika belum ada
+// Auto-migrate kolom intern_start_date & intern_end_date di tabel users jika belum ada
 if ($conn) {
     $chk_isd = @mysqli_query($conn, "SHOW COLUMNS FROM `users` LIKE 'intern_start_date'");
     if ($chk_isd && mysqli_num_rows($chk_isd) === 0) {
         @mysqli_query($conn, "ALTER TABLE `users` ADD COLUMN `intern_start_date` DATE DEFAULT NULL COMMENT 'Tanggal mulai wajib absen intern'");
+    }
+    $chk_ied = @mysqli_query($conn, "SHOW COLUMNS FROM `users` LIKE 'intern_end_date'");
+    if ($chk_ied && mysqli_num_rows($chk_ied) === 0) {
+        @mysqli_query($conn, "ALTER TABLE `users` ADD COLUMN `intern_end_date` DATE DEFAULT NULL COMMENT 'Tanggal selesai magang intern'");
     }
 }
 
@@ -166,16 +170,17 @@ if ($action === 'get_location_config' && $method === 'GET') {
 // (?action=all_summary, GET)
 // --------------------------------------------------------------
 if ($action === 'all_summary' && $method === 'GET') {
-    // 1. Ambil semua akun intern dari database (termasuk intern_start_date)
+    // 1. Ambil semua akun intern dari database (termasuk intern_start_date & intern_end_date)
     $interns = [];
-    $resUser = mysqli_query($conn, "SELECT id, username, intern_start_date FROM users WHERE role = 'intern' ORDER BY id ASC");
+    $resUser = mysqli_query($conn, "SELECT id, username, intern_start_date, intern_end_date FROM users WHERE role = 'intern' ORDER BY id ASC");
     if ($resUser) {
         while ($u = mysqli_fetch_assoc($resUser)) {
             $interns[] = [
                 'id'             => $u['id'],
                 'name'           => $u['username'],
                 'division'       => 'Intern Kedayweb',
-                'intern_start_date' => $u['intern_start_date'] ?? null
+                'intern_start_date' => $u['intern_start_date'] ?? null,
+                'intern_end_date'   => $u['intern_end_date'] ?? null
             ];
         }
     }
@@ -218,10 +223,10 @@ if ($action === 'all_summary' && $method === 'GET') {
 }
 
 // --------------------------------------------------------------
-// UPDATE TANGGAL MULAI WAJIB ABSEN INTERN (?action=update_start_date, POST)
+// UPDATE PERIODE MAGANG INTERN (?action=update_start_date / ?action=update_period, POST)
 // Hanya admin/superadmin yang boleh mengakses
 // --------------------------------------------------------------
-if ($action === 'update_start_date' && $method === 'POST') {
+if (($action === 'update_start_date' || $action === 'update_period') && $method === 'POST') {
     // Hanya admin atau superadmin yang boleh
     $allowedRoles = ['admin', 'superadmin'];
     $currentRole  = $_SESSION['role'] ?? '';
@@ -234,6 +239,7 @@ if ($action === 'update_start_date' && $method === 'POST') {
     $input      = json_decode(file_get_contents('php://input'), true);
     $user_id    = intval($input['user_id'] ?? 0);
     $start_date = trim($input['start_date'] ?? '');
+    $end_date   = trim($input['end_date'] ?? '');
 
     if ($user_id <= 0) {
         http_response_code(400);
@@ -244,18 +250,29 @@ if ($action === 'update_start_date' && $method === 'POST') {
     // Validasi format tanggal (YYYY-MM-DD) atau kosong (hapus tanggal)
     if (!empty($start_date) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $start_date)) {
         http_response_code(400);
-        echo json_encode(['error' => 'Format tanggal tidak valid (harus YYYY-MM-DD)']);
+        echo json_encode(['error' => 'Format tanggal mulai tidak valid (harus YYYY-MM-DD)']);
+        exit;
+    }
+    if (!empty($end_date) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $end_date)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Format tanggal selesai tidak valid (harus YYYY-MM-DD)']);
+        exit;
+    }
+    if (!empty($start_date) && !empty($end_date) && $start_date > $end_date) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Tanggal mulai magang tidak boleh lebih akhir daripada tanggal selesai magang']);
         exit;
     }
 
-    $setVal = !empty($start_date) ? $start_date : null;
-    $stmt = mysqli_prepare($conn, "UPDATE users SET intern_start_date = ? WHERE id = ? AND role = 'intern'");
+    $setStart = !empty($start_date) ? $start_date : null;
+    $setEnd   = !empty($end_date) ? $end_date : null;
+    $stmt = mysqli_prepare($conn, "UPDATE users SET intern_start_date = ?, intern_end_date = ? WHERE id = ? AND role = 'intern'");
     if (!$stmt) {
         http_response_code(500);
         echo json_encode(['error' => 'Gagal menyiapkan query: ' . mysqli_error($conn)]);
         exit;
     }
-    mysqli_stmt_bind_param($stmt, "si", $setVal, $user_id);
+    mysqli_stmt_bind_param($stmt, "ssi", $setStart, $setEnd, $user_id);
     if (!mysqli_stmt_execute($stmt)) {
         http_response_code(500);
         echo json_encode(['error' => 'Gagal menyimpan: ' . mysqli_error($conn)]);
@@ -264,11 +281,23 @@ if ($action === 'update_start_date' && $method === 'POST') {
     $affected = mysqli_stmt_affected_rows($stmt);
     mysqli_stmt_close($stmt);
 
+    // Sinkronkan juga rentang tanggal ke certificates jika ada
+    if ($setStart || $setEnd) {
+        $cUp = [];
+        if ($setStart) $cUp[] = "start_date = '$setStart'";
+        if ($setEnd) $cUp[] = "end_date = '$setEnd', issue_date = '$setEnd'";
+        if (!empty($cUp)) {
+            $cSql = "UPDATE certificates SET " . implode(', ', $cUp) . " WHERE user_id = $user_id";
+            @mysqli_query($conn, $cSql);
+        }
+    }
+
     echo json_encode([
         'success'    => true,
-        'message'    => $affected > 0 ? 'Tanggal mulai absen berhasil disimpan' : 'User tidak ditemukan atau bukan intern',
+        'message'    => 'Periode magang berhasil disimpan',
         'user_id'    => $user_id,
-        'start_date' => $setVal
+        'start_date' => $setStart,
+        'end_date'   => $setEnd
     ]);
     exit;
 }
@@ -277,6 +306,23 @@ if ($action === 'update_start_date' && $method === 'POST') {
 // 3. GET STATUS ABSEN HARI INI (?action=today)
 // --------------------------------------------------------------
 if ($action === 'today' && $method === 'GET') {
+    // Ambil data periode magang user ini
+    $uStart = null;
+    $uEnd = null;
+    $uStmt = mysqli_prepare($conn, "SELECT intern_start_date, intern_end_date FROM users WHERE username = ? LIMIT 1");
+    if ($uStmt) {
+        mysqli_stmt_bind_param($uStmt, "s", $username);
+        mysqli_stmt_execute($uStmt);
+        $uRes = mysqli_stmt_get_result($uStmt);
+        if ($uRow = mysqli_fetch_assoc($uRes)) {
+            $uStart = $uRow['intern_start_date'];
+            $uEnd   = $uRow['intern_end_date'];
+        }
+        mysqli_stmt_close($uStmt);
+    }
+    $isEnded = ($uEnd && $today > $uEnd);
+    $isNotStarted = ($uStart && $today < $uStart);
+
     $sql = "SELECT * FROM attendance WHERE username = ? AND date = ? LIMIT 1";
     $stmt = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt, "ss", $username, $today);
@@ -285,7 +331,13 @@ if ($action === 'today' && $method === 'GET') {
     $row = mysqli_fetch_assoc($result);
 
     if (!$row) {
-        echo json_encode(['exists' => false]);
+        echo json_encode([
+            'exists' => false,
+            'intern_start_date' => $uStart,
+            'intern_end_date'   => $uEnd,
+            'is_ended'          => $isEnded,
+            'is_not_started'    => $isNotStarted
+        ]);
         exit;
     }
 
@@ -302,6 +354,10 @@ if ($action === 'today' && $method === 'GET') {
         'location_out' => $row['location_out'],
         'lat_out' => isset($row['lat_out']) ? (float) $row['lat_out'] : null,
         'lng_out' => isset($row['lng_out']) ? (float) $row['lng_out'] : null,
+        'intern_start_date' => $uStart,
+        'intern_end_date'   => $uEnd,
+        'is_ended'          => $isEnded,
+        'is_not_started'    => $isNotStarted
     ]);
     exit;
 }
@@ -323,6 +379,21 @@ if ($action === 'save' && $method === 'POST') {
         http_response_code(400);
         echo json_encode(['error' => 'Data tidak lengkap (time)']);
         exit;
+    }
+
+    // Cek periode magang intern (tidak boleh absen sebelum mulai atau setelah selesai)
+    $uChk = @mysqli_query($conn, "SELECT intern_start_date, intern_end_date FROM users WHERE username = '" . mysqli_real_escape_string($conn, $username) . "' LIMIT 1");
+    if ($uChk && $uRow = mysqli_fetch_assoc($uChk)) {
+        if (!empty($uRow['intern_end_date']) && $today > $uRow['intern_end_date']) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Masa magang Anda telah selesai pada ' . date('d M Y', strtotime($uRow['intern_end_date'])) . '. Anda tidak perlu melakukan presensi lagi.']);
+            exit;
+        }
+        if (!empty($uRow['intern_start_date']) && $today < $uRow['intern_start_date']) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Masa magang Anda baru dimulai pada ' . date('d M Y', strtotime($uRow['intern_start_date'])) . '. Anda belum perlu melakukan presensi.']);
+            exit;
+        }
     }
 
     // Ambil pengaturan absensi & geofence dari database
@@ -460,6 +531,21 @@ if ($action === 'save_out' && $method === 'POST') {
         http_response_code(400);
         echo json_encode(['error' => 'Data tidak lengkap (time)']);
         exit;
+    }
+
+    // Cek periode magang intern (tidak boleh absen sebelum mulai atau setelah selesai)
+    $uChk = @mysqli_query($conn, "SELECT intern_start_date, intern_end_date FROM users WHERE username = '" . mysqli_real_escape_string($conn, $username) . "' LIMIT 1");
+    if ($uChk && $uRow = mysqli_fetch_assoc($uChk)) {
+        if (!empty($uRow['intern_end_date']) && $today > $uRow['intern_end_date']) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Masa magang Anda telah selesai pada ' . date('d M Y', strtotime($uRow['intern_end_date'])) . '. Anda tidak perlu melakukan presensi lagi.']);
+            exit;
+        }
+        if (!empty($uRow['intern_start_date']) && $today < $uRow['intern_start_date']) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Masa magang Anda baru dimulai pada ' . date('d M Y', strtotime($uRow['intern_start_date'])) . '. Anda belum perlu melakukan presensi.']);
+            exit;
+        }
     }
     if (empty($photoData)) {
         http_response_code(400);
@@ -789,6 +875,21 @@ if ($action === 'submit_leave' && $method === 'POST') {
         http_response_code(400);
         echo json_encode(['error' => 'Tanggal dan alasan izin wajib diisi']);
         exit;
+    }
+
+    // Cek periode magang intern
+    $uChk = @mysqli_query($conn, "SELECT intern_start_date, intern_end_date FROM users WHERE username = '" . mysqli_real_escape_string($conn, $username) . "' LIMIT 1");
+    if ($uChk && $uRow = mysqli_fetch_assoc($uChk)) {
+        if (!empty($uRow['intern_end_date']) && $date > $uRow['intern_end_date']) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Masa magang Anda telah selesai pada ' . date('d M Y', strtotime($uRow['intern_end_date'])) . '. Anda tidak perlu mengajukan izin lagi.']);
+            exit;
+        }
+        if (!empty($uRow['intern_start_date']) && $date < $uRow['intern_start_date']) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Masa magang Anda baru dimulai pada ' . date('d M Y', strtotime($uRow['intern_start_date'])) . '.']);
+            exit;
+        }
     }
 
     $status = 'permit';

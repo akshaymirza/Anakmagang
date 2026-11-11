@@ -898,8 +898,9 @@ if ($db_query) {
                 const dbUserAtt = dbAttendanceMap[i.name] || {};
                 let present = 0, late = 0, permit = 0, absent = 0;
 
-                // Tanggal mulai wajib absen intern (null = belum diset, semua hari dihitung)
+                // Tanggal mulai & selesai magang intern
                 const startDateStr = i.intern_start_date || null;
+                const endDateStr = i.intern_end_date || null;
 
                 // Hitung dari kalender bulan yang sedang aktif
                 for (let d = 1; d <= daysInMonth; d++) {
@@ -916,6 +917,9 @@ if ($db_query) {
 
                     // Skip hari sebelum tanggal mulai magang intern
                     if (startDateStr && dateStr < startDateStr) continue;
+
+                    // Skip hari setelah tanggal selesai magang intern (tidak dianggap Alpha)
+                    if (endDateStr && dateStr > endDateStr) continue;
 
                     const r = dbUserAtt[dateStr];
 
@@ -941,9 +945,19 @@ if ($db_query) {
                     }
                 });
 
+                const isInternEnded = i.intern_end_date && (todayStr > i.intern_end_date);
+                const statusBadge = isInternEnded 
+                    ? `<span class="ml-1.5 px-2 py-0.5 text-[10px] bg-slate-100 text-slate-600 rounded-md font-bold border border-slate-200 inline-flex items-center gap-0.5"><span class="material-symbols-outlined text-[11px]">task_alt</span> Selesai</span>` 
+                    : '';
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="px-3 py-2 font-semibold">${escHtml(i.name)}</td>
+                    <td class="px-3 py-2 font-semibold">
+                        <div class="flex items-center flex-wrap gap-1">
+                            <span>${escHtml(i.name)}</span>
+                            ${statusBadge}
+                        </div>
+                    </td>
                     <td class="px-3 py-2 text-on-surface-variant">${escHtml(i.division || 'Intern Kedayweb')}</td>
                     <td class="px-3 py-2 text-center text-green-700 font-bold">${present}</td>
                     <td class="px-3 py-2 text-center text-amber-700 font-bold">${late}</td>
@@ -1007,8 +1021,10 @@ if ($db_query) {
                 interns.forEach(intern => {
                     const dbUserAtt = dbAttendanceMap[intern.name] || {};
                     const startDateStr = intern.intern_start_date || null;
+                    const endDateStr = intern.intern_end_date || null;
 
                     if (startDateStr && dateStr < startDateStr) return;
+                    if (endDateStr && dateStr > endDateStr) return;
 
                     const r = dbUserAtt[dateStr];
 

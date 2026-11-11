@@ -289,7 +289,9 @@ CREATE TABLE `users` (
   `password` varchar(255) NOT NULL,
   `intern_position` varchar(150) DEFAULT NULL,
   `university` varchar(150) DEFAULT NULL,
-  `major` varchar(150) DEFAULT NULL
+  `major` varchar(150) DEFAULT NULL,
+  `intern_start_date` date DEFAULT NULL,
+  `intern_end_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --

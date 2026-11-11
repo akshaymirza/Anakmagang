@@ -19,6 +19,7 @@ if ($conn) {
     }
 
     $sql_users = "SELECT u.id, u.username, u.password, u.role, u.intern_position, u.university, u.major,
+                         u.intern_start_date, u.intern_end_date,
                          COALESCE(
                              (SELECT CAST(COALESCE(
                                  NULLIF(REGEXP_SUBSTR(c.certificate_id, '[0-9]{4}'), ''),
@@ -186,6 +187,7 @@ $total_admins = count(array_filter($users, static function (array $user): bool {
                                 <?php endif; ?>
                                 <th class="pb-2.5 pr-4 font-semibold">Role</th>
                                 <th class="pb-2.5 pr-4 font-semibold">Angkatan</th>
+                                <th class="pb-2.5 pr-4 font-semibold">Periode Magang</th>
                                 <th class="pb-2.5 pr-4 font-semibold">Posisi Magang</th>
                                 <th class="pb-2.5 pr-4 font-semibold">Instansi / Universitas</th>
                                 <th class="pb-2.5 pr-4 font-semibold">Jurusan</th>
@@ -219,6 +221,38 @@ $total_admins = count(array_filter($users, static function (array $user): bool {
                                             <span class="material-symbols-outlined text-[13px] text-amber-600">calendar_today</span>
                                             <span>Angkatan <?php echo (int)($user['entry_year'] ?? date('Y')); ?></span>
                                         </span>
+                                    </td>
+                                    <td class="py-2.5 pr-4 text-xs">
+                                        <?php if ($user['role'] === 'intern'): 
+                                            $todayStr = date('Y-m-d');
+                                            $hasStart = !empty($user['intern_start_date']);
+                                            $hasEnd   = !empty($user['intern_end_date']);
+                                            $isEnded  = $hasEnd && ($todayStr > $user['intern_end_date']);
+                                            $isFuture = $hasStart && ($todayStr < $user['intern_start_date']);
+                                        ?>
+                                            <?php if ($isEnded): ?>
+                                                <span class="px-2 py-0.5 rounded-full font-bold bg-slate-100 text-slate-700 border border-slate-300 inline-flex items-center gap-1 text-[11px]">
+                                                    <span class="material-symbols-outlined text-[12px] text-slate-500">task_alt</span> Selesai
+                                                </span>
+                                            <?php elseif ($isFuture): ?>
+                                                <span class="px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center gap-1 text-[11px]">
+                                                    <span class="material-symbols-outlined text-[12px] text-amber-600">hourglass_top</span> Belum Mulai
+                                                </span>
+                                            <?php elseif ($hasStart || $hasEnd): ?>
+                                                <span class="px-2 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 inline-flex items-center gap-1 text-[11px]">
+                                                    <span class="material-symbols-outlined text-[12px] text-emerald-600">check_circle</span> Aktif
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="text-slate-400 italic text-[11px]">Belum diset</span>
+                                            <?php endif; ?>
+                                            <?php if ($hasStart || $hasEnd): ?>
+                                                <div class="text-[10px] text-on-surface-variant mt-0.5">
+                                                    <?php echo $hasStart ? date('d/m/y', strtotime($user['intern_start_date'])) : '-'; ?> s/d <?php echo $hasEnd ? date('d/m/y', strtotime($user['intern_end_date'])) : '-'; ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <span class="text-slate-400 italic text-xs">-</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="py-2.5 pr-4 font-medium text-on-surface">
                                         <?php echo !empty($user['intern_position']) ? htmlspecialchars($user['intern_position'], ENT_QUOTES, 'UTF-8') : '<span class="text-slate-400 italic text-xs">-</span>'; ?>

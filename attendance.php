@@ -1,5 +1,26 @@
-<?php require_once __DIR__ . '/session.php';
-require_login(); ?>
+<?php 
+require_once __DIR__ . '/session.php';
+require_login();
+require_once __DIR__ . '/Login/koneksi.php';
+
+// Ambil periode magang intern (tanggal mulai dan tanggal selesai)
+$viewUsername = isset($_GET['intern']) && !empty($_GET['intern']) ? trim($_GET['intern']) : current_user_name();
+$internPeriodStart = null;
+$internPeriodEnd   = null;
+if ($conn) {
+    $stmtP = mysqli_prepare($conn, "SELECT intern_start_date, intern_end_date FROM users WHERE username = ? LIMIT 1");
+    if ($stmtP) {
+        mysqli_stmt_bind_param($stmtP, "s", $viewUsername);
+        mysqli_stmt_execute($stmtP);
+        $resP = mysqli_stmt_get_result($stmtP);
+        if ($rowP = mysqli_fetch_assoc($resP)) {
+            $internPeriodStart = $rowP['intern_start_date'] ?? null;
+            $internPeriodEnd   = $rowP['intern_end_date'] ?? null;
+        }
+        mysqli_stmt_close($stmtP);
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="id">
 
@@ -319,6 +340,19 @@ require_login(); ?>
                 <span class="material-symbols-outlined text-amber-600 shrink-0">visibility</span>
                 <span>Anda (Admin) sedang melihat kehadiran milik <strong id="admin-preview-name"></strong> dalam mode
                     baca-saja.</span>
+            </div>
+
+            <!-- Intern period / finished banner -->
+            <div id="intern-period-banner"
+                class="hidden mb-5 items-center justify-between gap-3 px-4 py-3 rounded-xl border text-xs sm:text-sm shadow-xs">
+                <div class="flex items-center gap-3">
+                    <span id="intern-period-icon" class="material-symbols-outlined text-2xl shrink-0">task_alt</span>
+                    <div>
+                        <p id="intern-period-title" class="font-bold text-sm sm:text-base"></p>
+                        <p id="intern-period-desc" class="text-xs mt-0.5"></p>
+                    </div>
+                </div>
+                <span id="intern-period-badge" class="px-3 py-1 font-bold text-xs rounded-full shrink-0"></span>
             </div>
 
             <!-- Stats Row -->
@@ -955,6 +989,9 @@ require_login(); ?>
         const isAdminRole = <?php echo is_admin() ? 'true' : 'false'; ?>;
         const activeInternName = attInternParam || (window.InternStore ? InternStore.getCurrentUser() : 'Alex Doe');
 
+        let internStartDate = <?php echo json_encode($internPeriodStart); ?>;
+        let internEndDate   = <?php echo json_encode($internPeriodEnd); ?>;
+
         // Sumber data sebenarnya adalah tabel `attendance` di database (lewat
         // attendance-api.php), BUKAN localStorage. Sebelumnya halaman ini membaca
         // dari localStorage lewat InternStore, padahal tidak pernah diisi saat
@@ -979,6 +1016,13 @@ require_login(); ?>
                 if (!res.ok) throw new Error((json && json.error) || 'Gagal memuat data (HTTP ' + res.status + ')');
 
                 if (isAdminPreview) {
+                    if (json.interns && Array.isArray(json.interns)) {
+                        const curObj = json.interns.find(i => i.name === activeInternName);
+                        if (curObj) {
+                            if (curObj.intern_start_date) internStartDate = curObj.intern_start_date;
+                            if (curObj.intern_end_date)   internEndDate   = curObj.intern_end_date;
+                        }
+                    }
                     const map = (json.attendanceMap && json.attendanceMap[activeInternName]) || {};
                     // Normalisasi field dari all_summary: API mengembalikan 'photo', 'location', 'lat', 'lng'
                     // tetapi popup mengharapkan 'photoIn', 'locationIn', 'latIn', 'lngIn'
@@ -1019,10 +1063,53 @@ require_login(); ?>
                         lngOut: r.lng_out
                     }));
                 }
+                applyInternPeriodBanner();
             } catch (err) {
                 console.error(err);
                 attendanceData = [];
                 showToast('Error Server: ' + err.message, 'warning');
+            }
+        }
+
+        function applyInternPeriodBanner() {
+            const banner = document.getElementById('intern-period-banner');
+            if (!banner) return;
+
+            const today = getNowWIB();
+            const todayStr = formatDate(today);
+
+            const isEnded = internEndDate && (todayStr > internEndDate);
+            const isUpcoming = internStartDate && (todayStr < internStartDate);
+
+            if (isEnded) {
+                banner.className = 'flex mb-5 items-center justify-between gap-3 px-4 py-3 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-950 text-xs sm:text-sm shadow-xs';
+                document.getElementById('intern-period-icon').className = 'material-symbols-outlined text-emerald-600 text-2xl shrink-0';
+                document.getElementById('intern-period-icon').textContent = 'workspace_premium';
+                document.getElementById('intern-period-title').textContent = 'Masa Magang Telah Selesai 🎉';
+                document.getElementById('intern-period-desc').innerHTML = `Periode magang telah berakhir pada <strong>${internEndDate}</strong>. Anda tidak perlu melakukan presensi lagi dan tidak akan dihitung absen/Alpha.`;
+                const badge = document.getElementById('intern-period-badge');
+                badge.className = 'px-3 py-1 font-bold text-xs rounded-full bg-emerald-200 text-emerald-900 border border-emerald-300 shrink-0';
+                badge.textContent = 'Alumni Magang';
+
+                // Sembunyikan tombol absen karena masa magang sudah tuntas
+                document.getElementById('main-input-btn')?.classList.add('hidden');
+                document.getElementById('main-clockout-btn')?.classList.add('hidden');
+                document.getElementById('main-leave-btn')?.classList.add('hidden');
+            } else if (isUpcoming) {
+                banner.className = 'flex mb-5 items-center justify-between gap-3 px-4 py-3 rounded-xl border border-amber-300 bg-amber-50 text-amber-950 text-xs sm:text-sm shadow-xs';
+                document.getElementById('intern-period-icon').className = 'material-symbols-outlined text-amber-600 text-2xl shrink-0';
+                document.getElementById('intern-period-icon').textContent = 'hourglass_top';
+                document.getElementById('intern-period-title').textContent = 'Masa Magang Belum Dimulai ⏳';
+                document.getElementById('intern-period-desc').innerHTML = `Periode magang dijadwalkan mulai pada <strong>${internStartDate}</strong>. Presensi belum diwajibkan sebelum tanggal tersebut.`;
+                const badge = document.getElementById('intern-period-badge');
+                badge.className = 'px-3 py-1 font-bold text-xs rounded-full bg-amber-200 text-amber-900 border border-amber-300 shrink-0';
+                badge.textContent = 'Belum Mulai';
+
+                document.getElementById('main-input-btn')?.classList.add('hidden');
+                document.getElementById('main-clockout-btn')?.classList.add('hidden');
+                document.getElementById('main-leave-btn')?.classList.add('hidden');
+            } else {
+                banner.classList.add('hidden');
             }
         }
 
@@ -1055,6 +1142,13 @@ require_login(); ?>
 
                     if (isSunday || isFuture) continue;
 
+                    // Lewati hari di luar periode magang (tidak dihitung Alpha):
+                    // 1. Hari sebelum tanggal mulai magang
+                    if (internStartDate && dateStr < internStartDate) continue;
+
+                    // 2. Hari setelah tanggal selesai magang (magang telah usai, tidak perlu absen)
+                    if (internEndDate && dateStr > internEndDate) continue;
+
                     if (!datesWithRec.has(dateStr)) {
                         if (isPastDay || isTodayPastCutoff) {
                             result.push({
@@ -1071,6 +1165,10 @@ require_login(); ?>
                             datesWithRec.add(dateStr);
                         }
                     }
+                }
+            }
+            return result;
+        }
                 }
             }
             return result;

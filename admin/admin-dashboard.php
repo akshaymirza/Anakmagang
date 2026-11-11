@@ -5,7 +5,7 @@ require_once __DIR__ . '/../Login/koneksi.php';
 
 // Ambil data user intern dari database MySQL db_internspace
 $db_interns = [];
-$db_query = mysqli_query($conn, "SELECT id, username, role FROM users WHERE role = 'intern' ORDER BY id ASC");
+$db_query = mysqli_query($conn, "SELECT id, username, role, intern_start_date, intern_end_date FROM users WHERE role = 'intern' ORDER BY id ASC");
 if ($db_query) {
     while ($row = mysqli_fetch_assoc($db_query)) {
         $db_interns[] = $row;
@@ -139,7 +139,12 @@ include '../partials/sidebar-admin.php';
                                         </div>
                                         <div>
                                             <h4 class="font-bold text-on-surface text-base line-clamp-1"><?php echo htmlspecialchars($intern['username'], ENT_QUOTES, 'UTF-8'); ?></h4>
-                                            <p class="text-xs text-on-surface-variant">Intern Kedayweb</p>
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <p class="text-xs text-on-surface-variant">Intern Kedayweb</p>
+                                                <?php if (!empty($intern['intern_end_date']) && date('Y-m-d') > $intern['intern_end_date']): ?>
+                                                    <span class="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-bold">Alumni (Selesai)</span>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
                                     </div>
 

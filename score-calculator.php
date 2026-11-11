@@ -524,3 +524,15 @@ if (!function_exists('sync_all_intern_certificates')) {
     }
 }
 
+if (!function_exists('ensure_intern_certificate')) {
+    /**
+     * Memastikan intern memiliki sertifikat dan menyinkronkan datanya.
+     */
+    function ensure_intern_certificate(mysqli $conn, int $userId, string $username = '', string $position = '', string $university = '', string $major = '')
+    {
+        if (function_exists('sync_all_intern_certificates')) {
+            sync_all_intern_certificates($conn);
+        }
+    }
+}
+
