@@ -969,42 +969,133 @@ if ($db_query) {
         }
 
         function exportAllAdminAttendanceCSV() {
-            // Gunakan HANYA data dari database MySQL
-            const interns = dbInternsList;
+            let interns = dbInternsList;
+            if (!interns.length && window.DB_INTERNS && window.DB_INTERNS.length) {
+                interns = window.DB_INTERNS.map(u => ({ name: u.username, division: 'Intern Kedayweb' }));
+            }
 
             if (!interns.length) {
                 alert('Tidak ada data intern.');
                 return;
             }
 
-            const statusLabel = { present: 'Hadir', late: 'Terlambat', absent: 'Tidak Masuk' };
+            const today = getNowWIB();
+            const todayStr = fmt(today);
+            const isTodayPastCutoff = today.getHours() >= 14;
+            const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+            const statusLabel = {
+                present: 'Hadir',
+                late: 'Terlambat',
+                absent: 'Tidak Masuk',
+                permit: 'Izin / Dispensasi'
+            };
+
             const allRecords = [];
 
-            // Kumpulkan data dari DB MySQL dan Store
+            // 1. Kumpulkan data setiap hari kerja dalam bulan aktif untuk semua intern
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateObj = new Date(calYear, calMonth, d);
+                const dateStr = fmt(dateObj);
+                const dow = dateObj.getDay();
+                const isSunday = (dow === 0); // Minggu libur
+                const isFuture = dateObj > today && dateStr !== todayStr;
+                const isToday = dateStr === todayStr;
+                const isPastDay = !isFuture && !isToday;
+
+                if (isFuture) continue;
+
+                interns.forEach(intern => {
+                    const dbUserAtt = dbAttendanceMap[intern.name] || {};
+                    const startDateStr = intern.intern_start_date || null;
+
+                    if (startDateStr && dateStr < startDateStr) return;
+
+                    const r = dbUserAtt[dateStr];
+
+                    if (r) {
+                        let stLabel = statusLabel[r.status] || r.status;
+                        if (r.status === 'permit') {
+                            const lt = (r.leaveType || '').toLowerCase();
+                            if (lt === 'dispen' || lt === 'dispensasi') stLabel = 'Dispensasi Instansi';
+                            else if (lt === 'sakit') stLabel = 'Sakit';
+                            else if (lt === 'izin') stLabel = 'Izin Keperluan';
+                            else if (lt === 'dinas') stLabel = 'Tugas Luar / Dinas';
+                            else stLabel = 'Izin / Dispensasi';
+                        }
+                        allRecords.push({
+                            internName: intern.name,
+                            division: intern.division || 'Intern Kedayweb',
+                            date: dateStr,
+                            clockIn: r.clockIn || '--:--',
+                            clockOut: r.clockOut || '--:--',
+                            status: stLabel,
+                            reason: r.reason || '-'
+                        });
+                    } else if (!isSunday) {
+                        // Hari kerja tanpa presensi (Alpha / Belum Absen)
+                        if (isPastDay || isTodayPastCutoff) {
+                            allRecords.push({
+                                internName: intern.name,
+                                division: intern.division || 'Intern Kedayweb',
+                                date: dateStr,
+                                clockIn: '--:--',
+                                clockOut: '--:--',
+                                status: 'Tidak Masuk',
+                                reason: 'Tidak melakukan absensi (Alpha)'
+                            });
+                        } else if (isToday) {
+                            allRecords.push({
+                                internName: intern.name,
+                                division: intern.division || 'Intern Kedayweb',
+                                date: dateStr,
+                                clockIn: '--:--',
+                                clockOut: '--:--',
+                                status: 'Belum Absen',
+                                reason: 'Belum melakukan absensi hari ini'
+                            });
+                        }
+                    }
+                });
+            }
+
+            // 2. Kumpulkan juga record yang tersimpan di luar hari kerja di atas (misal lembur hari Minggu atau record tanggal lain)
             interns.forEach(intern => {
                 const dbUserAtt = dbAttendanceMap[intern.name] || {};
                 Object.values(dbUserAtt).forEach(r => {
-                    allRecords.push({
-                        internName: intern.name,
-                        division: intern.division || 'Intern Kedayweb',
-                        date: r.date,
-                        clockIn: r.clockIn || '--:--',
-                        clockOut: r.clockOut || '--:--',
-                        status: r.status,
-                        reason: r.reason || '-'
-                    });
+                    const alreadyAdded = allRecords.some(item => item.internName === intern.name && item.date === r.date);
+                    if (!alreadyAdded) {
+                        let stLabel = statusLabel[r.status] || r.status;
+                        if (r.status === 'permit') {
+                            const lt = (r.leaveType || '').toLowerCase();
+                            if (lt === 'dispen' || lt === 'dispensasi') stLabel = 'Dispensasi Instansi';
+                            else if (lt === 'sakit') stLabel = 'Sakit';
+                            else if (lt === 'izin') stLabel = 'Izin Keperluan';
+                            else if (lt === 'dinas') stLabel = 'Tugas Luar / Dinas';
+                            else stLabel = 'Izin / Dispensasi';
+                        }
+                        allRecords.push({
+                            internName: intern.name,
+                            division: intern.division || 'Intern Kedayweb',
+                            date: r.date,
+                            clockIn: r.clockIn || '--:--',
+                            clockOut: r.clockOut || '--:--',
+                            status: stLabel,
+                            reason: r.reason || '-'
+                        });
+                    }
                 });
             });
 
             if (!allRecords.length) {
-                alert('Belum ada data kehadiran intern yang tercatat.');
+                alert('Belum ada data kehadiran untuk diekspor.');
                 return;
             }
 
+            // Urutkan berdasarkan tanggal descending, lalu nama intern
             allRecords.sort((a, b) => {
-                const dtA = `${a.date} ${a.clockIn !== '--:--' ? a.clockIn : '00:00'}`;
-                const dtB = `${b.date} ${b.clockIn !== '--:--' ? b.clockIn : '00:00'}`;
-                return dtB.localeCompare(dtA);
+                if (a.date !== b.date) return b.date.localeCompare(a.date);
+                return a.internName.localeCompare(b.internName);
             });
 
             const rows = [['Nama Intern', 'Divisi', 'Tanggal', 'Jam Masuk', 'Jam Keluar', 'Status', 'Alasan']];
@@ -1022,7 +1113,7 @@ if ($db_query) {
                     cleanDate,
                     r.clockIn,
                     r.clockOut,
-                    statusLabel[r.status] || r.status,
+                    r.status,
                     r.reason
                 ]);
             });
@@ -1040,7 +1131,7 @@ if ($db_query) {
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `Kehadiran_Semua_Intern_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.download = `Kehadiran_Semua_Intern_${calYear}_${String(calMonth + 1).padStart(2, '0')}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

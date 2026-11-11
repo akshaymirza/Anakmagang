@@ -1028,7 +1028,44 @@ require_login(); ?>
         }
 
         function loadData() {
-            return attendanceData;
+            // Gabungkan catatan server dengan hari kerja lalu yang belum ada absensi (Alpha)
+            const result = [...attendanceData];
+            const datesWithRec = new Set(result.map(r => r.date));
+
+            const today = getNowWIB();
+            const todayStr = formatDate(today);
+            const isTodayPastCutoff = isPastCutoff();
+            const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateObj = new Date(calYear, calMonth, d);
+                const dateStr = formatDate(dateObj);
+                const dow = dateObj.getDay();
+                const isSunday = (dow === 0);
+                const isFuture = dateObj > today && dateStr !== todayStr;
+                const isToday = dateStr === todayStr;
+                const isPastDay = !isFuture && !isToday;
+
+                if (isSunday || isFuture) continue;
+
+                if (!datesWithRec.has(dateStr)) {
+                    if (isPastDay || isTodayPastCutoff) {
+                        result.push({
+                            date: dateStr,
+                            status: 'absent',
+                            clockIn: '',
+                            clockOut: '',
+                            reason: 'Tidak melakukan absensi (Alpha)',
+                            leaveType: null,
+                            photoIn: '',
+                            locationIn: '',
+                            isAutoAbsent: true
+                        });
+                        datesWithRec.add(dateStr);
+                    }
+                }
+            }
+            return result;
         }
 
         function getRecord(dateStr) {
@@ -1694,12 +1731,16 @@ require_login(); ?>
         // EXPORT CSV
         // ============================================================
         function exportAttendanceCSV() {
-            const data = loadData().sort((a, b) => a.date.localeCompare(b.date));
+            const data = loadData().sort((a, b) => b.date.localeCompare(a.date));
             if (!data.length) { showToast('Belum ada data untuk diekspor.', 'warning'); return; }
 
-            const statusLabel = { present: 'Hadir', late: 'Terlambat', absent: 'Tidak Masuk' };
+            const statusLabel = {
+                present: 'Hadir',
+                late: 'Terlambat',
+                absent: 'Tidak Masuk',
+                permit: 'Izin / Dispensasi'
+            };
 
-            // Format tanggal yang bersih tanpa koma di dalam teks (misal: "Selasa 01 Sep 2026")
             function cleanDateDisplay(ds) {
                 const [y, m, d] = ds.split('-');
                 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -1710,28 +1751,38 @@ require_login(); ?>
 
             const rows = [['Tanggal', 'Jam Masuk', 'Jam Keluar', 'Status', 'Alasan']];
             data.forEach(r => {
+                let stLabel = statusLabel[r.status] || r.status;
+                if (r.status === 'permit') {
+                    const lt = (r.leaveType || '').toLowerCase();
+                    if (lt === 'dispen' || lt === 'dispensasi') stLabel = 'Dispensasi Instansi';
+                    else if (lt === 'sakit') stLabel = 'Sakit';
+                    else if (lt === 'izin') stLabel = 'Izin Keperluan';
+                    else if (lt === 'dinas') stLabel = 'Tugas Luar / Dinas';
+                    else stLabel = 'Izin / Dispensasi';
+                }
                 rows.push([
                     cleanDateDisplay(r.date),
                     r.clockIn || '--:--',
                     r.clockOut || '--:--',
-                    statusLabel[r.status] || r.status,
+                    stLabel,
                     r.reason || '-'
                 ]);
             });
 
-            // Pemisah koma dengan pembungkus tanda petik ganda (") untuk menjaga isi teks tetap rapi
-            const csvContent = rows.map(row =>
+            const csvRows = rows.map(row =>
                 row.map(val => {
                     const str = String(val || '').replace(/"/g, '""');
                     return `"${str}"`;
-                }).join(',')
-            ).join('\r\n');
+                }).join(';')
+            );
+
+            const csvContent = "sep=;\r\n" + csvRows.join('\r\n');
 
             const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `Kehadiran_PKL_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.download = `Kehadiran_PKL_${calYear}_${String(calMonth + 1).padStart(2, '0')}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
