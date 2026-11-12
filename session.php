@@ -136,7 +136,11 @@ if (!function_exists('require_login')) {
 if (!function_exists('current_user_name')) {
 	function current_user_name(): string
 	{
-		return (string) ($_SESSION['username'] ?? $_SESSION['user_id'] ?? 'Pengguna');
+		$name = (string) ($_SESSION['username'] ?? $_SESSION['user_id'] ?? 'Pengguna');
+		if ($name !== '' && !is_numeric($name)) {
+			return ucfirst($name);
+		}
+		return $name;
 	}
 }
 

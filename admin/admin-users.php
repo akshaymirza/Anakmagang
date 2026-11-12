@@ -206,7 +206,7 @@ $total_admins = count(array_filter($users, static function (array $user): bool {
                                     data-year="<?php echo (int)($user['entry_year'] ?? date('Y')); ?>"
                                     data-search="<?php echo htmlspecialchars(strtolower($user['username'] . ' ' . $user['role'] . ' ' . ($user['intern_position'] ?? '') . ' ' . ($user['university'] ?? '') . ' ' . ($user['major'] ?? '') . ' ' . ($user['entry_year'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>">
                                     <td class="py-2.5 pr-4 font-medium">#<?php echo (int) $user['id']; ?></td>
-                                    <td class="py-2.5 pr-4 font-semibold text-on-surface"><?php echo htmlspecialchars($user['username'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td class="py-2.5 pr-4 font-semibold text-on-surface"><?php echo htmlspecialchars(ucfirst($user['username']), ENT_QUOTES, 'UTF-8'); ?></td>
                                     <?php if (current_user_role() === 'superadmin'): ?>
                                         <td class="py-2.5 pr-4 font-mono text-sm">
                                             <div class="flex items-center gap-2">

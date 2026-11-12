@@ -139,7 +139,7 @@ include '../partials/sidebar-admin.php';
                                             <?php echo strtoupper(substr($intern['username'], 0, 1)); ?>
                                         </div>
                                         <div>
-                                            <h4 class="font-bold text-on-surface text-base line-clamp-1"><?php echo htmlspecialchars($intern['username'], ENT_QUOTES, 'UTF-8'); ?></h4>
+                                            <h4 class="font-bold text-on-surface text-base line-clamp-1"><?php echo htmlspecialchars(ucfirst($intern['username']), ENT_QUOTES, 'UTF-8'); ?></h4>
                                             <div class="flex items-center gap-1.5 flex-wrap">
                                                 <p class="text-xs text-on-surface-variant">Intern Kedayweb</p>
                                                 <?php if (!empty($intern['intern_end_date']) && date('Y-m-d') > $intern['intern_end_date']): ?>
@@ -561,7 +561,7 @@ include '../partials/sidebar-admin.php';
                                 ${escapeHtml(intern.name.charAt(0).toUpperCase())}
                             </div>
                             <div>
-                                <h4 class="font-bold text-on-surface text-base line-clamp-1">${escapeHtml(intern.name)}</h4>
+                                <h4 class="font-bold text-on-surface text-base line-clamp-1">${escapeHtml(intern.name ? (intern.name.charAt(0).toUpperCase() + intern.name.slice(1)) : '')}</h4>
                                 <p class="text-xs text-on-surface-variant">${escapeHtml(intern.division || 'Intern Kedayweb')}</p>
                             </div>
                         </div>

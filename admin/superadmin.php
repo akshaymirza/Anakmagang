@@ -366,7 +366,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $msg_type = "success";
 
     } elseif ($action === 'add_user') {
-        $username          = trim($_POST['username'] ?? '');
+        $raw_username      = trim($_POST['username'] ?? '');
+        $username          = $raw_username !== '' ? ucfirst($raw_username) : '';
         $password          = trim($_POST['password'] ?? '');
         $role              = trim($_POST['role'] ?? 'intern');
         $intern_position   = trim($_POST['intern_position'] ?? '');
@@ -411,7 +412,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($action === 'update_user') {
         $user_id           = intval($_POST['user_id'] ?? 0);
-        $username          = trim($_POST['username'] ?? '');
+        $raw_username      = trim($_POST['username'] ?? '');
+        $username          = $raw_username !== '' ? ucfirst($raw_username) : '';
         $password          = trim($_POST['password'] ?? '');
         $role              = trim($_POST['role'] ?? 'intern');
         $intern_position   = trim($_POST['intern_position'] ?? '');
@@ -652,6 +654,11 @@ if ($conn) {
             @mysqli_query($conn, "ALTER TABLE users ADD COLUMN $col_name $col_def");
         }
     }
+
+    // Auto-normalize: Paksa huruf pertama username kapital di seluruh database
+    @mysqli_query($conn, "UPDATE users SET username = CONCAT(UPPER(LEFT(username, 1)), SUBSTRING(username, 2)) WHERE username IS NOT NULL AND username != '' AND BINARY LEFT(username, 1) != UPPER(LEFT(username, 1))");
+    @mysqli_query($conn, "UPDATE attendance a JOIN users u ON LOWER(a.username) = LOWER(u.username) SET a.username = u.username WHERE a.username != u.username");
+    @mysqli_query($conn, "UPDATE certificates c JOIN users u ON c.user_id = u.id SET c.intern_name = u.username WHERE c.intern_name != u.username");
 
     // Auto sync certificates for any intern users
     if (function_exists('sync_all_intern_certificates')) {
@@ -1539,7 +1546,7 @@ $sop_data = get_sop_data();
                                         data-role="<?php echo htmlspecialchars($u['role'], ENT_QUOTES, 'UTF-8'); ?>"
                                         data-search="<?php echo htmlspecialchars(strtolower($u['username'] . ' ' . $u['role'] . ' ' . ($u['intern_position'] ?? '') . ' ' . ($u['university'] ?? '') . ' ' . ($u['major'] ?? '') . ' ' . ($u['entry_year'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>">
                                         <td class="py-2 px-3 font-bold text-xs whitespace-nowrap">#<?php echo (int) $u['id']; ?></td>
-                                        <td class="py-2 px-3 font-semibold text-on-surface text-xs whitespace-nowrap"><?php echo htmlspecialchars($u['username'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td class="py-2 px-3 font-semibold text-on-surface text-xs whitespace-nowrap"><?php echo htmlspecialchars(ucfirst($u['username']), ENT_QUOTES, 'UTF-8'); ?></td>
                                         <td class="py-2 px-3 font-mono text-xs whitespace-nowrap">
                                             <div class="flex items-center gap-1.5">
                                                 <span class="password-text hidden bg-surface-container-high px-2 py-0.5 rounded text-xs text-primary font-bold select-all"><?php echo htmlspecialchars($u['password'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></span>
@@ -2426,7 +2433,7 @@ $sop_data = get_sop_data();
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold mb-1">Username / Email <span class="text-red-500">*</span></label>
-                        <input type="text" name="username" required placeholder="Contoh: user@kedayweb.com" class="w-full px-3 py-2 border border-outline-variant rounded-xl text-sm outline-none focus:border-indigo-600"/>
+                        <input type="text" name="username" required placeholder="Contoh: user@kedayweb.com" oninput="if(this.value.length > 0){ this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1); }" class="w-full px-3 py-2 border border-outline-variant rounded-xl text-sm outline-none focus:border-indigo-600"/>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold mb-1">Password <span class="text-red-500">*</span></label>
@@ -2502,7 +2509,7 @@ $sop_data = get_sop_data();
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold mb-1">Username / Email <span class="text-red-500">*</span></label>
-                        <input type="text" name="username" id="edit-username" required class="w-full px-3 py-2 border border-outline-variant rounded-xl text-sm outline-none focus:border-indigo-600"/>
+                        <input type="text" name="username" id="edit-username" required oninput="if(this.value.length > 0){ this.value = this.value.charAt(0).toUpperCase() + this.value.slice(1); }" class="w-full px-3 py-2 border border-outline-variant rounded-xl text-sm outline-none focus:border-indigo-600"/>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold mb-1">Password Baru (opsional)</label>

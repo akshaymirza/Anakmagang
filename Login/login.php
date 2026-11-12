@@ -16,16 +16,18 @@ if (is_logged_in()) {
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = mysqli_real_escape_string($conn, $_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $role     = mysqli_real_escape_string($conn, $_POST['role'] ?? 'intern');
+    $rawUsername = trim($_POST['username'] ?? '');
+    $username    = mysqli_real_escape_string($conn, $rawUsername);
+    $capUsername = mysqli_real_escape_string($conn, ucfirst($rawUsername));
+    $password    = $_POST['password'] ?? '';
+    $role        = mysqli_real_escape_string($conn, $_POST['role'] ?? 'intern');
 
-    // Cek ke database berdasarkan username dan role
+    // Cek ke database berdasarkan username dan role (cocokkan variasi huruf kecil maupun huruf pertama kapital)
     // Jika login sebagai admin, cek juga role superadmin
     if ($role === 'admin') {
-        $query = "SELECT * FROM users WHERE username = '$username' AND (role = 'admin' OR role = 'superadmin')";
+        $query = "SELECT * FROM users WHERE (username = '$username' OR username = '$capUsername') AND (role = 'admin' OR role = 'superadmin')";
     } else {
-        $query = "SELECT * FROM users WHERE username = '$username' AND role = '$role'";
+        $query = "SELECT * FROM users WHERE (username = '$username' OR username = '$capUsername') AND role = '$role'";
     }
     $result = mysqli_query($conn, $query);
 
@@ -38,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             session_regenerate_id(true);
             $_SESSION['user_logged_in'] = true;
             $_SESSION['user_id'] = $user_data['id'];
-            $_SESSION['username'] = $user_data['username'];
+            $_SESSION['username'] = ucfirst($user_data['username']);
             $_SESSION['role'] = $user_data['role'];
 
             // ── Remember-Me: buat token persistent login ──

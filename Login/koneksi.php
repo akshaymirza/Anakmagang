@@ -62,6 +62,11 @@ if (!$conn) {
 // Paksa zona waktu MySQL session ke WIB (UTC+7)
 @mysqli_query($conn, "SET time_zone = '+07:00'");
 
+// Auto-normalize: Paksa huruf pertama username kapital di seluruh database
+@mysqli_query($conn, "UPDATE users SET username = CONCAT(UPPER(LEFT(username, 1)), SUBSTRING(username, 2)) WHERE username IS NOT NULL AND username != '' AND BINARY LEFT(username, 1) != UPPER(LEFT(username, 1))");
+@mysqli_query($conn, "UPDATE attendance a JOIN users u ON LOWER(a.username) = LOWER(u.username) SET a.username = u.username WHERE a.username != u.username");
+@mysqli_query($conn, "UPDATE certificates c JOIN users u ON c.user_id = u.id SET c.intern_name = u.username WHERE c.intern_name != u.username");
+
 // Muat helper fungsi sertifikat & kalkulator skor
 if (file_exists(__DIR__ . '/../score-calculator.php')) {
     require_once __DIR__ . '/../score-calculator.php';
