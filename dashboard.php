@@ -9,6 +9,7 @@ $userName = current_user_name();
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Kedayweb Dashboard - Portal PKL</title>
+<?php include __DIR__ . '/partials/favicon.php'; ?>
     <!-- Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <!-- Google Fonts -->

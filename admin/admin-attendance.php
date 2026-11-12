@@ -19,6 +19,7 @@ if ($db_query) {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>Kedayweb Admin - Kehadiran Semua Intern</title>
+<?php include __DIR__ . '/../partials/favicon.php'; ?>
     <!-- Inject DB Interns ke JS -->
     <script>
         window.DB_INTERNS = <?php echo json_encode($db_interns, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;

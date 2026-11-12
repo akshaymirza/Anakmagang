@@ -17,6 +17,7 @@ $is_superadmin = ($user_role === 'superadmin');
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Kedayweb - <?php echo htmlspecialchars($terms_data['title'] ?? 'Syarat & Ketentuan', ENT_QUOTES, 'UTF-8'); ?></title>
+<?php include __DIR__ . '/partials/favicon.php'; ?>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>

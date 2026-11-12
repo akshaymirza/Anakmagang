@@ -4,6 +4,7 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Kedayweb – Verifikasi Sertifikat Magang</title>
+<?php include __DIR__ . '/partials/favicon.php'; ?>
     <meta name="description" content="Verifikasi keaslian sertifikat magang dari Kedayweb secara online menggunakan ID sertifikat."/>
     <!-- Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>

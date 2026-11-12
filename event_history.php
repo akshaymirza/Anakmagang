@@ -439,6 +439,7 @@ foreach ($events_list_raw as $ev) {
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
     <title>Histori & Galeri Event Magang - Kedayweb</title>
+<?php include __DIR__ . '/partials/favicon.php'; ?>
     <!-- Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <!-- Google Fonts -->

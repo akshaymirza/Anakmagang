@@ -28,6 +28,7 @@ if ($conn) {
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Kedayweb - Kehadiran PKL</title>
+<?php include __DIR__ . '/partials/favicon.php'; ?>
     <meta name="description"
         content="Pantau kehadiran PKL Anda — kalender interaktif, status kehadiran, dan riwayat lengkap." />
     <!-- Material Symbols -->

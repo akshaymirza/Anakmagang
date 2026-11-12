@@ -256,6 +256,7 @@ $gallery_list = get_all_gallery_items($conn, $json_file);
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
     <title>Galeri Kegiatan Anak Magang - Kedayweb</title>
+<?php include __DIR__ . '/partials/favicon.php'; ?>
     <style>
         html {
             scrollbar-gutter: stable;
