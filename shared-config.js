@@ -127,3 +127,88 @@ window.formatTimeWIB = function(d = new Date(), withSeconds = false) {
     ? `${pad(w.getHours())}:${pad(w.getMinutes())}:${pad(w.getSeconds())}`
     : `${pad(w.getHours())}:${pad(w.getMinutes())}`;
 };
+
+// ============================================================
+// Dark Mode Theme Controller (Instant Execution to prevent flash)
+// ============================================================
+(function() {
+  // Inisialisasi tema segera sebelum halaman selesai render agar tidak ada flicker
+  try {
+    const savedTheme = localStorage.getItem('km_theme');
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  } catch (e) {
+    console.warn('Gagal memuat preferensi tema:', e);
+  }
+
+  // Pastikan style.css dimuat di semua halaman
+  try {
+    const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
+    const hasStyle = links.some(l => (l.href || '').includes('style.css'));
+    if (!hasStyle && document.head) {
+      const isSubdir = window.location.pathname.includes('/admin/');
+      const cssPath = (isSubdir ? '../' : '') + 'style.css';
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = cssPath;
+      document.head.appendChild(link);
+    }
+  } catch (e) {}
+})();
+
+window.updateThemeToggleUI = function() {
+  const isDark = document.documentElement.classList.contains('dark');
+
+  // 1. Ikon tombol aksi di header/navbar (klik untuk switch)
+  // Saat gelap: tampilkan matahari (klik untuk ke mode terang)
+  // Saat terang: tampilkan bulan (klik untuk ke mode gelap)
+  document.querySelectorAll('.dark-icon-sun').forEach(el => {
+    el.classList.toggle('hidden', !isDark);
+  });
+  document.querySelectorAll('.dark-icon-moon').forEach(el => {
+    el.classList.toggle('hidden', isDark);
+  });
+
+  // 2. Ikon indikator di sidebar (menunjukkan tema saat ini)
+  // Saat gelap: ikon bulan aktif (dark_mode)
+  // Saat terang: ikon matahari aktif (light_mode)
+  document.querySelectorAll('.sidebar-icon-moon').forEach(el => {
+    el.classList.toggle('hidden', !isDark);
+  });
+  document.querySelectorAll('.sidebar-icon-sun').forEach(el => {
+    el.classList.toggle('hidden', isDark);
+  });
+
+  // 3. Animasi toggle switch slider di sidebar
+  document.querySelectorAll('.theme-toggle-switch').forEach(el => {
+    if (isDark) {
+      el.classList.remove('bg-slate-300');
+      el.classList.add('bg-blue-600');
+    } else {
+      el.classList.remove('bg-blue-600');
+      el.classList.add('bg-slate-300');
+    }
+  });
+  document.querySelectorAll('.theme-toggle-knob').forEach(el => {
+    el.style.transform = isDark ? 'translateX(14px)' : 'translateX(0px)';
+  });
+};
+
+window.toggleDarkMode = function() {
+  const isDark = document.documentElement.classList.toggle('dark');
+  try {
+    localStorage.setItem('km_theme', isDark ? 'dark' : 'light');
+  } catch (e) {}
+  window.updateThemeToggleUI();
+  return isDark;
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', window.updateThemeToggleUI);
+} else {
+  window.updateThemeToggleUI();
+}

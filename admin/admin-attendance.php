@@ -32,9 +32,9 @@ if ($db_query) {
         href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap"
         rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="../shared-config.js"></script>
-    <script src="../intern-store.js"></script>
-    <link rel="stylesheet" href="../style.css" />
+    <script src="../shared-config.js?v=<?php echo time(); ?>"></script>
+    <script src="../intern-store.js?v=<?php echo time(); ?>"></script>
+    <link rel="stylesheet" href="../style.css?v=<?php echo time(); ?>" />
     <style>
         .glass-card {
             background: rgba(255, 255, 255, 0.8);
@@ -83,6 +83,33 @@ if ($db_query) {
             background: #ffffff;
             color: #334155;
             border-color: #e2e8f0;
+        }
+
+        /* Dark Mode Calendar Overrides */
+        html.dark .cal-cell.status-empty,
+        html.dark .cal-cell.status-pending {
+            background: #17264c !important;
+            color: #cbd5e1 !important;
+            border-color: #263864 !important;
+        }
+        html.dark .cal-cell.status-complete {
+            background: rgba(6, 78, 59, 0.65) !important;
+            color: #6ee7b7 !important;
+            border-color: #059669 !important;
+        }
+        html.dark .cal-cell.status-incomplete,
+        html.dark .cal-cell.status-late {
+            background: rgba(113, 63, 18, 0.65) !important;
+            color: #fde047 !important;
+            border-color: #d97706 !important;
+        }
+        html.dark .cal-cell.weekend {
+            background: #0d1630 !important;
+            color: #64748b !important;
+        }
+        html.dark .cal-cell.future {
+            background: #090f23 !important;
+            color: #475569 !important;
         }
 
         .cal-cell.weekend {

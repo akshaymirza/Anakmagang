@@ -272,7 +272,8 @@ $gallery_list = get_all_gallery_items($conn, $json_file);
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="shared-config.js"></script>
+    <script src="shared-config.js?v=<?php echo time(); ?>"></script>
+    <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
     <style>
         body { font-family: Inter, sans-serif; }
         .font-geist { font-family: Geist, sans-serif; }

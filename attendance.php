@@ -42,8 +42,9 @@ if ($conn) {
         rel="stylesheet" />
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="shared-config.js"></script>
-    <script src="intern-store.js"></script>
+    <script src="shared-config.js?v=<?php echo time(); ?>"></script>
+    <script src="intern-store.js?v=<?php echo time(); ?>"></script>
+    <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -168,6 +169,32 @@ if ($conn) {
         .cal-cell.future:hover {
             transform: none;
             border-color: transparent;
+        }
+
+        /* Dark Mode Calendar Overrides */
+        html.dark .cal-cell.weekend {
+            background: #0d1630;
+            color: #64748b;
+        }
+        html.dark .cal-cell.future {
+            background: #090f23;
+            color: #475569;
+        }
+        html.dark .cal-cell.status-present {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+        html.dark .cal-cell.status-late {
+            background: #713f12;
+            color: #fde047;
+        }
+        html.dark .cal-cell.status-absent {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+        html.dark .cal-cell.status-permit, html.dark .cal-cell.status-dispen, html.dark .cal-cell.status-sakit, html.dark .cal-cell.status-izin {
+            background: #3b1d6e;
+            color: #d8b4fe;
         }
 
         .status-dot {

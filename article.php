@@ -322,8 +322,8 @@ if (!$featured_article && count($articles) > 0) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="shared-config.js"></script>
-    <link rel="stylesheet" href="style.css"/>
+    <script src="shared-config.js?v=<?php echo time(); ?>"></script>
+    <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>"/>
     <style>
         .article-card {
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);

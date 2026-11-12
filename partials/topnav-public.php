@@ -43,6 +43,10 @@ if (!isset($nav_cta_href)) {
 
         <!-- Desktop & Tablet CTA Actions -->
         <div class="hidden sm:flex items-center gap-2 shrink-0">
+            <button type="button" onclick="toggleDarkMode()" class="p-2 rounded-lg border border-outline-variant text-on-surface hover:text-primary hover:bg-surface-container-high transition-colors flex items-center justify-center cursor-pointer shadow-2xs" title="Mode Gelap / Terang" aria-label="Toggle Dark Mode">
+                <span class="material-symbols-outlined text-[20px] dark-icon-sun hidden text-amber-400">light_mode</span>
+                <span class="material-symbols-outlined text-[20px] dark-icon-moon text-on-surface-variant">dark_mode</span>
+            </button>
             <a href="<?php echo $root_prefix; ?>verification.php" class="border border-outline-variant text-primary hover:bg-primary hover:text-white px-3 py-2 rounded-lg font-label-md text-xs sm:text-sm transition-all flex items-center gap-1.5 font-bold shadow-xs hover:shadow-sm group" title="Verifikasi Keaslian Sertifikat">
                 <span class="material-symbols-outlined text-[18px] text-primary group-hover:text-white" style="font-variation-settings: 'FILL' 1;">verified</span>
                 <span class="hidden md:inline">Verifikasi Sertifikat</span>
@@ -68,6 +72,14 @@ if (!isset($nav_cta_href)) {
         <a href="<?php echo $root_prefix; ?>index.php#contact" class="block px-md py-sm rounded-lg font-label-md text-on-surface hover:bg-surface-container-high hover:text-primary transition-colors" data-i18n="nav_contact">Kontak</a> -->
 
         <div class="pt-sm mt-sm border-t border-outline-variant flex flex-col gap-2 sm:hidden">
+            <button type="button" onclick="toggleDarkMode()" class="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container-high transition-colors font-semibold text-sm">
+                <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px] dark-icon-sun hidden text-amber-400">light_mode</span>
+                    <span class="material-symbols-outlined text-[18px] dark-icon-moon text-on-surface-variant">dark_mode</span>
+                    <span class="dark-mode-label">Mode Gelap</span>
+                </span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-surface-container border border-outline-variant dark-mode-status">Off</span>
+            </button>
             <a href="<?php echo $root_prefix; ?>verification.php" class="w-full justify-center border border-outline-variant text-primary hover:bg-primary hover:text-white px-3 py-2 rounded-lg font-label-md text-sm transition-all flex items-center gap-1.5 font-bold">
                 <span class="material-symbols-outlined text-[18px]">verified</span>
                 <span>Verifikasi Sertifikat</span>

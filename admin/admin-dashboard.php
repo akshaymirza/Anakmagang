@@ -71,10 +71,10 @@ if ($att_query) {
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="../shared-config.js"></script>
-    <script src="../project-store.js"></script>
-    <script src="../intern-store.js"></script>
-    <link rel="stylesheet" href="../style.css"/>
+    <script src="../shared-config.js?v=<?php echo time(); ?>"></script>
+    <script src="../project-store.js?v=<?php echo time(); ?>"></script>
+    <script src="../intern-store.js?v=<?php echo time(); ?>"></script>
+    <link rel="stylesheet" href="../style.css?v=<?php echo time(); ?>"/>
     <style>
         .glass-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); }
     </style>
@@ -96,7 +96,7 @@ include '../partials/sidebar-admin.php';
                 </button>
                 <h2 class="font-headline-lg font-bold text-on-surface">Admin Dashboard</h2>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 sm:gap-3">
                 <div class="flex items-center gap-sm p-1.5 px-3 rounded-full border border-outline-variant bg-surface-bright shadow-2xs">
                     <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container overflow-hidden shrink-0">
                         <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_circle</span>

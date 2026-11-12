@@ -27,6 +27,7 @@ $userRole = current_user_role();
     <script src="shared-config.js?v=<?php echo time(); ?>"></script>
     <script src="project-store.js?v=<?php echo time(); ?>"></script>
     <script src="intern-store.js?v=<?php echo time(); ?>"></script>
+    <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
     <style>
         body {
             font-family: Inter, sans-serif;

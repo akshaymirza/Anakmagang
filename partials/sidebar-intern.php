@@ -184,10 +184,22 @@ $sidebar_internspace_href = $root_prefix . 'internspace.php' . $intern_query_str
             </div>
         <?php endif; ?>
 
-        <div class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-on-surface">
-            <span class="material-symbols-outlined text-primary">account_circle</span>
-            <span class="truncate font-semibold"><?php echo htmlspecialchars(current_user_name(), ENT_QUOTES, 'UTF-8'); ?></span>
+        <!-- User Profile & Theme Toggle Button -->
+        <div class="flex items-center justify-between px-md py-sm rounded-lg font-label-md text-on-surface">
+            <div class="flex items-center gap-md min-w-0">
+                <span class="material-symbols-outlined text-primary">account_circle</span>
+                <span class="truncate font-semibold"><?php echo htmlspecialchars(current_user_name(), ENT_QUOTES, 'UTF-8'); ?></span>
+            </div>
+            <button type="button" onclick="toggleDarkMode()" class="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors cursor-pointer shrink-0 flex items-center justify-center" title="Mode Gelap / Terang" aria-label="Toggle Dark Mode">
+                <span class="material-symbols-outlined sidebar-icon-moon text-primary text-[20px]">dark_mode</span>
+                <span class="material-symbols-outlined sidebar-icon-sun hidden text-amber-500 text-[20px]">light_mode</span>
+            </button>
         </div>
+        <script>
+            if (typeof window.updateThemeToggleUI === 'function') {
+                window.updateThemeToggleUI();
+            }
+        </script>
         <a class="flex items-center gap-md px-md py-sm rounded-lg font-label-md text-label-md text-error hover:bg-error-container transition-colors" href="<?php echo $root_prefix; ?>logout.php">
             <span class="material-symbols-outlined">logout</span>
             <span>Keluar</span>

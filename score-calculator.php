@@ -470,10 +470,8 @@ if (!function_exists('sync_all_intern_certificates')) {
 
             if ($checkCert && $certRow = mysqli_fetch_assoc($checkCert)) {
                 $certId = (int)$certRow['id'];
-                // Jika user_id belum terisi di certificates, hubungkan sekarang
-                if (empty($certRow['user_id']) || (int)$certRow['user_id'] !== $userId) {
-                    @mysqli_query($conn, "UPDATE certificates SET user_id = $userId WHERE id = $certId");
-                }
+                // Pastikan user_id dan nama intern tersinkron dengan huruf pertama kapital
+                @mysqli_query($conn, "UPDATE certificates SET user_id = $userId, intern_name = '$escUsername' WHERE id = $certId");
                 $synced++;
             } else {
                 // Buat sertifikat baru otomatis untuk intern ini

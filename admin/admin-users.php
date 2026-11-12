@@ -71,8 +71,8 @@ $total_admins = count(array_filter($users, static function (array $user): bool {
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="../shared-config.js"></script>
-    <link rel="stylesheet" href="../style.css"/>
+    <script src="../shared-config.js?v=<?php echo time(); ?>"></script>
+    <link rel="stylesheet" href="../style.css?v=<?php echo time(); ?>"/>
     <style>
         .glass-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); }
     </style>

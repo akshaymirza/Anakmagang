@@ -22,8 +22,8 @@ $user_role = current_user_role();
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="shared-config.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <script src="shared-config.js?v=<?php echo time(); ?>"></script>
+    <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
     <style>
         .sop-content p { margin-bottom: 0.65rem; line-height: 1.65; color: #475569; }
         .sop-content p:last-child { margin-bottom: 0; }
@@ -32,6 +32,21 @@ $user_role = current_user_role();
         .sop-content li { margin-bottom: 0.35rem; line-height: 1.6; color: #334155; }
         .sop-content strong { font-weight: 700; color: #0f172a; }
         .sop-content h3, .sop-content h4 { font-weight: 700; color: #0f172a; margin-top: 1rem; margin-bottom: 0.4rem; }
+
+        /* Dark Mode Overrides for SOP Content */
+        html.dark .sop-content p { color: #cbd5e1 !important; }
+        html.dark .sop-content li { color: #e2e8f0 !important; }
+        html.dark .sop-content strong { color: #f8fafc !important; }
+        html.dark .sop-content h3, html.dark .sop-content h4 { color: #93c5fd !important; }
+        html.dark .sop-content span { color: inherit; }
+        html.dark .sop-content .text-primary { color: #93c5fd !important; }
+        html.dark .sop-content .text-on-surface-variant { color: #cbd5e1 !important; }
+        html.dark .sop-content .text-on-surface { color: #f8fafc !important; }
+        html.dark .sop-content .bg-surface-container-high,
+        html.dark .sop-content .bg-surface-container-lowest {
+            background-color: #17264c !important;
+            border-color: #263864 !important;
+        }
     </style>
 </head>
 <body class="bg-background text-on-surface font-body-md flex h-screen overflow-hidden">

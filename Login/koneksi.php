@@ -66,6 +66,7 @@ if (!$conn) {
 @mysqli_query($conn, "UPDATE users SET username = CONCAT(UPPER(LEFT(username, 1)), SUBSTRING(username, 2)) WHERE username IS NOT NULL AND username != '' AND BINARY LEFT(username, 1) != UPPER(LEFT(username, 1))");
 @mysqli_query($conn, "UPDATE attendance a JOIN users u ON LOWER(a.username) = LOWER(u.username) SET a.username = u.username WHERE a.username != u.username");
 @mysqli_query($conn, "UPDATE certificates c JOIN users u ON c.user_id = u.id SET c.intern_name = u.username WHERE c.intern_name != u.username");
+@mysqli_query($conn, "UPDATE certificates SET intern_name = CONCAT(UPPER(LEFT(intern_name, 1)), SUBSTRING(intern_name, 2)) WHERE intern_name IS NOT NULL AND intern_name != '' AND BINARY LEFT(intern_name, 1) != UPPER(LEFT(intern_name, 1))");
 
 // Muat helper fungsi sertifikat & kalkulator skor
 if (file_exists(__DIR__ . '/../score-calculator.php')) {

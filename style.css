@@ -138,3 +138,406 @@ body {
   text-decoration: none !important;
   transform: translateX(4px);
 }
+
+/* ==============================================================
+   DARK MODE COMPREHENSIVE THEME
+   ============================================================== */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0b1329 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Base Surfaces & Backgrounds */
+html.dark .bg-background,
+html.dark .bg-surface,
+html.dark .bg-surface-bright {
+  background-color: #0b1329 !important;
+}
+
+html.dark .bg-surface-container-lowest,
+html.dark .bg-white {
+  background-color: #121e3d !important;
+}
+
+html.dark .bg-surface-container-low {
+  background-color: #17264c !important;
+}
+
+html.dark .bg-surface-container {
+  background-color: #1d2f5d !important;
+}
+
+html.dark .bg-surface-container-high,
+html.dark .bg-surface-container-highest {
+  background-color: #24386e !important;
+}
+
+/* Neutral & Slate Pastel Containers (Fix White Blocks in Dark Mode) */
+html.dark .bg-slate-50,
+html.dark .bg-slate-100,
+html.dark .bg-slate-200,
+html.dark .bg-gray-50,
+html.dark .bg-gray-100 {
+  background-color: #17264c !important;
+  border-color: #263864 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Color-Tinted Containers in Dark Mode (Fix Blinding Pastel Boxes) */
+html.dark .bg-emerald-50,
+html.dark .bg-green-50,
+html.dark .bg-green-100,
+html.dark .bg-emerald-50\/60 {
+  background-color: rgba(6, 78, 59, 0.35) !important;
+  border-color: #047857 !important;
+  color: #6ee7b7 !important;
+}
+
+html.dark .bg-amber-50,
+html.dark .bg-yellow-50,
+html.dark .bg-amber-100,
+html.dark .bg-amber-50\/60 {
+  background-color: rgba(113, 63, 18, 0.35) !important;
+  border-color: #854d0e !important;
+  color: #fde047 !important;
+}
+
+html.dark .bg-blue-50,
+html.dark .bg-indigo-50,
+html.dark .bg-blue-100,
+html.dark .bg-indigo-100,
+html.dark .bg-indigo-50\/60 {
+  background-color: rgba(30, 58, 138, 0.35) !important;
+  border-color: #1e40af !important;
+  color: #93c5fd !important;
+}
+
+html.dark .bg-purple-50,
+html.dark .bg-purple-100 {
+  background-color: rgba(88, 28, 135, 0.35) !important;
+  border-color: #7e22ce !important;
+  color: #d8b4fe !important;
+}
+
+html.dark .border-purple-200 {
+  border-color: #7e22ce !important;
+}
+
+html.dark .text-blue-900,
+html.dark .text-blue-950 {
+  color: #bfdbfe !important;
+}
+
+html.dark .text-purple-900,
+html.dark .text-purple-950 {
+  color: #e9d5ff !important;
+}
+
+html.dark .text-purple-700 {
+  color: #d8b4fe !important;
+}
+
+html.dark .text-emerald-900,
+html.dark .text-emerald-950 {
+  color: #a7f3d0 !important;
+}
+
+html.dark .bg-rose-50,
+html.dark .bg-red-50,
+html.dark .bg-red-100 {
+  background-color: rgba(127, 29, 29, 0.35) !important;
+  border-color: #991b1b !important;
+  color: #fca5a5 !important;
+}
+
+/* Text Hierarchy & Contrast Fixes */
+html.dark .text-on-surface,
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-gray-900,
+html.dark .text-gray-800,
+html.dark .text-zinc-900 {
+  color: #f8fafc !important;
+}
+
+html.dark .text-on-surface-variant,
+html.dark .text-slate-600,
+html.dark .text-slate-500,
+html.dark .text-gray-600,
+html.dark .text-gray-500 {
+  color: #94a3b8 !important;
+}
+
+html.dark td.text-on-surface-variant,
+html.dark td .text-on-surface-variant {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-slate-700 {
+  color: #cbd5e1 !important;
+}
+
+/* Specific Accent Text in Dark Mode */
+html.dark .text-primary {
+  color: #93c5fd !important;
+}
+
+html.dark .bg-primary {
+  background-color: #2563eb !important;
+}
+
+html.dark .bg-primary-container {
+  background-color: #1d4ed8 !important;
+  color: #ffffff !important;
+}
+
+html.dark .text-on-primary-container {
+  color: #ffffff !important;
+}
+
+html.dark .text-green-700,
+html.dark .text-green-800,
+html.dark .text-emerald-700,
+html.dark .text-emerald-800 {
+  color: #6ee7b7 !important;
+}
+
+html.dark .text-amber-700,
+html.dark .text-amber-800 {
+  color: #fde047 !important;
+}
+
+html.dark .text-blue-700,
+html.dark .text-blue-800,
+html.dark .text-indigo-700,
+html.dark .text-indigo-800 {
+  color: #93c5fd !important;
+}
+
+/* SOP Content Specific High Contrast in Dark Mode */
+html.dark .sop-content p,
+html.dark .sop-content div {
+  color: #cbd5e1 !important;
+}
+
+html.dark .sop-content li {
+  color: #e2e8f0 !important;
+}
+
+html.dark .sop-content strong {
+  color: #f8fafc !important;
+}
+
+html.dark .sop-content h3,
+html.dark .sop-content h4 {
+  color: #93c5fd !important;
+}
+
+/* Inner Intern Stat Cards in admin-dashboard.php (Image 1 Fix) */
+html.dark .p-2.bg-white\/60,
+html.dark div[class*="bg-white/60"] {
+  background-color: #17264c !important;
+  border-color: #263864 !important;
+}
+
+/* Borders & Dividers */
+html.dark .border-outline-variant,
+html.dark .border-outline,
+html.dark .border-slate-200,
+html.dark .border-slate-300,
+html.dark .border-gray-200,
+html.dark .border-gray-300,
+html.dark .border-slate-200\/60,
+html.dark .border-outline-variant\/40,
+html.dark .border-outline-variant\/60 {
+  border-color: #263864 !important;
+}
+
+html.dark .divide-outline-variant > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #263864 !important;
+}
+
+/* Cards & Glass Elevation */
+html.dark .glass-card {
+  background: rgba(18, 30, 61, 0.88) !important;
+  backdrop-filter: blur(14px) !important;
+  border-color: #263864 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark .glass-card:hover {
+  background: rgba(23, 38, 76, 0.95) !important;
+  border-color: #3b528b !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Form Controls (Inputs, Selects, Textareas) */
+html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="color"]):not([type="file"]),
+html.dark textarea,
+html.dark select {
+  background-color: #17264c !important;
+  color: #f8fafc !important;
+  border-color: #2c4072 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+html.dark select option {
+  background-color: #121e3d !important;
+  color: #f8fafc !important;
+}
+
+/* Tables & Table Headers (Image 2 Fix) */
+html.dark thead,
+html.dark thead tr {
+  background-color: #16244a !important;
+  border-color: #263864 !important;
+  color: #cbd5e1 !important;
+}
+
+html.dark thead th,
+html.dark thead th span {
+  color: #e2e8f0 !important;
+}
+
+html.dark thead th:hover,
+html.dark thead th:hover span {
+  color: #93c5fd !important;
+}
+
+html.dark thead th .material-symbols-outlined {
+  color: #93c5fd !important;
+}
+
+html.dark tr:hover,
+html.dark tr.hover\:bg-surface-container-low:hover {
+  background-color: #1a2c58 !important;
+}
+
+/* Cohort Pills in Certificates & Users Tables (Image 2 Fix) */
+html.dark .cohort-pill:not(.bg-primary),
+html.dark .admin-cohort-pill:not(.bg-primary) {
+  background-color: #17264c !important;
+  color: #cbd5e1 !important;
+  border-color: #263864 !important;
+}
+
+html.dark .cohort-pill:not(.bg-primary):hover,
+html.dark .admin-cohort-pill:not(.bg-primary):hover {
+  background-color: #24386e !important;
+  color: #ffffff !important;
+}
+
+/* Attendance Calendar Cells (Image 3 Fix: No More White Squares) */
+html.dark .cal-cell.status-empty,
+html.dark .cal-cell.status-pending {
+  background: #17264c !important;
+  color: #cbd5e1 !important;
+  border-color: #263864 !important;
+}
+
+html.dark .cal-cell.status-complete {
+  background: rgba(6, 78, 59, 0.65) !important;
+  color: #6ee7b7 !important;
+  border-color: #059669 !important;
+}
+
+html.dark .cal-cell.status-incomplete,
+html.dark .cal-cell.status-late {
+  background: rgba(113, 63, 18, 0.65) !important;
+  color: #fde047 !important;
+  border-color: #d97706 !important;
+}
+
+html.dark .cal-cell.status-present {
+  background: #064e3b !important;
+  color: #6ee7b7 !important;
+  border-color: #047857 !important;
+}
+
+html.dark .cal-cell.status-absent {
+  background: #7f1d1d !important;
+  color: #fca5a5 !important;
+  border-color: #991b1b !important;
+}
+
+html.dark .cal-cell.status-permit,
+html.dark .cal-cell.status-dispen,
+html.dark .cal-cell.status-sakit,
+html.dark .cal-cell.status-izin {
+  background: #3b1d6e !important;
+  color: #d8b4fe !important;
+  border-color: #5b21b6 !important;
+}
+
+html.dark .cal-cell.weekend {
+  background: #0d1630 !important;
+  color: #64748b !important;
+  border-color: transparent !important;
+}
+
+html.dark .cal-cell.future {
+  background: #090f23 !important;
+  color: #475569 !important;
+  border-color: transparent !important;
+}
+
+html.dark .cal-cell.today {
+  box-shadow: 0 0 0 2px #60a5fa !important;
+  border-color: #60a5fa !important;
+}
+
+html.dark .cal-cell:hover:not(.weekend):not(.future) {
+  border-color: #60a5fa !important;
+  background-color: #1a2c58 !important;
+}
+
+/* Status Badges */
+html.dark .badge-present,
+html.dark .status-badge-green {
+  background-color: rgba(6, 78, 59, 0.6) !important;
+  color: #6ee7b7 !important;
+  border-color: #047857 !important;
+}
+
+html.dark .badge-late,
+html.dark .status-badge-yellow {
+  background-color: rgba(113, 63, 18, 0.6) !important;
+  color: #fde047 !important;
+  border-color: #854d0e !important;
+}
+
+html.dark .badge-absent,
+html.dark .status-badge-red {
+  background-color: rgba(127, 29, 29, 0.6) !important;
+  color: #fca5a5 !important;
+  border-color: #991b1b !important;
+}
+
+/* Modals */
+html.dark div[id$="-modal"] > div {
+  background-color: #121e3d !important;
+  border-color: #2c4072 !important;
+  color: #f8fafc !important;
+}
+
+/* Header & Aside Navigation */
+html.dark header,
+html.dark aside {
+  background-color: #121e3d !important;
+  border-color: #263864 !important;
+}
+
+/* Scrollbars */
+html.dark ::-webkit-scrollbar-track { background: #0b1329; }
+html.dark ::-webkit-scrollbar-thumb { background: #263864; }
+html.dark ::-webkit-scrollbar-thumb:hover { background: #3b528b; }
+

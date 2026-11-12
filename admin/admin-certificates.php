@@ -37,8 +37,8 @@ rsort($cohort_years);
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="../shared-config.js"></script>
-    <link rel="stylesheet" href="../style.css"/>
+    <script src="../shared-config.js?v=<?php echo time(); ?>"></script>
+    <link rel="stylesheet" href="../style.css?v=<?php echo time(); ?>"/>
     <style>
         .filled-icon { font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
         dialog::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(4px); }
@@ -706,22 +706,22 @@ async function loadCertificates() {
             <td class="px-4 py-3 font-mono text-sm font-bold text-primary">${c.certificate_id}</td>
             <td class="px-4 py-3">
                 <div class="font-medium text-on-surface flex items-center gap-1.5 flex-wrap">
-                    <span>${c.intern_name}</span>
+                    <span class="font-bold">${(c.intern_name || '').charAt(0).toUpperCase() + (c.intern_name || '').slice(1)}</span>
                     ${Number(c.is_score_manual) === 1
-                        ? '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800" title="Skor ditentukan secara manual oleh admin/pembimbing">Manual</span>'
-                        : '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800" title="Skor tersinkron otomatis dari data presensi">Auto</span>'}
+                        ? '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 dark:border dark:border-amber-700/50" title="Skor ditentukan secara manual oleh admin/pembimbing">Manual</span>'
+                        : '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border dark:border-emerald-700/50" title="Skor tersinkron otomatis dari data presensi">Auto</span>'}
                 </div>
                 <div class="text-[11px] text-on-surface-variant flex items-center gap-1.5 mt-0.5">
-                    <span class="inline-flex items-center px-1.5 py-0.2 rounded font-bold text-primary bg-primary/10">Grade: ${c.final_grade || '—'}</span>
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded font-bold text-primary bg-primary/10 dark:bg-blue-900/40 dark:text-blue-300">Grade: ${c.final_grade || '—'}</span>
                     <span>•</span>
                     <span title="Rata-rata: ${avgScore}">Rerata: ${avgScore}</span>
                     <span>•</span>
-                    <span class="text-xs text-on-surface-variant" title="Teknis: ${c.score_technical || 0}, Disiplin: ${c.score_discipline || 0}, Sikap: ${c.score_attitude || 0}">T:${c.score_technical || 0} D:${c.score_discipline || 0} S:${c.score_attitude || 0}</span>
+                    <span class="text-xs text-on-surface-variant dark:text-slate-300" title="Teknis: ${c.score_technical || 0}, Disiplin: ${c.score_discipline || 0}, Sikap: ${c.score_attitude || 0}">T:${c.score_technical || 0} D:${c.score_discipline || 0} S:${c.score_attitude || 0}</span>
                 </div>
             </td>
             <td class="px-4 py-3 text-center">
-                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
-                    <span class="material-symbols-outlined text-[13px] text-blue-600">calendar_month</span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800">
+                    <span class="material-symbols-outlined text-[13px] text-blue-600 dark:text-blue-400">calendar_month</span>
                     ${c.entry_year || '—'}
                 </span>
             </td>
@@ -730,13 +730,13 @@ async function loadCertificates() {
             <td class="px-4 py-3 text-center">
                 <label class="relative inline-flex items-center cursor-pointer select-none">
                     <input type="checkbox" class="sr-only peer" ${c.status === 'active' ? 'checked' : ''} onchange="toggleSingleCertStatus(${c.id}, this.checked ? 'active' : 'revoked')"/>
-                    <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                    <div class="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                 </label>
             </td>
             <td class="px-4 py-3 text-center">
                 ${c.status === 'active'
-                    ? '<span class="bg-[#dcfce7] text-[#166534] px-2.5 py-1 rounded-full text-xs font-bold">Aktif</span>'
-                    : '<span class="bg-error-container text-error px-2.5 py-1 rounded-full text-xs font-bold">Dicabut</span>'}
+                    ? '<span class="status-badge-green px-2.5 py-1 rounded-full text-xs font-bold inline-block">Aktif</span>'
+                    : '<span class="status-badge-red px-2.5 py-1 rounded-full text-xs font-bold inline-block">Dicabut</span>'}
             </td>
             <td class="px-4 py-3 text-center text-xs text-on-surface-variant">${c.issue_fmt}</td>
             <td class="px-4 py-3 text-center">
