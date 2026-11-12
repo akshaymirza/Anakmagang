@@ -1170,10 +1170,6 @@ if ($conn) {
             }
             return result;
         }
-                }
-            }
-            return result;
-        }
 
         function getRecord(dateStr) {
             return loadData().find(r => r.date === dateStr) || null;
