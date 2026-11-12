@@ -327,22 +327,6 @@ if ($conn) {
                 </div>
             </div>
 
-            <!-- Tracker mode info banner -->
-            <div
-                class="mb-5 flex items-center gap-2.5 bg-blue-50 border border-blue-200 text-blue-900 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm shadow-sm">
-                <span class="material-symbols-outlined text-blue-600 text-[18px] sm:text-[20px] shrink-0">info</span>
-                <span>Halaman ini berfungsi sebagai <strong>Tracker Kehadiran</strong>. Pengeditan dan pencatatan data
-                    kehadiran dilakukan oleh <strong>Admin</strong>.</span>
-            </div>
-
-            <!-- Admin preview banner (hanya tampil jika dibuka via ?intern=Nama oleh Admin) -->
-            <div id="admin-preview-banner"
-                class="hidden mb-5 flex items-center gap-2.5 bg-amber-50 border border-amber-200 text-amber-900 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm">
-                <span class="material-symbols-outlined text-amber-600 shrink-0">visibility</span>
-                <span>Anda (Admin) sedang melihat kehadiran milik <strong id="admin-preview-name"></strong> dalam mode
-                    baca-saja.</span>
-            </div>
-
             <!-- Intern period / finished banner -->
             <div id="intern-period-banner"
                 class="hidden mb-5 items-center justify-between gap-3 px-4 py-3 rounded-xl border text-xs sm:text-sm shadow-xs">
@@ -1182,8 +1166,10 @@ if ($conn) {
             document.getElementById('page-subtitle').textContent = isAdminRole
                 ? 'Data kehadiran intern ini. Anda dapat mengedit, menghapus, atau mengatur status kehadiran & dispensasi.'
                 : 'Data kehadiran intern ini, dilihat oleh Admin.';
-            document.getElementById('admin-preview-banner').classList.remove('hidden');
-            document.getElementById('admin-preview-name').textContent = activeInternName;
+            document.getElementById('admin-preview-banner')?.classList.remove('hidden');
+            if (document.getElementById('admin-preview-name')) {
+                document.getElementById('admin-preview-name').textContent = activeInternName;
+            }
             document.getElementById('main-input-btn')?.classList.add('hidden');
             document.getElementById('main-clockout-btn')?.classList.add('hidden');
             document.getElementById('main-leave-btn')?.classList.add('hidden');

@@ -95,32 +95,6 @@ $userName = current_user_name();
     <!-- Dashboard Content -->
     <div class="w-full max-w-container-max mx-auto p-md md:p-gutter flex flex-col gap-xl flex-1">
         
-        <!-- Admin Preview Mode Banner -->
-        <div id="admin-preview-banner" class="hidden bg-amber-50 border border-amber-300 text-amber-900 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-amber-200 text-amber-800 flex items-center justify-center shrink-0">
-                    <span class="material-symbols-outlined text-[24px]">visibility</span>
-                </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-200 text-amber-900">Mode Pratinjau Admin</span>
-                        <span class="text-xs text-amber-700 font-medium">Hanya Baca</span>
-                    </div>
-                    <p class="text-sm font-semibold text-amber-950 mt-0.5">
-                        Melihat dashboard personal milik <strong id="admin-preview-intern-name" class="underline"></strong>
-                    </p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2 shrink-0">
-                <a id="admin-preview-att-btn" href="#" class="px-3.5 py-2 bg-white border border-amber-300 text-amber-900 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors flex items-center gap-1.5 shadow-2xs">
-                    <span class="material-symbols-outlined text-[16px] text-amber-700">calendar_month</span> Lihat Kehadiran
-                </a>
-                <a href="admin/admin-dashboard.php" class="px-3.5 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary-container transition-colors flex items-center gap-1.5 shadow-2xs">
-                    <span class="material-symbols-outlined text-[16px]">arrow_back</span> Kembali ke Admin
-                </a>
-            </div>
-        </div>
-
         <!-- Page Header -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
