@@ -36,29 +36,49 @@ if ($db_query) {
     <script src="../intern-store.js?v=<?php echo time(); ?>"></script>
     <link rel="stylesheet" href="../style.css?v=<?php echo time(); ?>" />
     <style>
-        .glass-card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(12px);
+        body {
+            font-family: 'Inter', sans-serif;
         }
 
+        .font-geist {
+            font-family: 'Geist', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 500;
+        }
+
+        /* Calendar Responsive Cell (Identical to attendance.php) */
         .cal-cell {
             aspect-ratio: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.15s ease;
             position: relative;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             font-weight: 600;
-            border: 1.5px solid transparent;
+            border: 1px solid transparent;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            min-width: 0;
+            width: 100%;
+        }
+
+        @media (min-width: 640px) {
+            .cal-cell {
+                font-size: 0.85rem;
+                border-radius: 12px;
+                border-width: 1.5px;
+            }
         }
 
         .cal-cell:hover {
-            transform: scale(1.07);
-            border-color: #2563eb;
+            transform: scale(1.05);
+            border-color: var(--color-primary, #2563eb);
         }
 
         .cal-cell.today {
@@ -68,14 +88,12 @@ if ($db_query) {
         .cal-cell.status-complete {
             background: #dcfce7;
             color: #166534;
-            border-color: #86efac;
         }
 
         .cal-cell.status-incomplete,
         .cal-cell.status-late {
             background: #fef9c3;
             color: #854d0e;
-            border-color: #fde047;
         }
 
         .cal-cell.status-empty,
@@ -93,15 +111,13 @@ if ($db_query) {
             border-color: #263864 !important;
         }
         html.dark .cal-cell.status-complete {
-            background: rgba(6, 78, 59, 0.65) !important;
+            background: #064e3b !important;
             color: #6ee7b7 !important;
-            border-color: #059669 !important;
         }
         html.dark .cal-cell.status-incomplete,
         html.dark .cal-cell.status-late {
-            background: rgba(113, 63, 18, 0.65) !important;
+            background: #713f12 !important;
             color: #fde047 !important;
-            border-color: #d97706 !important;
         }
         html.dark .cal-cell.weekend {
             background: #0d1630 !important;
@@ -134,7 +150,7 @@ if ($db_query) {
         }
 
         .cal-cell.future {
-            background: #f8fafc;
+            background: #f1f5f9;
             color: #cbd5e1;
             cursor: not-allowed;
             opacity: 0.6;
@@ -146,11 +162,69 @@ if ($db_query) {
         }
 
         .status-dot {
-            width: 6px;
-            height: 6px;
+            width: 5px;
+            height: 5px;
             border-radius: 50%;
             position: absolute;
-            bottom: 5px;
+            bottom: 4px;
+        }
+
+        @media (min-width: 640px) {
+            .status-dot {
+                width: 6px;
+                height: 6px;
+                bottom: 5px;
+            }
+        }
+
+        /* Stat card gradient (From attendance.php) */
+        .stat-present {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        }
+
+        .stat-late {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        }
+
+        .stat-absent {
+            background: linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%);
+        }
+
+        .stat-rate {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        }
+
+        /* Dark mode stat card overrides */
+        html.dark .stat-present {
+            background: linear-gradient(135deg, rgba(6, 78, 59, 0.7) 0%, rgba(6, 95, 70, 0.7) 100%);
+            border-color: rgba(5, 150, 105, 0.4);
+        }
+        html.dark .stat-late {
+            background: linear-gradient(135deg, rgba(113, 63, 18, 0.7) 0%, rgba(146, 64, 14, 0.7) 100%);
+            border-color: rgba(217, 119, 6, 0.4);
+        }
+        html.dark .stat-absent {
+            background: linear-gradient(135deg, rgba(127, 29, 29, 0.7) 0%, rgba(153, 27, 27, 0.7) 100%);
+            border-color: rgba(220, 38, 38, 0.4);
+        }
+        html.dark .stat-rate {
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.7) 0%, rgba(29, 78, 216, 0.7) 100%);
+            border-color: rgba(37, 99, 235, 0.4);
+        }
+        html.dark .stat-present *, html.dark .stat-late *, html.dark .stat-absent *, html.dark .stat-rate * {
+            color: #f8fafc;
+        }
+
+        /* Table row hover */
+        .att-row {
+            transition: background 0.12s;
+        }
+
+        .att-row:hover {
+            background: #f8fafc;
+        }
+        html.dark .att-row:hover {
+            background: rgba(255, 255, 255, 0.03);
         }
 
         .modal-backdrop {
@@ -201,8 +275,6 @@ if ($db_query) {
             border: 1px solid #bae6fd;
         }
 
-        
-
         .badge-pending {
             background: #f1f5f9;
             color: #475569;
@@ -228,14 +300,8 @@ if ($db_query) {
                 </h2>
             </div>
             <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-                <button onclick="openAdminSetAttendanceModal()"
-                    class="px-3 py-2 sm:px-3.5 sm:py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 flex items-center gap-1.5 shadow-sm active:scale-95 transition-all shrink-0 cursor-pointer">
-                    <span class="material-symbols-outlined text-[17px]">edit_calendar</span>
-                    <span class="hidden sm:inline">+ Set Kehadiran Intern</span>
-                    <span class="sm:hidden font-semibold">+ Set Absen</span>
-                </button>
                 <button onclick="exportAllAdminAttendanceCSV()"
-                    class="px-3 py-2 sm:px-3.5 sm:py-2 bg-primary text-on-primary rounded-xl text-xs font-bold hover:opacity-90 flex items-center gap-1 shadow-sm active:scale-95 transition-all shrink-0">
+                    class="px-3 py-2 sm:px-3.5 sm:py-2 bg-primary text-on-primary rounded-xl text-xs font-bold hover:opacity-90 flex items-center gap-1 shadow-sm active:scale-95 transition-all shrink-0 cursor-pointer">
                     <span class="material-symbols-outlined text-[16px]">download</span>
                     <span class="hidden sm:inline">Export CSV</span>
                     <span class="sm:hidden font-semibold">CSV</span>
@@ -254,116 +320,213 @@ if ($db_query) {
                 </div>
             </div>
         </header>
-        <div class="p-5 md:p-10 flex-1 flex flex-col gap-6">
-        <!-- Stats -->
-        <section class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/60">
-                <span class="text-xs font-bold uppercase tracking-wider text-primary">Total Intern</span>
-                <div class="text-2xl font-bold mt-1" id="stat-total-interns">0</div>
-            </div>
-            <div class="p-3 rounded-lg border border-green-200 bg-green-50">
-                <span class="text-xs font-bold uppercase tracking-wider text-green-700">Hari Lengkap</span>
-                <div class="text-2xl font-bold mt-1 text-green-800" id="stat-days-complete">0</div>
-            </div>
-            <div class="p-3 rounded-lg border border-amber-200 bg-amber-50">
-                <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Hari Tidak Lengkap</span>
-                <div class="text-2xl font-bold mt-1 text-amber-800" id="stat-days-late">0</div>
-            </div>
-            <div class="p-3 rounded-lg border border-slate-200 bg-white">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-600">Hari Belum Terisi</span>
-                <div class="text-2xl font-bold mt-1 text-slate-800" id="stat-days-empty">0</div>
-            </div>
-        </section>
+        <div class="flex-1 pb-10 px-2.5 sm:px-4 md:px-8 max-w-[1400px] mx-auto w-full min-w-0">
 
-        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Legend -->
-            <div class="lg:col-span-4 flex flex-col gap-4">
-                <div class="glass-card rounded-2xl border border-outline-variant p-5">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Keterangan
-                        Warna</h3>
-                    <div class="space-y-2.5">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-700 text-xs font-bold border border-green-300">12</div>
-                            <div>
-                                <div class="text-sm font-semibold text-on-surface">Lengkap</div>
-                                <div class="text-xs text-on-surface-variant">Semua intern sudah mengisi absensi</div>
-                            </div>
+            <!-- Page Header (Matching attendance.php) -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3 mt-4 md:mt-8">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest text-primary mb-0.5" id="page-eyebrow">ADMINISTRATOR</p>
+                    <h2 class="font-geist text-2xl sm:text-3xl md:text-4xl font-bold text-on-surface" id="page-title">
+                        Kehadiran Seluruh Intern
+                    </h2>
+                    <p class="text-xs sm:text-sm text-on-surface-variant mt-0.5" id="page-subtitle">
+                        Pantau presensi harian seluruh intern, status kedatangan, dan kelola absensi.
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-2 w-full sm:w-auto shrink-0 mt-1 sm:mt-0">
+                    <button onclick="exportAllAdminAttendanceCSV()"
+                        class="flex-1 sm:flex-none flex items-center justify-center gap-2 border border-outline-variant text-on-surface bg-surface-container-lowest px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold hover:bg-surface-container-low transition-colors cursor-pointer">
+                        <span class="material-symbols-outlined text-[18px]">download</span>
+                        Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Row (Matching attendance.php gradient cards) -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 mb-6">
+                <!-- Stat 1: Total Intern (stat-rate style) -->
+                <div class="stat-rate rounded-2xl p-3 sm:p-4 border border-blue-200">
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                        <span class="material-symbols-outlined text-blue-700 text-[18px] sm:text-[20px]"
+                            style="font-variation-settings:'FILL' 1;">groups</span>
+                        <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-blue-700">Total Intern</span>
+                    </div>
+                    <div id="stat-total-interns" class="text-2xl sm:text-3xl font-geist font-bold text-blue-800">0</div>
+                    <div class="text-[11px] sm:text-xs text-blue-700 mt-0.5">intern aktif</div>
+                </div>
+
+                <!-- Stat 2: Hari Lengkap (stat-present style) -->
+                <div class="stat-present rounded-2xl p-3 sm:p-4 border border-green-200">
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                        <span class="material-symbols-outlined text-green-700 text-[18px] sm:text-[20px]"
+                            style="font-variation-settings:'FILL' 1;">check_circle</span>
+                        <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-green-700">Hari Lengkap</span>
+                    </div>
+                    <div id="stat-days-complete" class="text-2xl sm:text-3xl font-geist font-bold text-green-800">0</div>
+                    <div class="text-[11px] sm:text-xs text-green-700 mt-0.5">semua hadir</div>
+                </div>
+
+                <!-- Stat 3: Hari Tidak Lengkap (stat-late style) -->
+                <div class="stat-late rounded-2xl p-3 sm:p-4 border border-amber-200">
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                        <span class="material-symbols-outlined text-amber-700 text-[18px] sm:text-[20px]"
+                            style="font-variation-settings:'FILL' 1;">schedule</span>
+                        <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-amber-700">Tidak Lengkap</span>
+                    </div>
+                    <div id="stat-days-late" class="text-2xl sm:text-3xl font-geist font-bold text-amber-800">0</div>
+                    <div class="text-[11px] sm:text-xs text-amber-700 mt-0.5">sebagian belum</div>
+                </div>
+
+                <!-- Stat 4: Hari Belum Terisi (stat-absent style) -->
+                <div class="stat-absent rounded-2xl p-3 sm:p-4 border border-red-200">
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                        <span class="material-symbols-outlined text-red-700 text-[18px] sm:text-[20px]"
+                            style="font-variation-settings:'FILL' 1;">cancel</span>
+                        <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-red-700">Belum Terisi</span>
+                    </div>
+                    <div id="stat-days-empty" class="text-2xl sm:text-3xl font-geist font-bold text-red-800">0</div>
+                    <div class="text-[11px] sm:text-xs text-red-700 mt-0.5">hari kerja</div>
+                </div>
+            </div>
+
+            <!-- Main Bento Grid (Prioritize Calendar on Mobile, matching attendance.php) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-6 sm:mb-8 min-w-0 w-full">
+
+                <!-- Right: Calendar (First on Mobile screens for fast access) -->
+                <div class="lg:col-span-8 order-1 lg:order-2 bg-surface-container-lowest rounded-2xl border border-outline-variant p-3 sm:p-5 min-w-0 w-full overflow-hidden">
+                    <!-- Calendar Header -->
+                    <div class="flex justify-between items-center mb-3 sm:mb-5">
+                        <h3 id="cal-title" class="font-geist text-base sm:text-xl font-bold text-on-surface"></h3>
+                        <div class="flex items-center gap-1">
+                            <button id="cal-prev" onclick="changeMonth(-1)"
+                                class="p-1.5 sm:p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-primary cursor-pointer">
+                                <span class="material-symbols-outlined text-xl">chevron_left</span>
+                            </button>
+                            <button onclick="goToday()"
+                                class="px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold bg-primary-container text-on-primary-container hover:opacity-80 transition-opacity cursor-pointer">
+                                Hari Ini
+                            </button>
+                            <button id="cal-next" onclick="changeMonth(1)"
+                                class="p-1.5 sm:p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-primary cursor-pointer">
+                                <span class="material-symbols-outlined text-xl">chevron_right</span>
+                            </button>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 text-xs font-bold border border-amber-300">12</div>
-                            <div>
-                                <div class="text-sm font-semibold text-on-surface">Tidak Lengkap</div>
-                                <div class="text-xs text-on-surface-variant">Sebagian intern sudah mengisi absensi</div>
+                    </div>
+                    <!-- Day Headers (7 Columns Fit) -->
+                    <div class="grid grid-cols-7 gap-1 sm:gap-1.5 mb-2 text-center w-full min-w-0">
+                        <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-red-500 truncate">Min</div>
+                        <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Sen</div>
+                        <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Sel</div>
+                        <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Rab</div>
+                        <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Kam</div>
+                        <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Jum</div>
+                        <div class="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-on-surface-variant truncate">Sab</div>
+                    </div>
+                    <!-- Calendar Grid -->
+                    <div id="cal-grid" class="grid grid-cols-7 gap-1 sm:gap-1.5 w-full min-w-0"></div>
+                </div>
+
+                <!-- Left: Action + Legend + Guidance (Second on Mobile screens) -->
+                <div class="lg:col-span-4 order-2 lg:order-1 flex flex-col gap-4">
+
+                    <!-- Admin Action Card -->
+                    <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4 sm:p-5 flex flex-col items-center text-center">
+                        <span class="material-symbols-outlined text-[36px] sm:text-[44px] text-emerald-500 mb-1 sm:mb-2"
+                            style="font-variation-settings:'FILL' 1;">edit_calendar</span>
+                        <div class="font-geist text-lg sm:text-xl font-bold text-on-surface mb-0.5">Kelola Kehadiran</div>
+                        <p class="text-xs text-on-surface-variant mb-3">Atur status hadir manual, dispensasi resmi instansi, atau izin sakit.</p>
+                        <button onclick="openAdminSetAttendanceModal()"
+                            class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-95">
+                            <span class="material-symbols-outlined text-[18px]">add_circle</span>
+                            <span>+ Set Kehadiran Intern</span>
+                        </button>
+                    </div>
+
+                    <!-- Legend Card (Exact replica of attendance.php) -->
+                    <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4 sm:p-5">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Keterangan Kalender</h3>
+                        <div class="space-y-2.5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-green-100 dark:bg-green-950/60 flex items-center justify-center text-green-700 dark:text-green-300 text-xs font-bold shrink-0">
+                                    12
+                                </div>
+                                <div>
+                                    <div class="text-xs sm:text-sm font-semibold text-on-surface">Lengkap</div>
+                                    <div class="text-[11px] sm:text-xs text-on-surface-variant">Semua intern sudah mengisi absensi</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-slate-700 text-xs font-bold border border-slate-300 shadow-2xs">12</div>
-                            <div>
-                                <div class="text-sm font-semibold text-on-surface">Belum Ada Yang Mengisi</div>
-                                <div class="text-xs text-on-surface-variant">Belum ada catatan kehadiran</div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-700 dark:text-amber-300 text-xs font-bold shrink-0">
+                                    12
+                                </div>
+                                <div>
+                                    <div class="text-xs sm:text-sm font-semibold text-on-surface">Tidak Lengkap</div>
+                                    <div class="text-[11px] sm:text-xs text-on-surface-variant">Sebagian intern sudah mengisi absensi</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 text-xs font-bold shrink-0 border border-slate-200 dark:border-slate-700 shadow-2xs">
+                                    12
+                                </div>
+                                <div>
+                                    <div class="text-xs sm:text-sm font-semibold text-on-surface">Belum Ada Yang Mengisi</div>
+                                    <div class="text-[11px] sm:text-xs text-on-surface-variant">Belum ada catatan kehadiran</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-400 text-xs font-bold shrink-0">
+                                    12
+                                </div>
+                                <div>
+                                    <div class="text-xs sm:text-sm font-semibold text-on-surface">Akhir Pekan (Minggu)</div>
+                                    <div class="text-[11px] sm:text-xs text-on-surface-variant">Hari libur mingguan</div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="glass-card rounded-2xl border border-outline-variant p-5">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Cara Pakai</h3>
-                    <p class="text-sm text-on-surface-variant">Klik salah satu tanggal pada kalender untuk melihat
-                        rincian kehadiran setiap intern pada hari itu &mdash; termasuk jam masuk, keterlambatan, dan
-                        alasan tidak masuk.</p>
-                </div>
-            </div>
 
-            <!-- Calendar -->
-            <div class="lg:col-span-8 glass-card rounded-2xl border border-outline-variant p-5">
-                <div class="flex justify-between items-center mb-5">
-                    <h3 id="cal-title" class="font-headline-md font-bold text-on-surface"></h3>
-                    <div class="flex items-center gap-1">
-                        <button onclick="changeMonth(-1)"
-                            class="p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-primary">
-                            <span class="material-symbols-outlined">chevron_left</span>
-                        </button>
-                        <button onclick="goToday()"
-                            class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary-container text-on-primary-container hover:opacity-80 transition-opacity">Hari
-                            Ini</button>
-                        <button onclick="changeMonth(1)"
-                            class="p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-primary">
-                            <span class="material-symbols-outlined">chevron_right</span>
-                        </button>
+                    <!-- Cara Pakai Card (Matches attendance.php styling) -->
+                    <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-4 sm:p-5">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2.5">Cara Pakai</h3>
+                        <p class="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                            Klik salah satu tanggal pada kalender untuk melihat rincian kehadiran setiap intern pada hari itu &mdash; termasuk jam masuk, keterlambatan, dan alasan tidak masuk.
+                        </p>
                     </div>
                 </div>
-                <div class="grid grid-cols-7 gap-1.5 mb-2 text-center">
-                    <div class="text-xs font-bold uppercase tracking-wider text-red-400">Min</div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Sen</div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Sel</div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Rab</div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Kam</div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Jum</div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Sab</div>
-                </div>
-                <div id="cal-grid" class="grid grid-cols-7 gap-1.5"></div>
             </div>
-        </section>
 
-        <!-- Intern roster quick table -->
-        <section class="glass-card p-5 rounded-2xl border border-outline-variant mt-6">
-            <h3 class="font-headline-md mb-3">Daftar Intern</h3>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-surface-container-lowest">
-                        <tr>
-                            <th class="px-3 py-2 text-left">Nama</th>
-                            <th class="px-3 py-2 text-left">Divisi</th>
-                            <th class="px-3 py-2 text-center">Hadir</th>
-                            <th class="px-3 py-2 text-center">Telat</th>
-                            <th class="px-3 py-2 text-center text-purple-700">Dispen / Izin</th>
-                            <th class="px-3 py-2 text-center">Alpha</th>
-                            <th class="px-3 py-2 text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="intern-roster-body" class="divide-y divide-outline-variant"></tbody>
-                </table>
+            <!-- History Table / Daftar Rekap Intern (Matches attendance.php table) -->
+            <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant overflow-hidden">
+                <div class="p-4 sm:p-5 border-b border-outline-variant flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <h3 class="font-geist text-base sm:text-lg font-bold text-on-surface">Daftar Kehadiran Seluruh Intern</h3>
+                        <p class="text-xs text-on-surface-variant mt-0.5">Rekapitulasi total kehadiran per intern pada bulan aktif</p>
+                    </div>
+                    <div class="w-full sm:w-auto">
+                        <div class="relative w-full sm:w-64">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+                            <input type="text" id="roster-search" oninput="filterRosterTable()" placeholder="Cari nama atau divisi intern..."
+                                class="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-outline-variant bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary font-medium" />
+                        </div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs sm:text-sm">
+                        <thead>
+                            <tr class="bg-surface-container-low border-b border-outline-variant">
+                                <th class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">Nama Intern</th>
+                                <th class="px-3.5 sm:px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">Divisi</th>
+                                <th class="px-3.5 sm:px-5 py-3 text-center text-xs font-bold uppercase tracking-wider text-green-700 whitespace-nowrap">Hadir</th>
+                                <th class="px-3.5 sm:px-5 py-3 text-center text-xs font-bold uppercase tracking-wider text-amber-700 whitespace-nowrap">Terlambat</th>
+                                <th class="px-3.5 sm:px-5 py-3 text-center text-xs font-bold uppercase tracking-wider text-purple-700 whitespace-nowrap">Dispen / Izin</th>
+                                <th class="px-3.5 sm:px-5 py-3 text-center text-xs font-bold uppercase tracking-wider text-red-700 whitespace-nowrap">Alpha</th>
+                                <th class="px-3.5 sm:px-5 py-3 text-center text-xs font-bold uppercase tracking-wider text-on-surface-variant whitespace-nowrap">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="intern-roster-body" class="divide-y divide-outline-variant"></tbody>
+                    </table>
+                </div>
             </div>
-        </section>
         </div>
         <div class="mt-auto shrink-0 w-full">
             <?php include '../partials/footer.php'; ?>
@@ -373,10 +536,10 @@ if ($db_query) {
     
     <!-- Modal Set / Override Kehadiran Intern (Admin) -->
     <div id="admin-set-attendance-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
-        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-outline-variant overflow-hidden max-h-[90vh] flex flex-col">
-            <div class="p-5 border-b border-outline-variant flex justify-between items-center bg-slate-50">
+        <div class="bg-surface-bright dark:bg-[#111a33] text-on-surface rounded-2xl w-full max-w-md shadow-2xl border border-outline-variant overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="p-5 border-b border-outline-variant flex justify-between items-center bg-slate-50 dark:bg-[#0c1326]">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center">
                         <span class="material-symbols-outlined text-[20px]">edit_calendar</span>
                     </div>
                     <div>
@@ -384,7 +547,7 @@ if ($db_query) {
                         <p class="text-xs text-on-surface-variant">Atur status hadir, telat, dispen, atau alpha</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeAdminSetAttendanceModal()" class="text-on-surface-variant hover:text-primary transition p-1 rounded-lg hover:bg-slate-200">
+                <button type="button" onclick="closeAdminSetAttendanceModal()" class="text-on-surface-variant hover:text-primary transition p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800">
                     <span class="material-symbols-outlined text-[20px]">close</span>
                 </button>
             </div>
@@ -531,11 +694,10 @@ if ($db_query) {
     <!-- Detail modal: rincian kehadiran per-intern pada satu tanggal -->
     <div id="detail-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
         <div
-            class="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-outline-variant overflow-hidden max-h-[85vh] flex flex-col">
-            <div class="p-5 border-b border-outline-variant flex justify-between items-start">
+            class="bg-surface-bright dark:bg-[#111a33] text-on-surface rounded-2xl w-full max-w-lg shadow-2xl border border-outline-variant overflow-hidden max-h-[85vh] flex flex-col">
+            <div class="p-5 border-b border-outline-variant flex justify-between items-start bg-slate-50 dark:bg-[#0c1326]">
                 <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-0.5">Rincian
-                        Kehadiran</p>
+                    <p class="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-0.5">Rincian Kehadiran</p>
                     <h3 id="detail-date-label" class="font-headline-md font-bold text-on-surface text-lg"></h3>
                 </div>
                 <button onclick="closeDetailModal()"
@@ -901,6 +1063,18 @@ if ($db_query) {
             return '../' + val;                               // path lama (backward compat)
         }
 
+        function filterRosterTable() {
+            const q = (document.getElementById('roster-search')?.value || '').toLowerCase().trim();
+            const rows = document.querySelectorAll('#intern-roster-body tr');
+            rows.forEach(tr => {
+                if (tr.dataset.internName) {
+                    const match = tr.dataset.internName.toLowerCase().includes(q) ||
+                                  (tr.dataset.division || '').toLowerCase().includes(q);
+                    tr.style.display = match ? '' : 'none';
+                }
+            });
+        }
+
         function renderRoster() {
             // Gunakan HANYA data intern dari database MySQL
             let interns = dbInternsList;
@@ -908,12 +1082,14 @@ if ($db_query) {
                 interns = window.DB_INTERNS.map(u => ({ name: u.username, division: 'Intern Kedayweb' }));
             }
 
-            document.getElementById('stat-total-interns').textContent = interns.length;
+            if (document.getElementById('stat-total-interns')) {
+                document.getElementById('stat-total-interns').textContent = interns.length;
+            }
             const tbody = document.getElementById('intern-roster-body');
             tbody.innerHTML = '';
 
             if (!interns.length) {
-                tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-6 text-center text-on-surface-variant text-sm italic">Belum ada intern terdaftar di database.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="px-5 py-8 text-center text-on-surface-variant text-sm italic">Belum ada intern terdaftar di database.</td></tr>';
                 return;
             }
 
@@ -975,34 +1151,47 @@ if ($db_query) {
 
                 const isInternEnded = i.intern_end_date && (todayStr > i.intern_end_date);
                 const statusBadge = isInternEnded 
-                    ? `<span class="ml-1.5 px-2 py-0.5 text-[10px] bg-slate-100 text-slate-600 rounded-md font-bold border border-slate-200 inline-flex items-center gap-0.5"><span class="material-symbols-outlined text-[11px]">task_alt</span> Selesai</span>` 
+                    ? `<span class="ml-1.5 px-2 py-0.5 text-[10px] bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 rounded-md font-bold border border-slate-200 dark:border-slate-700 inline-flex items-center gap-0.5"><span class="material-symbols-outlined text-[11px]">task_alt</span> Selesai</span>` 
                     : '';
 
                 const tr = document.createElement('tr');
+                tr.className = 'att-row border-b border-outline-variant/60';
+                tr.dataset.internName = i.name;
+                tr.dataset.division = i.division || 'Intern Kedayweb';
                 tr.innerHTML = `
-                    <td class="px-3 py-2 font-semibold">
-                        <div class="flex items-center flex-wrap gap-1">
-                            <span>${escHtml(i.name)}</span>
-                            ${statusBadge}
+                    <td class="px-3.5 sm:px-5 py-3 font-semibold text-on-surface">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container font-bold flex items-center justify-center text-xs shrink-0">
+                                ${escHtml(i.name.charAt(0).toUpperCase())}
+                            </div>
+                            <div class="flex items-center flex-wrap gap-1">
+                                <span class="font-bold text-xs sm:text-sm">${escHtml(i.name)}</span>
+                                ${statusBadge}
+                            </div>
                         </div>
                     </td>
-                    <td class="px-3 py-2 text-on-surface-variant">${escHtml(i.division || 'Intern Kedayweb')}</td>
-                    <td class="px-3 py-2 text-center text-green-700 font-bold">${present}</td>
-                    <td class="px-3 py-2 text-center text-amber-700 font-bold">${late}</td>
-                    <td class="px-3 py-2 text-center text-purple-700 font-bold">${permit}</td>
-                    <td class="px-3 py-2 text-center text-red-700 font-bold">${absent}</td>
-                    <td class="px-3 py-2 text-center">
-                        <div class="flex items-center justify-center gap-1.5">
-                            <button onclick="openAdminSetAttendanceModal('${escHtml(i.name)}')" class="px-2.5 py-1 bg-surface-container-high hover:bg-emerald-600 hover:text-white text-on-surface rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer" title="Atur kehadiran intern ini">
-                                <span class="material-symbols-outlined text-[14px]">edit_calendar</span>
+                    <td class="px-3.5 sm:px-5 py-3 text-on-surface-variant font-medium text-xs">${escHtml(i.division || 'Intern Kedayweb')}</td>
+                    <td class="px-3.5 sm:px-5 py-3 text-center text-green-700 dark:text-green-400 font-bold text-sm">${present}</td>
+                    <td class="px-3.5 sm:px-5 py-3 text-center text-amber-700 dark:text-amber-400 font-bold text-sm">${late}</td>
+                    <td class="px-3.5 sm:px-5 py-3 text-center text-purple-700 dark:text-purple-400 font-bold text-sm">${permit}</td>
+                    <td class="px-3.5 sm:px-5 py-3 text-center text-red-700 dark:text-red-400 font-bold text-sm">${absent}</td>
+                    <td class="px-3.5 sm:px-5 py-3 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="openAdminSetAttendanceModal('${escHtml(i.name)}')" class="px-2.5 py-1 bg-surface-container-high hover:bg-emerald-600 hover:text-white text-on-surface rounded-lg text-xs font-semibold transition flex items-center gap-1 cursor-pointer border border-outline-variant/60 shadow-2xs" title="Atur kehadiran intern ini">
+                                <span class="material-symbols-outlined text-[15px]">edit_calendar</span>
                                 <span>Set Absen</span>
                             </button>
-                            <a href="../attendance.php?intern=${encodeURIComponent(i.name)}" class="text-primary hover:underline text-xs font-semibold">Lihat Kalender</a>
+                            <a href="../attendance.php?intern=${encodeURIComponent(i.name)}" class="px-2.5 py-1 bg-surface-container-low hover:bg-primary hover:text-white text-primary rounded-lg text-xs font-semibold transition flex items-center gap-1 border border-outline-variant/60 shadow-2xs" title="Lihat Kalender Personal">
+                                <span class="material-symbols-outlined text-[15px]">calendar_month</span>
+                                <span>Kalender</span>
+                            </a>
                         </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
+
+            filterRosterTable();
         }
 
         function renderAll() {
