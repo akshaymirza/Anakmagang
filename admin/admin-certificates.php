@@ -109,10 +109,10 @@ include '../partials/sidebar-admin.php';
         <!-- Search, Angkatan Filter + Table -->
         <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-xs overflow-hidden">
             <!-- Header & Toolbar -->
-            <div class="p-5 border-b border-outline-variant flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between bg-surface-container-low/40">
+            <div class="p-5 border-b border-outline-variant flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between bg-surface-container-low">
                 <div>
                     <div class="flex items-center gap-2.5">
-                        <span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+                        <span class="material-symbols-outlined text-primary dark:text-blue-400 text-xl" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
                         <h3 class="font-headline-md font-bold text-on-surface">Daftar Sertifikat Intern</h3>
                     </div>
                     <p class="text-xs text-on-surface-variant mt-0.5">Kelola verifikasi, status terbit, dan arsip sertifikat berdasarkan angkatan tahun masuk.</p>
@@ -121,30 +121,30 @@ include '../partials/sidebar-admin.php';
                 <!-- Action Controls: Year Tabs, Sort Control & Search -->
                 <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
                     <!-- Filter Angkatan -->
-                    <div class="flex items-center gap-1.5 bg-surface-bright border border-outline-variant rounded-xl px-2.5 py-1 shadow-2xs">
-                        <span class="material-symbols-outlined text-primary text-[18px]">calendar_today</span>
+                    <div class="flex items-center gap-1.5 bg-surface-container-lowest dark:bg-[#0e172e] border border-outline-variant rounded-xl px-2.5 py-1 shadow-2xs">
+                        <span class="material-symbols-outlined text-primary dark:text-blue-400 text-[18px]">calendar_today</span>
                         <label for="year-select" class="text-xs font-semibold text-on-surface-variant whitespace-nowrap">Angkatan:</label>
                         <select id="year-select" onchange="filterCohortYear(this.value)"
-                                class="bg-transparent border-none text-xs font-bold text-primary focus:outline-none focus:ring-0 py-1 pl-1 pr-6 cursor-pointer">
-                            <option value="all">Semua Tahun</option>
+                                class="bg-transparent border-none text-xs font-bold text-primary dark:text-blue-400 focus:outline-none focus:ring-0 py-1 pl-1 pr-6 cursor-pointer">
+                            <option value="all" class="bg-surface-container-lowest text-on-surface">Semua Tahun</option>
                             <?php foreach ($cohort_years as $yr): ?>
-                                <option value="<?php echo $yr; ?>" <?php echo ($yr == date('Y')) ? 'selected' : ''; ?>>Angkatan <?php echo $yr; ?></option>
+                                <option value="<?php echo $yr; ?>" class="bg-surface-container-lowest text-on-surface" <?php echo ($yr == date('Y')) ? 'selected' : ''; ?>>Angkatan <?php echo $yr; ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
                     <!-- Sort Control -->
-                    <div class="flex items-center gap-1 bg-surface-bright border border-outline-variant rounded-xl px-2 py-1 shadow-2xs">
-                        <span class="material-symbols-outlined text-primary text-[18px]">sort</span>
+                    <div class="flex items-center gap-1 bg-surface-container-lowest dark:bg-[#0e172e] border border-outline-variant rounded-xl px-2 py-1 shadow-2xs">
+                        <span class="material-symbols-outlined text-primary dark:text-blue-400 text-[18px]">sort</span>
                         <label for="sort-by-select" class="text-xs font-semibold text-on-surface-variant whitespace-nowrap">Urut:</label>
                         <select id="sort-by-select" onchange="changeSortBy(this.value)"
-                                class="bg-transparent border-none text-xs font-bold text-primary focus:outline-none focus:ring-0 py-1 pl-1 pr-5 cursor-pointer">
-                            <option value="year">Tahun Angkatan (ID)</option>
-                            <option value="id">ID Sertifikat</option>
-                            <option value="name">Nama Intern</option>
-                            <option value="created_at">Waktu Dibuat</option>
+                                class="bg-transparent border-none text-xs font-bold text-primary dark:text-blue-400 focus:outline-none focus:ring-0 py-1 pl-1 pr-5 cursor-pointer">
+                            <option value="year" class="bg-surface-container-lowest text-on-surface">Tahun Angkatan (ID)</option>
+                            <option value="id" class="bg-surface-container-lowest text-on-surface">ID Sertifikat</option>
+                            <option value="name" class="bg-surface-container-lowest text-on-surface">Nama Intern</option>
+                            <option value="created_at" class="bg-surface-container-lowest text-on-surface">Waktu Dibuat</option>
                         </select>
-                        <button type="button" id="sort-dir-btn" onclick="toggleSortDir()" class="p-1 rounded-lg hover:bg-surface-container-high text-primary flex items-center justify-center transition-colors" title="Ubah Arah Urutan">
+                        <button type="button" id="sort-dir-btn" onclick="toggleSortDir()" class="p-1 rounded-lg hover:bg-surface-container-high text-primary dark:text-blue-400 flex items-center justify-center transition-colors cursor-pointer" title="Ubah Arah Urutan">
                             <span id="sort-dir-icon" class="material-symbols-outlined text-[16px]">arrow_downward</span>
                         </button>
                     </div>
@@ -153,17 +153,17 @@ include '../partials/sidebar-admin.php';
                     <div class="relative flex-1 sm:w-60 min-w-[180px]">
                         <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
                         <input id="search-input" type="text" placeholder="Cari nama, ID, posisi..."
-                               class="w-full pl-9 pr-4 py-1.5 rounded-xl border border-outline-variant bg-surface-bright focus:outline-none focus:ring-2 focus:ring-primary text-xs font-medium transition-colors shadow-2xs"
+                               class="w-full pl-9 pr-4 py-1.5 rounded-xl border border-outline-variant bg-surface-container-lowest dark:bg-[#0e172e] focus:outline-none focus:ring-2 focus:ring-primary text-xs font-medium text-on-surface placeholder:text-on-surface-variant/70 transition-colors shadow-2xs"
                                oninput="loadCertificates()"/>
                     </div>
                 </div>
             </div>
 
             <!-- Cohort Pills Bar (Quick Navigation) — rebuilt dynamically via JS -->
-            <div id="cohort-pills-bar" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-low/20 border-b border-outline-variant overflow-x-auto text-xs">
+            <div id="cohort-pills-bar" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-lowest border-b border-outline-variant overflow-x-auto text-xs">
                 <span class="text-on-surface-variant font-medium shrink-0 mr-1">Filter Cepat:</span>
                 <!-- Pills diisi otomatis oleh rebuildCohortPills() -->
-                <button type="button" onclick="setCohortPill('all')" data-cohort="all" class="cohort-pill px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary text-on-primary shadow-xs">
+                <button type="button" onclick="setCohortPill('all')" data-cohort="all" class="cohort-pill px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary text-white shadow-xs cursor-pointer">
                     Semua Angkatan
                 </button>
             </div>
@@ -534,9 +534,9 @@ function highlightActivePill(year) {
     document.querySelectorAll('.cohort-pill').forEach(pill => {
         const pYear = pill.getAttribute('data-cohort');
         if (pYear === year) {
-            pill.className = 'cohort-pill px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary text-on-primary shadow-xs';
+            pill.className = 'cohort-pill px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary text-white shadow-xs cursor-pointer';
         } else {
-            pill.className = 'cohort-pill px-3 py-1 rounded-full text-xs font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high border border-outline-variant/60 transition-all';
+            pill.className = 'cohort-pill px-3 py-1 rounded-full text-xs font-semibold text-on-surface-variant hover:text-on-surface bg-surface-container-low dark:bg-slate-800/80 hover:bg-surface-container-high border border-outline-variant/60 transition-all cursor-pointer';
         }
     });
 }
@@ -645,7 +645,7 @@ function makePill(cohortValue, label) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.setAttribute('data-cohort', cohortValue);
-    btn.className = 'cohort-pill px-3 py-1 rounded-full text-xs font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high border border-outline-variant/60 transition-all';
+    btn.className = 'cohort-pill px-3 py-1 rounded-full text-xs font-semibold text-on-surface-variant hover:text-on-surface bg-surface-container-low dark:bg-slate-800/80 hover:bg-surface-container-high border border-outline-variant/60 transition-all cursor-pointer';
     btn.textContent = label;
     btn.onclick = () => setCohortPill(cohortValue);
     return btn;

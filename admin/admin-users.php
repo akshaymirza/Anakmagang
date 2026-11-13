@@ -168,12 +168,12 @@ $total_admins = count(array_filter($users, static function (array $user): bool {
                 </div>
 
                 <!-- Cohort Pills Bar (Quick Navigation) -->
-                <div id="admin-cohort-pills-bar" class="flex items-center gap-2 px-4 py-2 bg-surface-container-low/40 rounded-xl border border-outline-variant mb-4 overflow-x-auto text-xs">
+                <div id="admin-cohort-pills-bar" class="flex items-center gap-2 px-4 py-2 bg-surface-container-low rounded-xl border border-outline-variant mb-4 overflow-x-auto text-xs">
                     <span class="text-on-surface-variant font-medium shrink-0 mr-1 flex items-center gap-1">
-                        <span class="material-symbols-outlined text-sm text-primary">filter_alt</span>
+                        <span class="material-symbols-outlined text-sm text-primary dark:text-blue-400">filter_alt</span>
                         <span>Filter Cepat:</span>
                     </span>
-                    <button type="button" onclick="setAdminCohortPill('all')" data-cohort="all" class="admin-cohort-pill px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary text-on-primary shadow-xs cursor-pointer">
+                    <button type="button" onclick="setAdminCohortPill('all')" data-cohort="all" class="admin-cohort-pill px-3 py-1 rounded-full text-xs font-bold transition-all bg-primary text-white shadow-xs cursor-pointer">
                         Semua Angkatan
                     </button>
                     <?php foreach ($cohort_years as $yr): ?>

@@ -176,6 +176,26 @@ html.dark .bg-surface-container-highest {
   background-color: #24386e !important;
 }
 
+/* Translucent Surface Overrides in Dark Mode (Eliminates Milky Chalky Overlays) */
+html.dark [class*="bg-surface-container-low/"],
+html.dark .bg-surface-container-low\/40,
+html.dark .bg-surface-container-low\/30,
+html.dark .bg-surface-container-low\/20,
+html.dark .bg-surface-container-low\/50,
+html.dark .bg-surface-container-low\/60 {
+  background-color: rgba(23, 38, 76, 0.7) !important;
+}
+
+html.dark [class*="bg-surface-container-lowest/"],
+html.dark .bg-surface-container-lowest\/40,
+html.dark .bg-surface-container-lowest\/20 {
+  background-color: rgba(18, 30, 61, 0.7) !important;
+}
+
+html.dark [class*="bg-surface-container/"] {
+  background-color: rgba(29, 47, 93, 0.7) !important;
+}
+
 /* Neutral & Slate Pastel Containers (Fix White Blocks in Dark Mode) */
 html.dark .bg-slate-50,
 html.dark .bg-slate-100,
