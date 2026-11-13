@@ -508,40 +508,40 @@ include 'partials/topnav-public.php';
                         <!-- Technical -->
                         <div>
                             <div class="flex justify-between items-center mb-2">
-                                <span class="font-body-md text-on-surface font-medium flex items-center gap-2">
+                                <span class="font-body-md text-on-surface font-semibold flex items-center gap-2">
                                     <span class="material-symbols-outlined text-secondary text-[18px]">code</span>
                                     Kemampuan Teknis
                                 </span>
-                                <span id="score-tech-label" class="font-label-md text-primary bg-primary-fixed px-2 py-1 rounded-md font-bold">0/100</span>
+                                <span id="score-tech-label" class="font-label-md text-primary dark:text-blue-200 bg-primary-fixed dark:bg-blue-900/40 dark:border dark:border-blue-600/40 px-2.5 py-1 rounded-md font-bold shadow-sm">0/100</span>
                             </div>
-                            <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
-                                <div id="score-tech-bar" class="h-full bg-gradient-to-r from-primary-container to-primary rounded-full bar-fill" style="width:0%"></div>
+                            <div class="w-full h-3 bg-slate-200 dark:bg-slate-700/60 rounded-full overflow-hidden">
+                                <div id="score-tech-bar" class="h-full bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-cyan-400 rounded-full bar-fill" style="width:0%"></div>
                             </div>
                         </div>
                         <!-- Discipline -->
                         <div>
                             <div class="flex justify-between items-center mb-2">
-                                <span class="font-body-md text-on-surface font-medium flex items-center gap-2">
+                                <span class="font-body-md text-on-surface font-semibold flex items-center gap-2">
                                     <span class="material-symbols-outlined text-secondary text-[18px]">schedule</span>
                                     Kedisiplinan
                                 </span>
-                                <span id="score-disc-label" class="font-label-md text-primary bg-primary-fixed px-2 py-1 rounded-md font-bold">0/100</span>
+                                <span id="score-disc-label" class="font-label-md text-primary dark:text-blue-200 bg-primary-fixed dark:bg-blue-900/40 dark:border dark:border-blue-600/40 px-2.5 py-1 rounded-md font-bold shadow-sm">0/100</span>
                             </div>
-                            <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
-                                <div id="score-disc-bar" class="h-full bg-gradient-to-r from-primary-container to-primary rounded-full bar-fill" style="width:0%"></div>
+                            <div class="w-full h-3 bg-slate-200 dark:bg-slate-700/60 rounded-full overflow-hidden">
+                                <div id="score-disc-bar" class="h-full bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-cyan-400 rounded-full bar-fill" style="width:0%"></div>
                             </div>
                         </div>
                         <!-- Attitude -->
                         <div>
                             <div class="flex justify-between items-center mb-2">
-                                <span class="font-body-md text-on-surface font-medium flex items-center gap-2">
+                                <span class="font-body-md text-on-surface font-semibold flex items-center gap-2">
                                     <span class="material-symbols-outlined text-secondary text-[18px]">groups</span>
                                     Sikap & Kerjasama
                                 </span>
-                                <span id="score-att-label" class="font-label-md text-primary bg-primary-fixed px-2 py-1 rounded-md font-bold">0/100</span>
+                                <span id="score-att-label" class="font-label-md text-primary dark:text-blue-200 bg-primary-fixed dark:bg-blue-900/40 dark:border dark:border-blue-600/40 px-2.5 py-1 rounded-md font-bold shadow-sm">0/100</span>
                             </div>
-                            <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
-                                <div id="score-att-bar" class="h-full bg-gradient-to-r from-primary-container to-primary rounded-full bar-fill" style="width:0%"></div>
+                            <div class="w-full h-3 bg-slate-200 dark:bg-slate-700/60 rounded-full overflow-hidden">
+                                <div id="score-att-bar" class="h-full bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-cyan-400 rounded-full bar-fill" style="width:0%"></div>
                             </div>
                         </div>
                     </div>
@@ -634,7 +634,7 @@ function showResult(d) {
         // Tampilkan gambar tanda tangan resmi
         if (approvedTtd) approvedTtd.style.display = 'flex';
         if (resApprovalStatus) {
-            resApprovalStatus.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1';
+            resApprovalStatus.className = 'text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-600/50 flex items-center gap-1 shadow-sm';
             resApprovalStatus.innerHTML = '<span class="material-symbols-outlined text-sm">verified</span> Disetujui Super Admin';
         }
     } else {
@@ -646,7 +646,7 @@ function showResult(d) {
         // Sembunyikan tanda tangan resmi
         if (approvedTtd) approvedTtd.style.display = 'none';
         if (resApprovalStatus) {
-            resApprovalStatus.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 flex items-center gap-1';
+            resApprovalStatus.className = 'text-xs font-bold px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-600/50 flex items-center gap-1 shadow-sm';
             resApprovalStatus.innerHTML = '<span class="material-symbols-outlined text-sm">hourglass_empty</span> Belum Disetujui Super Admin';
         }
     }
