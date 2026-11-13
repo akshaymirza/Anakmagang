@@ -381,11 +381,11 @@ if (!$featured_article && count($articles) > 0) {
         /* ── Floating Batik in Dark Mode ── */
         html.dark .batik-float {
             filter: brightness(0) invert(1) !important;
-            opacity: 0.13 !important;
+            opacity: 0.08 !important;
         }
         @media (max-width: 768px) {
             html.dark .batik-float {
-                opacity: 0.15 !important;
+                opacity: 0.10 !important;
             }
         }
     </style>
@@ -394,14 +394,14 @@ if (!$featured_article && count($articles) > 0) {
     <?php if (!$is_logged_in): ?>
     <!-- ═══ Floating Batik Gajah Oling Background Layer ═══ -->
     <div id="batik-layer" aria-hidden="true">
-        <div class="batik-float" style="width:260px;height:260px;top:4%;left:-4%;opacity:0.07;transform:rotate(-15deg)"></div>
-        <div class="batik-float" style="width:180px;height:180px;top:12%;right:-2%;opacity:0.05;transform:rotate(22deg)"></div>
+        <div class="batik-float" style="width:260px;height:260px;top:3%;left:-3%;opacity:0.07;transform:rotate(-15deg)"></div>
+        <div class="batik-float" style="width:180px;height:180px;top:8%;right:-2%;opacity:0.05;transform:rotate(22deg)"></div>
+        <div class="batik-float" style="width:260px;height:260px;top:22%;left:20%;opacity:0.05;transform:rotate(55deg)"></div>
+        <div class="batik-float" style="width:280px;height:280px;top:32%;right:12%;opacity:0.06;transform:rotate(8deg)"></div>
         <div class="batik-float" style="width:200px;height:200px;top:52%;left:-3%;opacity:0.07;transform:rotate(-30deg)"></div>
-        <div class="batik-float" style="width:240px;height:240px;top:70%;right:-4%;opacity:0.05;transform:rotate(40deg)"></div>
-        <div class="batik-float" style="width:150px;height:150px;top:85%;left:25%;opacity:0.06;transform:rotate(-5deg)"></div>
-        <div class="batik-float" style="width:320px;height:320px;top:38%;left:55%;opacity:0.06;transform:rotate(8deg)"></div>
-        <div class="batik-float" style="width:280px;height:280px;top:25%;left:20%;opacity:0.04;transform:rotate(55deg)"></div>
-        <div class="batik-float" style="width:170px;height:170px;top:60%;right:25%;opacity:0.05;transform:rotate(-18deg)"></div>
+        <div class="batik-float" style="width:200px;height:200px;top:62%;left:48%;opacity:0.05;transform:rotate(-18deg)"></div>
+        <div class="batik-float" style="width:240px;height:240px;top:72%;right:-3%;opacity:0.05;transform:rotate(40deg)"></div>
+        <div class="batik-float" style="width:160px;height:160px;top:85%;left:22%;opacity:0.06;transform:rotate(-5deg)"></div>
     </div>
     <?php endif; ?>
 
