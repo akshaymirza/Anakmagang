@@ -146,6 +146,17 @@ if (!is_array($positions) || empty($positions)) {
                 opacity: 0.08 !important;
             }
         }
+
+        /* ── Floating Batik in Dark Mode ── */
+        html.dark .batik-float {
+            filter: brightness(0) invert(1) !important;
+            opacity: 0.13 !important;
+        }
+        @media (max-width: 768px) {
+            html.dark .batik-float {
+                opacity: 0.15 !important;
+            }
+        }
     </style>
 </head>
 

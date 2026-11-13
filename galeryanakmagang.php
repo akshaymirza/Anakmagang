@@ -300,6 +300,16 @@ $gallery_list = get_all_gallery_items($conn, $json_file);
                 opacity: 0.08 !important;
             }
         }
+        /* ── Floating Batik in Dark Mode ── */
+        html.dark .batik-float {
+            filter: brightness(0) invert(1) !important;
+            opacity: 0.13 !important;
+        }
+        @media (max-width: 768px) {
+            html.dark .batik-float {
+                opacity: 0.15 !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col overflow-x-hidden relative">

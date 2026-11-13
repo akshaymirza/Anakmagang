@@ -542,6 +542,18 @@ html.dark .status-badge-red {
   border-color: #991b1b !important;
 }
 
+/* ── Floating Batik Gajah Oling in Dark Mode ── */
+html.dark .batik-float {
+  filter: brightness(0) invert(1) !important;
+  opacity: 0.13 !important;
+}
+
+@media (max-width: 768px) {
+  html.dark .batik-float {
+    opacity: 0.15 !important;
+  }
+}
+
 /* Modals */
 html.dark div[id$="-modal"] > div {
   background-color: #121e3d !important;
