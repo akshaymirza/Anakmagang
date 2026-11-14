@@ -129,21 +129,56 @@ window.formatTimeWIB = function(d = new Date(), withSeconds = false) {
 };
 
 // ============================================================
-// Dark Mode Theme Controller (Instant Execution to prevent flash)
+// Dark Mode Theme Controller (Follows Chrome / System Default)
 // ============================================================
+function getSystemTheme() {
+  return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+}
+
+window.applyTheme = function(theme) {
+  const isDark = (theme === 'dark');
+  if (isDark) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+  if (typeof window.updateThemeToggleUI === 'function') {
+    window.updateThemeToggleUI();
+  }
+};
+
 (function() {
   // Inisialisasi tema segera sebelum halaman selesai render agar tidak ada flicker
   try {
-    const savedTheme = localStorage.getItem('km_theme');
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+    // Reset preferensi manual lama satu kali agar pengguna langsung mengikuti default Chrome/Browser
+    if (localStorage.getItem('km_theme_system_default_v1') !== 'true') {
+      localStorage.removeItem('km_theme');
+      localStorage.setItem('km_theme_system_default_v1', 'true');
     }
+
+    const savedTheme = localStorage.getItem('km_theme');
+    // Jika ada setelan manual dari tombol, ikuti itu; jika belum ada, otomatis ikuti setelan Chrome/Sistem
+    const activeTheme = (savedTheme === 'dark' || savedTheme === 'light') ? savedTheme : getSystemTheme();
+    window.applyTheme(activeTheme);
   } catch (e) {
     console.warn('Gagal memuat preferensi tema:', e);
   }
+
+  // Real-time listener: jika pengguna mengubah setelan tema di Chrome/Sistem, halaman langsung beradaptasi
+  try {
+    const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    const onSystemThemeChange = function(e) {
+      try {
+        localStorage.removeItem('km_theme'); // Sinkronkan kembali ke pengaturan sistem
+      } catch (err) {}
+      window.applyTheme(e.matches ? 'dark' : 'light');
+    };
+    if (mql.addEventListener) {
+      mql.addEventListener('change', onSystemThemeChange);
+    } else if (mql.addListener) {
+      mql.addListener(onSystemThemeChange);
+    }
+  } catch (e) {}
 
   // Pastikan style.css dimuat di semua halaman
   try {
