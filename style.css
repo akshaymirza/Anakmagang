@@ -390,6 +390,7 @@ html.dark .border-slate-300,
 html.dark .border-gray-200,
 html.dark .border-gray-300,
 html.dark .border-slate-200\/60,
+html.dark .border-slate-200\/80,
 html.dark .border-outline-variant\/40,
 html.dark .border-outline-variant\/60 {
   border-color: #263864 !important;
@@ -590,4 +591,78 @@ html.dark aside {
 html.dark ::-webkit-scrollbar-track { background: #0b1329; }
 html.dark ::-webkit-scrollbar-thumb { background: #263864; }
 html.dark ::-webkit-scrollbar-thumb:hover { background: #3b528b; }
+
+/* ── Stat Cards in Dark Mode (attendance.php & admin-attendance.php) ── */
+html.dark .stat-present {
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.45) 0%, rgba(6, 95, 70, 0.3) 100%) !important;
+  border-color: rgba(5, 150, 105, 0.4) !important;
+}
+html.dark .stat-present,
+html.dark .stat-present * {
+  color: #a7f3d0 !important;
+}
+html.dark .stat-present #stat-present,
+html.dark .stat-present [id^="stat-"] {
+  color: #ecfdf5 !important;
+}
+
+html.dark .stat-late {
+  background: linear-gradient(135deg, rgba(113, 63, 18, 0.45) 0%, rgba(146, 64, 14, 0.3) 100%) !important;
+  border-color: rgba(217, 119, 6, 0.4) !important;
+}
+html.dark .stat-late,
+html.dark .stat-late * {
+  color: #fde68a !important;
+}
+html.dark .stat-late #stat-late,
+html.dark .stat-late [id^="stat-"] {
+  color: #fefce8 !important;
+}
+
+html.dark .stat-absent {
+  background: linear-gradient(135deg, rgba(127, 29, 29, 0.45) 0%, rgba(153, 27, 27, 0.3) 100%) !important;
+  border-color: rgba(220, 38, 38, 0.4) !important;
+}
+html.dark .stat-absent,
+html.dark .stat-absent * {
+  color: #fca5a5 !important;
+}
+html.dark .stat-absent #stat-absent,
+html.dark .stat-absent [id^="stat-"] {
+  color: #fff1f2 !important;
+}
+
+html.dark .stat-rate {
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.45) 0%, rgba(29, 78, 216, 0.3) 100%) !important;
+  border-color: rgba(37, 99, 235, 0.4) !important;
+}
+html.dark .stat-rate,
+html.dark .stat-rate * {
+  color: #93c5fd !important;
+}
+html.dark .stat-rate #stat-rate,
+html.dark .stat-rate [id^="stat-"] {
+  color: #eff6ff !important;
+}
+
+/* ── Footer in Dark Mode ── */
+html.dark footer {
+  background-color: #0b1329 !important;
+  border-color: #263864 !important;
+  color: #94a3b8 !important;
+}
+html.dark footer h4 {
+  color: #f1f5f9 !important;
+}
+html.dark footer a:not(.bg-blue-600) {
+  color: #94a3b8 !important;
+}
+html.dark footer a:not(.bg-blue-600):hover {
+  color: #60a5fa !important;
+}
+html.dark footer .border-slate-200\/80,
+html.dark footer .border-b,
+html.dark footer .border-t {
+  border-color: #263864 !important;
+}
 

@@ -194,25 +194,57 @@ if ($db_query) {
             background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
         }
 
-        /* Dark mode stat card overrides */
+        /* Dark mode stat card overrides (Fix Blinding Pastel Boxes) */
         html.dark .stat-present {
-            background: linear-gradient(135deg, rgba(6, 78, 59, 0.7) 0%, rgba(6, 95, 70, 0.7) 100%);
-            border-color: rgba(5, 150, 105, 0.4);
+            background: linear-gradient(135deg, rgba(6, 78, 59, 0.45) 0%, rgba(6, 95, 70, 0.3) 100%) !important;
+            border-color: rgba(5, 150, 105, 0.4) !important;
         }
+        html.dark .stat-present,
+        html.dark .stat-present * {
+            color: #a7f3d0 !important;
+        }
+        html.dark .stat-present #stat-days-complete,
+        html.dark .stat-present [id^="stat-"] {
+            color: #ecfdf5 !important;
+        }
+
         html.dark .stat-late {
-            background: linear-gradient(135deg, rgba(113, 63, 18, 0.7) 0%, rgba(146, 64, 14, 0.7) 100%);
-            border-color: rgba(217, 119, 6, 0.4);
+            background: linear-gradient(135deg, rgba(113, 63, 18, 0.45) 0%, rgba(146, 64, 14, 0.3) 100%) !important;
+            border-color: rgba(217, 119, 6, 0.4) !important;
         }
+        html.dark .stat-late,
+        html.dark .stat-late * {
+            color: #fde68a !important;
+        }
+        html.dark .stat-late #stat-days-late,
+        html.dark .stat-late [id^="stat-"] {
+            color: #fefce8 !important;
+        }
+
         html.dark .stat-absent {
-            background: linear-gradient(135deg, rgba(127, 29, 29, 0.7) 0%, rgba(153, 27, 27, 0.7) 100%);
-            border-color: rgba(220, 38, 38, 0.4);
+            background: linear-gradient(135deg, rgba(127, 29, 29, 0.45) 0%, rgba(153, 27, 27, 0.3) 100%) !important;
+            border-color: rgba(220, 38, 38, 0.4) !important;
         }
+        html.dark .stat-absent,
+        html.dark .stat-absent * {
+            color: #fca5a5 !important;
+        }
+        html.dark .stat-absent #stat-days-empty,
+        html.dark .stat-absent [id^="stat-"] {
+            color: #fff1f2 !important;
+        }
+
         html.dark .stat-rate {
-            background: linear-gradient(135deg, rgba(30, 58, 138, 0.7) 0%, rgba(29, 78, 216, 0.7) 100%);
-            border-color: rgba(37, 99, 235, 0.4);
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.45) 0%, rgba(29, 78, 216, 0.3) 100%) !important;
+            border-color: rgba(37, 99, 235, 0.4) !important;
         }
-        html.dark .stat-present *, html.dark .stat-late *, html.dark .stat-absent *, html.dark .stat-rate * {
-            color: #f8fafc;
+        html.dark .stat-rate,
+        html.dark .stat-rate * {
+            color: #93c5fd !important;
+        }
+        html.dark .stat-rate #stat-total-interns,
+        html.dark .stat-rate [id^="stat-"] {
+            color: #eff6ff !important;
         }
 
         /* Table row hover */
