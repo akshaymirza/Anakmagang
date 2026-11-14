@@ -150,8 +150,12 @@ window.formatTimeWIB = function(d = new Date(), withSeconds = false) {
     const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
     const hasStyle = links.some(l => (l.href || '').includes('style.css'));
     if (!hasStyle && document.head) {
-      const isSubdir = window.location.pathname.includes('/admin/');
-      const cssPath = (isSubdir ? '../' : '') + 'style.css';
+      let cssPath = 'style.css';
+      if (window.location.pathname.includes('/admin/Login/')) {
+        cssPath = '../../style.css';
+      } else if (window.location.pathname.includes('/admin/') || window.location.pathname.includes('/Login/')) {
+        cssPath = '../style.css';
+      }
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.href = cssPath;
