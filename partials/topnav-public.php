@@ -22,43 +22,43 @@ if (!isset($nav_cta_href)) {
 ?>
 <header class="bg-surface-container-lowest border-b border-outline-variant shadow-sm sticky top-0 z-50">
     <div class="flex justify-between items-center px-gutter w-full max-w-container-max mx-auto h-16">
-        <!-- Logo & Brand -->
-        <div class="flex items-center gap-sm shrink-0">
+        <!-- Logo & Brand (Left Wing) -->
+        <div class="flex items-center gap-sm shrink-0 xl:flex-1">
             <a href="<?php echo htmlspecialchars($nav_home_href); ?>" class="flex items-center gap-sm group">
                 <img src="<?php echo $root_prefix; ?>uploads/Icon/Anak_Magang_Icon.jpg.jpeg" alt="Logo AnakMagang" class="w-8 h-8 rounded-lg object-cover shadow-xs border border-outline-variant/30 shrink-0 group-hover:opacity-90 transition-opacity"/>
                 <span class="font-headline-md text-headline-md font-bold text-primary" data-i18n="brand_name">AnakMagang</span>
             </a>
         </div>
 
-        <!-- Desktop Navigation Links (Visible on xl+) -->
-        <nav class="hidden xl:flex items-center gap-md">
+        <!-- Desktop Navigation Links (True Center) -->
+        <nav class="hidden xl:flex items-center justify-center gap-md shrink-0">
             <a href="<?php echo $root_prefix; ?>about.php" class="px-3 py-2 rounded-lg font-label-md text-body-sm text-on-surface hover:text-primary hover:bg-surface-container-high transition-colors">Tentang</a>
             <a href="<?php echo $root_prefix; ?>event_history.php" class="px-3 py-2 rounded-lg font-label-md text-body-sm text-on-surface hover:text-primary hover:bg-surface-container-high transition-colors">Histori Event</a>
             <a href="<?php echo $root_prefix; ?>galeryanakmagang.php" class="px-3 py-2 rounded-lg font-label-md text-body-sm text-on-surface hover:text-primary hover:bg-surface-container-high transition-colors">Galeri Magang</a>
             <a href="<?php echo $root_prefix; ?>article.php" class="px-3 py-2 rounded-lg font-label-md text-body-sm text-on-surface hover:text-primary hover:bg-surface-container-high transition-colors">Artikel</a>
-            <!-- <a href="<?php echo $root_prefix; ?>index.php#features" class="px-3 py-2 rounded-lg font-label-md text-body-sm text-on-surface hover:text-primary hover:bg-surface-container-high transition-colors" data-i18n="nav_features">Fitur</a>
-            <a href="<?php echo $root_prefix; ?>index.php#faq" class="px-3 py-2 rounded-lg font-label-md text-body-sm text-on-surface hover:text-primary hover:bg-surface-container-high transition-colors" data-i18n="nav_faq">FAQ</a>
-            <a href="<?php echo $root_prefix; ?>index.php#contact" class="px-3 py-2 rounded-lg font-label-md text-body-sm text-on-surface hover:text-primary hover:bg-surface-container-high transition-colors" data-i18n="nav_contact">Kontak</a> -->
         </nav>
 
-        <!-- Desktop & Tablet CTA Actions -->
-        <div class="hidden sm:flex items-center gap-2 shrink-0">
-            <button type="button" onclick="toggleDarkMode()" class="p-2 rounded-lg border border-outline-variant text-on-surface hover:text-primary hover:bg-surface-container-high transition-colors flex items-center justify-center cursor-pointer shadow-2xs" title="Mode Gelap / Terang" aria-label="Toggle Dark Mode">
-                <span class="material-symbols-outlined text-[20px] dark-icon-sun hidden text-amber-400">light_mode</span>
-                <span class="material-symbols-outlined text-[20px] dark-icon-moon text-on-surface-variant">dark_mode</span>
-            </button>
-            <a href="<?php echo $root_prefix; ?>verification.php" class="border border-outline-variant text-primary hover:bg-primary hover:text-white px-3 py-2 rounded-lg font-label-md text-xs sm:text-sm transition-all flex items-center gap-1.5 font-bold shadow-xs hover:shadow-sm group" title="Verifikasi Keaslian Sertifikat">
-                <span class="material-symbols-outlined text-[18px] text-primary group-hover:text-white" style="font-variation-settings: 'FILL' 1;">verified</span>
-                <span class="hidden md:inline">Verifikasi Sertifikat</span>
-                <span class="inline md:hidden">Verifikasi</span>
-            </a>
-            <a href="<?php echo htmlspecialchars($nav_cta_href); ?>" class="bg-primary-container text-on-primary px-3.5 py-2 rounded-lg font-label-md text-xs sm:text-sm hover:bg-primary transition-colors font-bold shadow-xs" data-i18n="btn_portal_login"><?php echo htmlspecialchars($nav_cta_label); ?></a>
-        </div>
+        <!-- Right Wing: CTA Actions & Mobile Toggle -->
+        <div class="flex items-center justify-end gap-2 shrink-0 xl:flex-1">
+            <!-- Desktop & Tablet CTA Actions -->
+            <div class="hidden sm:flex items-center gap-2">
+                <button type="button" onclick="toggleDarkMode()" class="p-2 rounded-lg border border-outline-variant text-on-surface hover:text-primary hover:bg-surface-container-high transition-colors flex items-center justify-center cursor-pointer shadow-2xs" title="Mode Gelap / Terang" aria-label="Toggle Dark Mode">
+                    <span class="material-symbols-outlined text-[20px] dark-icon-sun hidden text-amber-400">light_mode</span>
+                    <span class="material-symbols-outlined text-[20px] dark-icon-moon text-on-surface-variant">dark_mode</span>
+                </button>
+                <a href="<?php echo $root_prefix; ?>verification.php" class="border border-outline-variant text-primary hover:bg-primary hover:text-white px-3 py-2 rounded-lg font-label-md text-xs sm:text-sm transition-all flex items-center gap-1.5 font-bold shadow-xs hover:shadow-sm group" title="Verifikasi Keaslian Sertifikat">
+                    <span class="material-symbols-outlined text-[18px] text-primary group-hover:text-white" style="font-variation-settings: 'FILL' 1;">verified</span>
+                    <span class="hidden md:inline">Verifikasi Sertifikat</span>
+                    <span class="inline md:hidden">Verifikasi</span>
+                </a>
+                <a href="<?php echo htmlspecialchars($nav_cta_href); ?>" class="bg-primary-container text-on-primary px-3.5 py-2 rounded-lg font-label-md text-xs sm:text-sm hover:bg-primary transition-colors font-bold shadow-xs" data-i18n="btn_portal_login"><?php echo htmlspecialchars($nav_cta_label); ?></a>
+            </div>
 
-        <!-- Mobile Menu Toggle Button (Visible below xl) -->
-        <button id="public-mobile-menu-btn" type="button" class="xl:hidden p-2 text-on-surface hover:bg-surface-container-high rounded-lg transition-colors focus:outline-none" aria-label="Buka Menu">
-            <span id="public-mobile-menu-icon" class="material-symbols-outlined text-2xl">menu</span>
-        </button>
+            <!-- Mobile Menu Toggle Button (Visible below xl) -->
+            <button id="public-mobile-menu-btn" type="button" class="xl:hidden p-2 text-on-surface hover:bg-surface-container-high rounded-lg transition-colors focus:outline-none" aria-label="Buka Menu">
+                <span id="public-mobile-menu-icon" class="material-symbols-outlined text-2xl">menu</span>
+            </button>
+        </div>
     </div>
 
     <!-- Mobile Dropdown Navigation (Visible below xl when toggled) -->
