@@ -624,7 +624,7 @@ if ($db_query) {
                         <p class="text-xs text-on-surface-variant">Atur status hadir, telat, dispen, atau alpha</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeAdminSetAttendanceModal()" class="text-on-surface-variant hover:text-primary transition p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800">
+                <button type="button" onclick="closeAdminSetAttendanceModal(true)" class="text-on-surface-variant hover:text-primary transition p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800">
                     <span class="material-symbols-outlined text-[20px]">close</span>
                 </button>
             </div>
@@ -776,7 +776,7 @@ if ($db_query) {
                         <span>Hapus Catatan</span>
                     </button>
                     <div class="flex items-center gap-2 ml-auto">
-                        <button type="button" onclick="closeAdminSetAttendanceModal()" class="px-3.5 py-2 border border-outline-variant rounded-xl text-xs font-semibold text-on-surface-variant hover:bg-slate-100 transition cursor-pointer">
+                        <button type="button" onclick="closeAdminSetAttendanceModal(true)" class="px-3.5 py-2 border border-outline-variant rounded-xl text-xs font-semibold text-on-surface-variant hover:bg-slate-100 transition cursor-pointer">
                             Batal
                         </button>
                         <button type="submit" id="admin-set-submit-btn" class="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:opacity-90 transition shadow-sm flex items-center gap-1 cursor-pointer">
@@ -820,7 +820,7 @@ if ($db_query) {
                         <p class="text-xs text-on-surface-variant">Atur hari libur resmi agar intern tidak terhitung Alpha / Tidak Masuk</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeHolidayModal()" class="text-on-surface-variant hover:text-primary transition p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer">
+                <button type="button" onclick="closeHolidayModal(true)" class="text-on-surface-variant hover:text-primary transition p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer">
                     <span class="material-symbols-outlined text-[20px]">close</span>
                 </button>
             </div>
@@ -868,7 +868,7 @@ if ($db_query) {
             </div>
 
             <div class="p-4 border-t border-outline-variant flex justify-end bg-slate-50 dark:bg-[#0c1326]">
-                <button type="button" onclick="closeHolidayModal()" class="px-4 py-2 border border-outline-variant rounded-xl text-xs font-semibold text-on-surface-variant hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
+                <button type="button" onclick="closeHolidayModal(true)" class="px-4 py-2 border border-outline-variant rounded-xl text-xs font-semibold text-on-surface-variant hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
                     Tutup
                 </button>
             </div>
@@ -930,6 +930,17 @@ if ($db_query) {
             }
         }
 
+        // Helper ambil catatan kehadiran intern dengan toleransi case-insensitive
+        function getInternAttendanceMap(name) {
+            if (!name) return {};
+            if (dbAttendanceMap[name]) return dbAttendanceMap[name];
+            const lower = String(name).toLowerCase();
+            for (const k in dbAttendanceMap) {
+                if (k.toLowerCase() === lower) return dbAttendanceMap[k];
+            }
+            return {};
+        }
+
         // Ambil ringkasan kehadiran per tanggal HANYA dari database
         function getCombinedDaySummary(dateStr) {
             // Gunakan HANYA data dari DB MySQL
@@ -941,7 +952,7 @@ if ($db_query) {
 
             const entries = interns.map(intern => {
                 let rec = null;
-                const dbUserAtt = dbAttendanceMap[intern.name];
+                const dbUserAtt = getInternAttendanceMap(intern.name);
                 if (dbUserAtt && dbUserAtt[dateStr]) {
                     rec = dbUserAtt[dateStr];
                 }
@@ -1035,7 +1046,6 @@ if ($db_query) {
                     dot.className = 'status-dot';
                     dot.style.background = '#e11d48';
                     cell.appendChild(dot);
-                    cell.addEventListener('click', () => openDetailModal(dateStr));
                 } else if (isSunday && !hasRecords) {
                     cell.classList.add('weekend');
                 } else {
@@ -1047,9 +1057,7 @@ if ($db_query) {
                     }
                     cell.classList.add(`status-${cls}`);
 
-                    if (!isFuture && summary.total > 0) {
-                        cell.addEventListener('click', () => openDetailModal(dateStr));
-                    } else if (isFuture) {
+                    if (isFuture) {
                         cell.classList.add('future');
                     }
 
@@ -1061,6 +1069,9 @@ if ($db_query) {
                         cell.appendChild(dot);
                     }
                 }
+
+                // Semua tanggal dapat diklik oleh admin untuk rincian & set absensi
+                cell.addEventListener('click', () => openDetailModal(dateStr));
 
                 if (isToday) cell.classList.add('today');
                 const span = document.createElement('span');
@@ -1075,7 +1086,11 @@ if ($db_query) {
             if (document.getElementById('stat-days-holiday')) document.getElementById('stat-days-holiday').textContent = daysHoliday;
         }
 
+        let lastOpenedDetailDate = null;
+        let returnToDetailDate = null;
+
         function openDetailModal(dateStr) {
+            lastOpenedDetailDate = dateStr;
             const summary = getCombinedDaySummary(dateStr);
             document.getElementById('detail-date-label').textContent = formatDateDisplay(dateStr);
             const list = document.getElementById('detail-list');
@@ -1264,7 +1279,7 @@ if ($db_query) {
                             ${record && record.reason ? `<div class="mt-2 bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-xs text-amber-900"><strong>Alasan / Keterangan:</strong> ${escHtml(record.reason)}</div>` : ''}
                             ${!record ? '<p class="text-xs text-on-surface-variant italic mt-1.5">Intern ini belum melakukan absensi pada hari tersebut.</p>' : ''}
                             <div class="mt-2.5 flex items-center justify-between border-t border-outline-variant/40 pt-2 flex-wrap gap-2">
-                                <button type="button" onclick="closeDetailModal(); openAdminSetAttendanceModal('${escHtml(intern.name)}', '${dateStr}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition shadow-2xs cursor-pointer">
+                                <button type="button" onclick="openAdminSetAttendanceModal('${escHtml(intern.name)}', '${dateStr}', true)" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition shadow-2xs cursor-pointer">
                                     <span class="material-symbols-outlined text-[14px]">edit_calendar</span>
                                     <span>Set / Ubah Kehadiran</span>
                                 </button>
@@ -1336,7 +1351,7 @@ if ($db_query) {
             const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
 
             interns.forEach(i => {
-                const dbUserAtt = dbAttendanceMap[i.name] || {};
+                const dbUserAtt = getInternAttendanceMap(i.name);
                 let present = 0, late = 0, permit = 0, absent = 0;
 
                 // Tanggal mulai & selesai magang intern
@@ -1354,9 +1369,6 @@ if ($db_query) {
                     const isToday = dateStr === todayStr;
                     const isPastDay = !isFuture && !isToday;
 
-                    // Skip hari Minggu atau hari libur resmi (tidak dianggap Alpha)
-                    if (isSunday || isHoliday) continue;
-
                     // Skip hari sebelum tanggal mulai magang intern
                     if (startDateStr && dateStr < startDateStr) continue;
 
@@ -1366,11 +1378,12 @@ if ($db_query) {
                     const r = dbUserAtt[dateStr];
 
                     if (r) {
+                        // Jika ada catatan kehadiran (termasuk pada hari Minggu atau Libur), tetap hitung!
                         if (r.status === 'present') present++;
                         else if (r.status === 'late') late++;
                         else if (r.status === 'permit') permit++;
                         else if (r.status === 'absent') absent++;
-                    } else if (!isFuture) {
+                    } else if (!isFuture && !isSunday && !isHoliday) {
                         // Jika hari kerja lalu atau hari ini sudah lewat batas jam 14:00 dan tidak ada absen -> dihitung tidak masuk (alpha)
                         if (isPastDay || isTodayPastCutoff) {
                             absent++;
@@ -1597,6 +1610,11 @@ if ($db_query) {
         document.addEventListener('DOMContentLoaded', async () => {
             if (window.ProjectStore) ProjectStore.setRole('admin');
             initCalendar();
+
+            // Pasang listener perubahan intern / tanggal pada modal set kehadiran
+            document.getElementById('admin-set-username')?.addEventListener('change', refreshAdminSetModalFields);
+            document.getElementById('admin-set-date')?.addEventListener('change', refreshAdminSetModalFields);
+
             // Render dulu kalender kosong, lalu setelah DB data masuk re-render
             renderAll();
             await fetchDbAttendance();
@@ -1664,38 +1682,32 @@ if ($db_query) {
             }
         }
 
-        function openAdminSetAttendanceModal(optUsername = '', optDate = '') {
-            const modal = document.getElementById('admin-set-attendance-modal');
-            if (!modal) return;
-
+        function refreshAdminSetModalFields() {
             const userInput = document.getElementById('admin-set-username');
             const dateInput = document.getElementById('admin-set-date');
-            const msgEl = document.getElementById('admin-set-msg');
             const deleteBtn = document.getElementById('admin-delete-att-btn');
-            if (msgEl) { msgEl.className = 'hidden'; msgEl.textContent = ''; }
+            if (!userInput || !dateInput) return;
 
-            const todayStr = fmt(getNowWIB());
-            const targetDate = optDate || todayStr;
-            if (dateInput) dateInput.value = targetDate;
-            if (userInput) userInput.value = optUsername || (dbInternsList[0]?.name || '');
+            const selectedUser = userInput.value;
+            const targetDate = dateInput.value;
+            if (!selectedUser || !targetDate) return;
 
-            // Cek apakah sudah ada data kehadiran untuk intern & tanggal tersebut
-            let existingRecord = null;
-            if (optUsername && dbAttendanceMap[optUsername] && dbAttendanceMap[optUsername][targetDate]) {
-                existingRecord = dbAttendanceMap[optUsername][targetDate];
-            }
+            const userAtt = getInternAttendanceMap(selectedUser);
+            const existingRecord = userAtt[targetDate] || null;
 
             if (existingRecord) {
                 selectAdminStatus(existingRecord.status || 'present');
                 if (existingRecord.clockIn) document.getElementById('admin-set-clock-in').value = existingRecord.clockIn;
+                else document.getElementById('admin-set-clock-in').value = (existingRecord.status === 'present' || existingRecord.status === 'late') ? '08:00' : '';
                 if (existingRecord.clockOut) document.getElementById('admin-set-clock-out').value = existingRecord.clockOut;
-                if (existingRecord.reason) document.getElementById('admin-set-reason').value = existingRecord.reason;
+                else document.getElementById('admin-set-clock-out').value = '';
+                document.getElementById('admin-set-reason').value = existingRecord.reason || '';
                 if (existingRecord.leaveType) {
                     const rdo = document.querySelector(`input[name="admin_leave_type"][value="${existingRecord.leaveType}"]`);
                     if (rdo) rdo.checked = true;
                 }
                 if (deleteBtn) deleteBtn.classList.remove('hidden');
-            } else if (dbHolidaysMap[targetDate]) {
+            } else if (dbHolidaysMap && dbHolidaysMap[targetDate]) {
                 selectAdminStatus('holiday');
                 document.getElementById('admin-set-reason').value = dbHolidaysMap[targetDate].title || '';
                 if (deleteBtn) deleteBtn.classList.add('hidden');
@@ -1706,16 +1718,56 @@ if ($db_query) {
                 document.getElementById('admin-set-reason').value = '';
                 if (deleteBtn) deleteBtn.classList.add('hidden');
             }
+        }
+
+        function openAdminSetAttendanceModal(optUsername = '', optDate = '', fromDetail = false) {
+            const modal = document.getElementById('admin-set-attendance-modal');
+            if (!modal) return;
+
+            // Simpan tanggal agar setelah simpan atau batal otomatis kembali ke modal rincian
+            returnToDetailDate = fromDetail ? (optDate || lastOpenedDetailDate || null) : null;
+            if (fromDetail) {
+                closeDetailModal();
+            }
+
+            const userInput = document.getElementById('admin-set-username');
+            const dateInput = document.getElementById('admin-set-date');
+            const msgEl = document.getElementById('admin-set-msg');
+            if (msgEl) { msgEl.className = 'hidden'; msgEl.textContent = ''; }
+
+            const todayStr = fmt(getNowWIB());
+            const targetDate = optDate || todayStr;
+            if (dateInput) dateInput.value = targetDate;
+
+            if (userInput) {
+                const targetUser = optUsername || (dbInternsList[0]?.name || '');
+                let matched = false;
+                for (let i = 0; i < userInput.options.length; i++) {
+                    if (userInput.options[i].value.toLowerCase() === targetUser.toLowerCase()) {
+                        userInput.selectedIndex = i;
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) userInput.value = targetUser;
+            }
+
+            refreshAdminSetModalFields();
 
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }
 
-        function closeAdminSetAttendanceModal() {
+        function closeAdminSetAttendanceModal(cancelled = false) {
             const modal = document.getElementById('admin-set-attendance-modal');
             if (modal) {
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
+            }
+            if (cancelled && returnToDetailDate) {
+                const backDate = returnToDetailDate;
+                returnToDetailDate = null;
+                openDetailModal(backDate);
             }
         }
 
@@ -1766,13 +1818,16 @@ if ($db_query) {
                 renderAll();
 
                 setTimeout(() => {
-                    closeAdminSetAttendanceModal();
-                    // Jika modal detail sedang terbuka, refresh kontennya
-                    const detailModal = document.getElementById('detail-modal');
-                    if (detailModal && !detailModal.classList.contains('hidden')) {
-                        openDetailModal(date);
+                    const targetDetailDate = returnToDetailDate || date;
+                    const shouldReturn = Boolean(returnToDetailDate);
+                    returnToDetailDate = null;
+                    closeAdminSetAttendanceModal(false);
+
+                    // Kembali ke modal Rincian Kehadiran untuk tanggal tersebut
+                    if (shouldReturn && targetDetailDate) {
+                        openDetailModal(targetDetailDate);
                     }
-                }, 600);
+                }, 400);
             } catch (err) {
                 msgEl.className = 'text-xs font-semibold p-2.5 rounded-xl bg-red-50 text-red-800 border border-red-200 block';
                 msgEl.textContent = err.message || 'Terjadi kesalahan saat menyimpan.';
@@ -1800,11 +1855,14 @@ if ($db_query) {
 
                 await fetchDbAttendance();
                 renderAll();
-                closeAdminSetAttendanceModal();
 
-                const detailModal = document.getElementById('detail-modal');
-                if (detailModal && !detailModal.classList.contains('hidden')) {
-                    openDetailModal(date);
+                const targetDetailDate = returnToDetailDate || date;
+                const shouldReturn = Boolean(returnToDetailDate);
+                returnToDetailDate = null;
+                closeAdminSetAttendanceModal(false);
+
+                if (shouldReturn && targetDetailDate) {
+                    openDetailModal(targetDetailDate);
                 }
             } catch (err) {
                 alert(err.message || 'Gagal menghapus catatan');
@@ -1835,16 +1893,24 @@ if ($db_query) {
             modal.classList.add('flex');
         }
 
+        let returnToDetailHolidayDate = null;
+
         function openHolidayModalWithDate(dateStr) {
+            returnToDetailHolidayDate = dateStr;
             closeDetailModal();
             openHolidayModal(dateStr);
         }
 
-        function closeHolidayModal() {
+        function closeHolidayModal(cancelled = false) {
             const modal = document.getElementById('holiday-modal');
             if (modal) {
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
+            }
+            if (cancelled && returnToDetailHolidayDate) {
+                const backDate = returnToDetailHolidayDate;
+                returnToDetailHolidayDate = null;
+                openDetailModal(backDate);
             }
         }
 
@@ -1917,9 +1983,16 @@ if ($db_query) {
                 renderAll();
                 renderHolidayList();
 
-                setTimeout(() => {
-                    if (msgEl) msgEl.className = 'hidden';
-                }, 2500);
+                if (returnToDetailHolidayDate) {
+                    const backDate = returnToDetailHolidayDate;
+                    returnToDetailHolidayDate = null;
+                    closeHolidayModal(false);
+                    openDetailModal(backDate);
+                } else {
+                    setTimeout(() => {
+                        if (msgEl) msgEl.className = 'hidden';
+                    }, 2500);
+                }
             } catch (err) {
                 msgEl.className = 'text-xs font-semibold p-2 rounded-lg bg-red-50 text-red-800 border border-red-200 block';
                 msgEl.textContent = err.message || 'Terjadi kesalahan.';

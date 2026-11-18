@@ -186,9 +186,11 @@ if ($action === 'get_location_config' && $method === 'GET') {
 if ($action === 'all_summary' && $method === 'GET') {
     // 1. Ambil semua akun intern dari database (termasuk intern_start_date & intern_end_date)
     $interns = [];
+    $userCanonicalMap = [];
     $resUser = mysqli_query($conn, "SELECT id, username, intern_start_date, intern_end_date FROM users WHERE role = 'intern' ORDER BY id ASC");
     if ($resUser) {
         while ($u = mysqli_fetch_assoc($resUser)) {
+            $userCanonicalMap[strtolower($u['username'])] = $u['username'];
             $interns[] = [
                 'id'             => $u['id'],
                 'name'           => $u['username'],
@@ -204,7 +206,8 @@ if ($action === 'all_summary' && $method === 'GET') {
     $resAtt = mysqli_query($conn, "SELECT username, date, status, clock_in, clock_out, reason, location_in, photo_in, lat_in, lng_in, location_out, photo_out, lat_out, lng_out, leave_type, override_by FROM attendance");
     if ($resAtt) {
         while ($row = mysqli_fetch_assoc($resAtt)) {
-            $uName = $row['username'];
+            $rawUser = $row['username'];
+            $uName = $userCanonicalMap[strtolower($rawUser)] ?? $rawUser;
             $dStr = $row['date'];
             if (!isset($attendanceMap[$uName])) {
                 $attendanceMap[$uName] = [];
@@ -804,6 +807,12 @@ if ($action === 'admin_set_attendance' && $method === 'POST') {
         exit;
     }
 
+    // Normalisasi $targetUsername ke canonical username di tabel users
+    $chkUser = mysqli_query($conn, "SELECT username FROM users WHERE LOWER(username) = LOWER('" . mysqli_real_escape_string($conn, $targetUsername) . "') LIMIT 1");
+    if ($chkUser && $rowU = mysqli_fetch_assoc($chkUser)) {
+        $targetUsername = $rowU['username'];
+    }
+
     $allowedStatuses = ['present', 'late', 'permit', 'absent', 'holiday'];
     if (!in_array($status, $allowedStatuses, true)) {
         http_response_code(400);
@@ -851,9 +860,9 @@ if ($action === 'admin_set_attendance' && $method === 'POST') {
     $existing = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtChk));
 
     if ($existing) {
-        $sqlUpd = "UPDATE attendance SET status = ?, leave_type = ?, clock_in = ?, clock_out = ?, reason = ?, override_by = ? WHERE id = ?";
+        $sqlUpd = "UPDATE attendance SET username = ?, status = ?, leave_type = ?, clock_in = ?, clock_out = ?, reason = ?, override_by = ? WHERE id = ?";
         $stmtUpd = mysqli_prepare($conn, $sqlUpd);
-        mysqli_stmt_bind_param($stmtUpd, "ssssssi", $status, $leaveType, $clockIn, $clockOut, $reason, $adminActor, $existing['id']);
+        mysqli_stmt_bind_param($stmtUpd, "sssssssi", $targetUsername, $status, $leaveType, $clockIn, $clockOut, $reason, $adminActor, $existing['id']);
         $ok = mysqli_stmt_execute($stmtUpd);
     } else {
         $sqlIns = "INSERT INTO attendance (username, date, status, leave_type, clock_in, clock_out, reason, override_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
@@ -895,6 +904,12 @@ if ($action === 'admin_delete_attendance' && $method === 'POST') {
         http_response_code(400);
         echo json_encode(['error' => 'Nama intern dan tanggal wajib diisi']);
         exit;
+    }
+
+    // Normalisasi $targetUsername ke canonical username di tabel users
+    $chkUser = mysqli_query($conn, "SELECT username FROM users WHERE LOWER(username) = LOWER('" . mysqli_real_escape_string($conn, $targetUsername) . "') LIMIT 1");
+    if ($chkUser && $rowU = mysqli_fetch_assoc($chkUser)) {
+        $targetUsername = $rowU['username'];
     }
 
     $sql = "DELETE FROM attendance WHERE username = ? AND date = ?";
