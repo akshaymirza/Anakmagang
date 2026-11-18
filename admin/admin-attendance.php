@@ -194,6 +194,14 @@ if ($db_query) {
             background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
         }
 
+        .stat-empty {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        .stat-holiday {
+            background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%);
+        }
+
         /* Dark mode stat card overrides (Fix Blinding Pastel Boxes) */
         html.dark .stat-present {
             background: linear-gradient(135deg, rgba(6, 78, 59, 0.45) 0%, rgba(6, 95, 70, 0.3) 100%) !important;
@@ -245,6 +253,32 @@ if ($db_query) {
         html.dark .stat-rate #stat-total-interns,
         html.dark .stat-rate [id^="stat-"] {
             color: #eff6ff !important;
+        }
+
+        html.dark .stat-empty {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.45) 0%, rgba(51, 65, 85, 0.3) 100%) !important;
+            border-color: rgba(100, 116, 139, 0.4) !important;
+        }
+        html.dark .stat-empty,
+        html.dark .stat-empty * {
+            color: #cbd5e1 !important;
+        }
+        html.dark .stat-empty #stat-days-empty,
+        html.dark .stat-empty [id^="stat-"] {
+            color: #f8fafc !important;
+        }
+
+        html.dark .stat-holiday {
+            background: linear-gradient(135deg, rgba(136, 19, 55, 0.45) 0%, rgba(159, 18, 57, 0.3) 100%) !important;
+            border-color: rgba(225, 29, 72, 0.4) !important;
+        }
+        html.dark .stat-holiday,
+        html.dark .stat-holiday * {
+            color: #fca5a5 !important;
+        }
+        html.dark .stat-holiday #stat-days-holiday,
+        html.dark .stat-holiday [id^="stat-"] {
+            color: #fff1f2 !important;
         }
 
         /* Table row hover */
@@ -374,50 +408,60 @@ if ($db_query) {
                 </div>
             </div>
 
-            <!-- Stats Row (Matching attendance.php gradient cards) -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 mb-6">
+            <!-- Stats Row (5 cards matching Keterangan Kalender + Total Intern) -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 mb-6">
                 <!-- Stat 1: Total Intern (stat-rate style) -->
                 <div class="stat-rate rounded-2xl p-3 sm:p-4 border border-blue-200">
                     <div class="flex items-center gap-1.5 mb-1.5">
                         <span class="material-symbols-outlined text-blue-700 text-[18px] sm:text-[20px]"
                             style="font-variation-settings:'FILL' 1;">groups</span>
-                        <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-blue-700">Total Intern</span>
+                        <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-blue-700 truncate">Total Intern</span>
                     </div>
                     <div id="stat-total-interns" class="text-2xl sm:text-3xl font-geist font-bold text-blue-800">0</div>
-                    <div class="text-[11px] sm:text-xs text-blue-700 mt-0.5">intern aktif</div>
+                    <div class="text-[11px] sm:text-xs text-blue-700 mt-0.5 truncate">intern aktif</div>
                 </div>
 
-                <!-- Stat 2: Hari Lengkap (stat-present style) -->
+                <!-- Stat 2: Lengkap (stat-present style) -->
                 <div class="stat-present rounded-2xl p-3 sm:p-4 border border-green-200">
                     <div class="flex items-center gap-1.5 mb-1.5">
                         <span class="material-symbols-outlined text-green-700 text-[18px] sm:text-[20px]"
                             style="font-variation-settings:'FILL' 1;">check_circle</span>
-                        <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-green-700">Hari Lengkap</span>
+                        <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-green-700 truncate">Lengkap</span>
                     </div>
                     <div id="stat-days-complete" class="text-2xl sm:text-3xl font-geist font-bold text-green-800">0</div>
-                    <div class="text-[11px] sm:text-xs text-green-700 mt-0.5">semua hadir</div>
+                    <div class="text-[11px] sm:text-xs text-green-700 mt-0.5 truncate">semua hadir</div>
                 </div>
 
-                <!-- Stat 3: Hari Tidak Lengkap (stat-late style) -->
+                <!-- Stat 3: Tidak Lengkap (stat-late style) -->
                 <div class="stat-late rounded-2xl p-3 sm:p-4 border border-amber-200">
                     <div class="flex items-center gap-1.5 mb-1.5">
                         <span class="material-symbols-outlined text-amber-700 text-[18px] sm:text-[20px]"
                             style="font-variation-settings:'FILL' 1;">schedule</span>
-                        <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-amber-700">Tidak Lengkap</span>
+                        <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-amber-700 truncate">Tidak Lengkap</span>
                     </div>
                     <div id="stat-days-late" class="text-2xl sm:text-3xl font-geist font-bold text-amber-800">0</div>
-                    <div class="text-[11px] sm:text-xs text-amber-700 mt-0.5">sebagian belum</div>
+                    <div class="text-[11px] sm:text-xs text-amber-700 mt-0.5 truncate">sebagian belum</div>
                 </div>
 
-                <!-- Stat 4: Hari Belum Terisi (stat-absent style) -->
-                <div class="stat-absent rounded-2xl p-3 sm:p-4 border border-red-200">
+                <!-- Stat 4: Belum Ada Yang Mengisi (stat-empty style) -->
+                <div class="stat-empty rounded-2xl p-3 sm:p-4 border border-slate-300 dark:border-slate-700">
                     <div class="flex items-center gap-1.5 mb-1.5">
-                        <span class="material-symbols-outlined text-red-700 text-[18px] sm:text-[20px]"
-                            style="font-variation-settings:'FILL' 1;">cancel</span>
-                        <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-red-700">Belum Terisi</span>
+                        <span class="material-symbols-outlined text-slate-600 dark:text-slate-400 text-[18px] sm:text-[20px]">calendar_today</span>
+                        <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 truncate" title="Belum Ada Yang Mengisi">Belum Terisi</span>
                     </div>
-                    <div id="stat-days-empty" class="text-2xl sm:text-3xl font-geist font-bold text-red-800">0</div>
-                    <div class="text-[11px] sm:text-xs text-red-700 mt-0.5">hari kerja</div>
+                    <div id="stat-days-empty" class="text-2xl sm:text-3xl font-geist font-bold text-slate-800 dark:text-slate-200">0</div>
+                    <div class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">belum ada catatan</div>
+                </div>
+
+                <!-- Stat 5: Tanggal Merah / Libur (stat-holiday style) -->
+                <div class="stat-holiday rounded-2xl p-3 sm:p-4 border border-rose-200 dark:border-rose-800 col-span-2 sm:col-span-1">
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                        <span class="material-symbols-outlined text-rose-700 dark:text-rose-300 text-[18px] sm:text-[20px]"
+                            style="font-variation-settings:'FILL' 1;">event_busy</span>
+                        <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300 truncate" title="Tanggal Merah / Libur">Tanggal Merah</span>
+                    </div>
+                    <div id="stat-days-holiday" class="text-2xl sm:text-3xl font-geist font-bold text-rose-800 dark:text-rose-200">0</div>
+                    <div class="text-[11px] sm:text-xs text-rose-700 dark:text-rose-400 mt-0.5 truncate">libur resmi</div>
                 </div>
             </div>
 
@@ -472,6 +516,7 @@ if ($db_query) {
                             <span class="material-symbols-outlined text-[18px]">add_circle</span>
                             <span>+ Set Kehadiran Intern</span>
                         </button>
+
                     </div>
 
                     <!-- Legend Card (Exact replica of attendance.php) -->
@@ -506,12 +551,12 @@ if ($db_query) {
                                 </div>
                             </div>
                             <div class="flex items-center gap-3">
-                                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-400 text-xs font-bold shrink-0">
-                                    12
+                                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-rose-100 dark:bg-rose-950/70 border border-rose-300 dark:border-rose-800 flex items-center justify-center text-rose-700 dark:text-rose-300 text-xs font-bold shrink-0">
+                                    17
                                 </div>
                                 <div>
-                                    <div class="text-xs sm:text-sm font-semibold text-on-surface">Akhir Pekan (Minggu)</div>
-                                    <div class="text-[11px] sm:text-xs text-on-surface-variant">Hari libur mingguan</div>
+                                    <div class="text-xs sm:text-sm font-semibold text-on-surface">Tanggal Merah / Libur</div>
+                                    <div class="text-[11px] sm:text-xs text-on-surface-variant">Libur nasional / cuti bersama resmi</div>
                                 </div>
                             </div>
                         </div>
@@ -653,7 +698,28 @@ if ($db_query) {
                                 <span class="block text-[10px] text-red-700/80">Tidak Masuk</span>
                             </div>
                         </label>
+
+                        <!-- Holiday (Libur / Tanggal Merah) -->
+                        <label onclick="selectAdminStatus('holiday')" id="admin-status-card-holiday" class="col-span-2 flex items-center gap-2 border-2 border-outline-variant bg-surface-container-lowest rounded-xl p-2.5 cursor-pointer transition select-none">
+                            <input type="radio" name="admin_status" value="holiday" class="sr-only" />
+                            <span class="material-symbols-outlined text-rose-500 text-[20px]">event_busy</span>
+                            <div>
+                                <span class="block text-xs font-bold text-rose-900 dark:text-rose-300">Libur / Tanggal Merah</span>
+                                <span class="block text-[10px] text-rose-700/80 dark:text-rose-400/80">Menetapkan hari libur resmi untuk semua intern pada tanggal ini</span>
+                            </div>
+                        </label>
                     </div>
+                </div>
+
+                <!-- Holiday Info Banner (Muncul saat status holiday dipilih) -->
+                <div id="admin-holiday-info-wrap" class="hidden p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 space-y-1">
+                    <div class="text-xs font-bold text-rose-900 dark:text-rose-200 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[16px]">info</span>
+                        <span>Berlaku Untuk Seluruh Intern</span>
+                    </div>
+                    <p class="text-[11px] text-rose-700 dark:text-rose-300/80 leading-relaxed">
+                        Menetapkan tanggal ini sebagai Hari Libur / Tanggal Merah otomatis membebaskan semua intern dari kewajiban presensi, sehingga tidak akan dihitung Alpha / Tidak Masuk.
+                    </p>
                 </div>
 
                 <!-- Sub-type Dispensasi / Izin (Muncul saat status permit dipilih) -->
@@ -741,10 +807,79 @@ if ($db_query) {
         </div>
     </div>
 
+    <!-- Modal Kelola Hari Libur & Tanggal Merah -->
+    <div id="holiday-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+        <div class="bg-surface-bright dark:bg-[#111a33] text-on-surface rounded-2xl w-full max-w-lg shadow-2xl border border-outline-variant overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="p-5 border-b border-outline-variant flex justify-between items-center bg-rose-50/70 dark:bg-rose-950/40">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-[20px]">event_busy</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline-md font-bold text-on-surface text-base">Kelola Tanggal Merah & Hari Libur</h3>
+                        <p class="text-xs text-on-surface-variant">Atur hari libur resmi agar intern tidak terhitung Alpha / Tidak Masuk</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeHolidayModal()" class="text-on-surface-variant hover:text-primary transition p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+            </div>
+
+            <div class="p-5 overflow-y-auto flex-1 space-y-5">
+                <!-- Form Tambah Libur Baru -->
+                <form id="add-holiday-form" onsubmit="handleSaveHolidaySubmit(event)" class="p-4 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/40 dark:bg-rose-950/20 space-y-3">
+                    <div class="text-xs font-bold uppercase tracking-wide text-rose-900 dark:text-rose-300 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[16px]">add_circle</span>
+                        <span>Tambah Hari Libur / Tanggal Merah</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-on-surface mb-1">Tanggal Libur <span class="text-red-500">*</span></label>
+                            <input type="date" id="holiday-input-date" required class="w-full rounded-xl border border-outline-variant bg-surface-bright px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-rose-500 focus:outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-on-surface mb-1">Nama / Judul Libur <span class="text-red-500">*</span></label>
+                            <input type="text" id="holiday-input-title" placeholder="Contoh: Hari Kemerdekaan RI" required class="w-full rounded-xl border border-outline-variant bg-surface-bright px-3 py-2 text-xs font-semibold focus:ring-2 focus:ring-rose-500 focus:outline-none" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-on-surface mb-1">Keterangan Tambahan (Opsional)</label>
+                        <input type="text" id="holiday-input-desc" placeholder="Contoh: Libur nasional sesuai SKB 3 Menteri" class="w-full rounded-xl border border-outline-variant bg-surface-bright px-3 py-2 text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none" />
+                    </div>
+                    <div id="holiday-form-msg" class="hidden text-xs font-semibold p-2 rounded-lg"></div>
+                    <div class="flex justify-end">
+                        <button type="submit" id="holiday-submit-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer">
+                            <span class="material-symbols-outlined text-[16px]">save</span>
+                            <span>Simpan Hari Libur</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Daftar Hari Libur Terdaftar -->
+                <div>
+                    <div class="flex items-center justify-between mb-2.5">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Daftar Hari Libur Terdaftar</h4>
+                        <span id="holiday-count-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">0 Hari</span>
+                    </div>
+                    <div id="holiday-list-container" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-outline-variant flex justify-end bg-slate-50 dark:bg-[#0c1326]">
+                <button type="button" onclick="closeHolidayModal()" class="px-4 py-2 border border-outline-variant rounded-xl text-xs font-semibold text-on-surface-variant hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let calYear, calMonth;
         let dbInternsList = [];
         let dbAttendanceMap = {}; // { username: { date: record } }
+        let dbHolidaysMap = {};   // { dateStr: { id, date, title, description } }
 
         // Zona Waktu: Paksa mengikuti WIB (Asia/Jakarta, UTC+7)
         function getNowWIB(d) {
@@ -788,6 +923,7 @@ if ($db_query) {
                     const data = await res.json();
                     dbInternsList = data.interns || [];
                     dbAttendanceMap = data.attendanceMap || {};
+                    dbHolidaysMap = data.holidays || {};
                 }
             } catch (err) {
                 console.warn('Gagal memuat data presensi dari MySQL:', err);
@@ -872,7 +1008,7 @@ if ($db_query) {
                 grid.appendChild(cell);
             }
 
-            let daysComplete = 0, daysIncomplete = 0, daysEmpty = 0;
+            let daysComplete = 0, daysIncomplete = 0, daysEmpty = 0, daysHoliday = 0;
 
             for (let d = 1; d <= daysInMonth; d++) {
                 const dateObj = new Date(calYear, calMonth, d);
@@ -889,8 +1025,18 @@ if ($db_query) {
 
                 // Minggu (0) libur default
                 const isSunday = (dow === 0);
+                const isHoliday = dbHolidaysMap && dbHolidaysMap[dateStr];
 
-                if (isSunday && !hasRecords) {
+                if (isHoliday) {
+                    daysHoliday++;
+                    cell.classList.add('holiday');
+                    cell.title = `Libur: ${isHoliday.title || 'Tanggal Merah'}`;
+                    const dot = document.createElement('div');
+                    dot.className = 'status-dot';
+                    dot.style.background = '#e11d48';
+                    cell.appendChild(dot);
+                    cell.addEventListener('click', () => openDetailModal(dateStr));
+                } else if (isSunday && !hasRecords) {
                     cell.classList.add('weekend');
                 } else {
                     const cls = dayClass(summary, isFuture, isToday, dateStr);
@@ -926,6 +1072,7 @@ if ($db_query) {
             if (document.getElementById('stat-days-complete')) document.getElementById('stat-days-complete').textContent = daysComplete;
             if (document.getElementById('stat-days-late')) document.getElementById('stat-days-late').textContent = daysIncomplete;
             if (document.getElementById('stat-days-empty')) document.getElementById('stat-days-empty').textContent = daysEmpty;
+            if (document.getElementById('stat-days-holiday')) document.getElementById('stat-days-holiday').textContent = daysHoliday;
         }
 
         function openDetailModal(dateStr) {
@@ -934,23 +1081,81 @@ if ($db_query) {
             const list = document.getElementById('detail-list');
             list.innerHTML = '';
 
+            const isHoliday = dbHolidaysMap && dbHolidaysMap[dateStr];
+            if (isHoliday) {
+                const holCard = document.createElement('div');
+                holCard.className = 'p-3.5 mb-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900/60 flex items-center justify-between gap-2';
+                holCard.innerHTML = `
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-300 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-[19px]">event_busy</span>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-xs font-bold text-rose-900 dark:text-rose-200">Hari Libur: ${escHtml(isHoliday.title || 'Tanggal Merah')}</div>
+                            <div class="text-[11px] text-rose-700 dark:text-rose-300/80">${isHoliday.description ? escHtml(isHoliday.description) : 'Seluruh intern dibebaskan dari absensi (tidak dihitung Alpha).'}</div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="deleteHolidayByDate('${dateStr}')" class="px-2.5 py-1 text-[11px] font-bold text-rose-700 dark:text-rose-300 bg-white dark:bg-rose-900/80 hover:bg-rose-100 rounded-lg border border-rose-200 dark:border-rose-700 transition cursor-pointer shrink-0">
+                        Hapus Libur
+                    </button>
+                `;
+                list.appendChild(holCard);
+            } else {
+                const addHolWrap = document.createElement('div');
+                addHolWrap.className = 'mb-2 flex items-center justify-end';
+                addHolWrap.innerHTML = `
+                    <button type="button" onclick="openHolidayModalWithDate('${dateStr}')" class="text-xs font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 flex items-center gap-1 cursor-pointer">
+                        <span class="material-symbols-outlined text-[15px]">event_busy</span>
+                        <span>+ Tandai Tanggal Ini Sebagai Libur</span>
+                    </button>
+                `;
+                list.appendChild(addHolWrap);
+            }
+
             if (summary.entries.length === 0) {
-                list.innerHTML = '<p class="text-sm text-on-surface-variant italic">Belum ada intern terdaftar.</p>';
+                list.innerHTML += '<p class="text-sm text-on-surface-variant italic">Belum ada intern terdaftar.</p>';
             } else {
                 const todayStr = fmt(getNowWIB());
                 const now = getNowWIB();
                 const isTodayPastCutoff = (dateStr === todayStr) && (now.getHours() >= 14);
                 const isPastDay = dateStr < todayStr;
 
-                summary.entries.forEach(({ intern, record }) => {
+                // Urutkan intern: Belum Absen / Tidak Masuk (paling atas) -> Telat -> Izin -> Masuk
+                const sortedEntries = summary.entries.map(item => {
+                    const { intern, record } = item;
                     let status = record ? record.status : 'pending';
-                    if (!record && (isPastDay || isTodayPastCutoff)) {
-                        status = 'absent';
+                    if (!record) {
+                        if (isHoliday) {
+                            status = 'holiday';
+                        } else if (isPastDay || isTodayPastCutoff) {
+                            status = 'absent';
+                        }
                     }
+                    return { intern, record, status };
+                });
 
-                    let label = { present: 'Hadir Tepat Waktu', late: 'Terlambat', permit: 'Izin', absent: 'Tidak Masuk', pending: 'Belum Absen' }[status] || 'Belum Absen';
-                    let badgeClass = { present: 'badge-present', late: 'badge-late', permit: 'badge-dispen', absent: 'badge-absent', pending: 'badge-pending' }[status] || 'badge-pending';
-                    let icon = { present: 'check_circle', late: 'schedule', permit: 'verified', absent: 'cancel', pending: 'help' }[status] || 'help';
+                function getStatusSortPriority(s) {
+                    if (s === 'pending') return 1; // Belum Absen (paling atas)
+                    if (s === 'absent')  return 2; // Tidak Masuk / Alpha
+                    if (s === 'late')    return 3; // Telat
+                    if (s === 'permit')  return 4; // Izin / Sakit / Dispen
+                    if (s === 'present') return 5; // Masuk (Hadir Tepat Waktu)
+                    if (s === 'holiday') return 6; // Libur Resmi
+                    return 7;
+                }
+
+                sortedEntries.sort((a, b) => {
+                    const pA = getStatusSortPriority(a.status);
+                    const pB = getStatusSortPriority(b.status);
+                    if (pA !== pB) return pA - pB;
+                    return (a.intern.name || '').localeCompare(b.intern.name || '');
+                });
+
+                sortedEntries.forEach(({ intern, record, status }) => {
+
+                    let label = { present: 'Hadir Tepat Waktu', late: 'Terlambat', permit: 'Izin', absent: 'Tidak Masuk', holiday: 'Libur Resmi', pending: 'Belum Absen' }[status] || 'Belum Absen';
+                    let badgeClass = { present: 'badge-present', late: 'badge-late', permit: 'badge-dispen', absent: 'badge-absent', holiday: 'badge-holiday', pending: 'badge-pending' }[status] || 'badge-pending';
+                    let icon = { present: 'check_circle', late: 'schedule', permit: 'verified', absent: 'cancel', holiday: 'event_busy', pending: 'help' }[status] || 'help';
 
                     if (record && (record.status === 'permit' || record.status === 'absent') && record.leaveType) {
                         const lt = record.leaveType.toLowerCase();
@@ -1144,12 +1349,13 @@ if ($db_query) {
                     const dateStr = fmt(dateObj);
                     const dow = dateObj.getDay();
                     const isSunday = (dow === 0); // Hanya Minggu yang libur
+                    const isHoliday = (dbHolidaysMap && dbHolidaysMap[dateStr]);
                     const isFuture = dateObj > today && dateStr !== todayStr;
                     const isToday = dateStr === todayStr;
                     const isPastDay = !isFuture && !isToday;
 
-                    // Skip hari Minggu saja (Sabtu tetap hari kerja)
-                    if (isSunday) continue;
+                    // Skip hari Minggu atau hari libur resmi (tidak dianggap Alpha)
+                    if (isSunday || isHoliday) continue;
 
                     // Skip hari sebelum tanggal mulai magang intern
                     if (startDateStr && dateStr < startDateStr) continue;
@@ -1263,6 +1469,7 @@ if ($db_query) {
                 const dateStr = fmt(dateObj);
                 const dow = dateObj.getDay();
                 const isSunday = (dow === 0); // Minggu libur
+                const isHoliday = (dbHolidaysMap && dbHolidaysMap[dateStr]);
                 const isFuture = dateObj > today && dateStr !== todayStr;
                 const isToday = dateStr === todayStr;
                 const isPastDay = !isFuture && !isToday;
@@ -1295,6 +1502,16 @@ if ($db_query) {
                             clockOut: r.clockOut || '--:--',
                             status: stLabel,
                             reason: r.reason || '-'
+                        });
+                    } else if (isHoliday) {
+                        allRecords.push({
+                            internName: intern.name,
+                            division: intern.division || 'Intern Kedayweb',
+                            date: dateStr,
+                            clockIn: '--:--',
+                            clockOut: '--:--',
+                            status: `Libur (${isHoliday.title || 'Tanggal Merah'})`,
+                            reason: isHoliday.description || 'Hari libur resmi'
                         });
                     } else if (!isSunday && !isFuture) {
                         // Hari kerja tanpa presensi (Alpha / Belum Absen)
@@ -1393,35 +1610,57 @@ if ($db_query) {
 
         function selectAdminStatus(status) {
             currentAdminSelectedStatus = status;
-            const cards = ['present', 'late', 'permit', 'absent'];
+            const cards = ['present', 'late', 'permit', 'absent', 'holiday'];
             cards.forEach(s => {
                 const card = document.getElementById(`admin-status-card-${s}`);
                 if (!card) return;
                 const radio = card.querySelector('input[type="radio"]');
+                const isColSpan2 = (s === 'holiday');
+                const colPrefix = isColSpan2 ? 'col-span-2 ' : '';
                 if (s === status) {
                     if (radio) radio.checked = true;
-                    if (s === 'present') card.className = 'flex items-center gap-2 border-2 border-emerald-400 bg-emerald-50/70 rounded-xl p-2.5 cursor-pointer transition select-none';
-                    else if (s === 'late') card.className = 'flex items-center gap-2 border-2 border-amber-400 bg-amber-50/70 rounded-xl p-2.5 cursor-pointer transition select-none';
-                    else if (s === 'permit') card.className = 'flex items-center gap-2 border-2 border-purple-400 bg-purple-50/70 rounded-xl p-2.5 cursor-pointer transition select-none';
-                    else if (s === 'absent') card.className = 'flex items-center gap-2 border-2 border-red-400 bg-red-50/70 rounded-xl p-2.5 cursor-pointer transition select-none';
+                    if (s === 'present') card.className = `${colPrefix}flex items-center gap-2 border-2 border-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-xl p-2.5 cursor-pointer transition select-none`;
+                    else if (s === 'late') card.className = `${colPrefix}flex items-center gap-2 border-2 border-amber-400 bg-amber-50/70 dark:bg-amber-950/40 rounded-xl p-2.5 cursor-pointer transition select-none`;
+                    else if (s === 'permit') card.className = `${colPrefix}flex items-center gap-2 border-2 border-purple-400 bg-purple-50/70 dark:bg-purple-950/40 rounded-xl p-2.5 cursor-pointer transition select-none`;
+                    else if (s === 'absent') card.className = `${colPrefix}flex items-center gap-2 border-2 border-red-400 bg-red-50/70 dark:bg-red-950/40 rounded-xl p-2.5 cursor-pointer transition select-none`;
+                    else if (s === 'holiday') card.className = `${colPrefix}flex items-center gap-2 border-2 border-rose-400 bg-rose-50/70 dark:bg-rose-950/40 rounded-xl p-2.5 cursor-pointer transition select-none`;
                 } else {
                     if (radio) radio.checked = false;
-                    card.className = 'flex items-center gap-2 border-2 border-outline-variant bg-surface-container-lowest rounded-xl p-2.5 cursor-pointer transition select-none';
+                    card.className = `${colPrefix}flex items-center gap-2 border-2 border-outline-variant bg-surface-container-lowest rounded-xl p-2.5 cursor-pointer transition select-none`;
                 }
             });
 
-            // Toggle sub-type dispensasi & jam
+            // Toggle sub-type dispensasi, jam, dan info libur
             const leaveWrap = document.getElementById('admin-leave-type-wrap');
             const timeFields = document.getElementById('admin-time-fields');
+            const holidayWrap = document.getElementById('admin-holiday-info-wrap');
+            const reasonInput = document.getElementById('admin-set-reason');
+            const reasonLabel = reasonInput?.previousElementSibling;
+
             if (status === 'permit') {
                 if (leaveWrap) leaveWrap.classList.remove('hidden');
                 if (timeFields) timeFields.classList.add('hidden');
+                if (holidayWrap) holidayWrap.classList.add('hidden');
+                if (reasonLabel) reasonLabel.textContent = 'Alasan / Keterangan Dispensasi';
+                if (reasonInput) reasonInput.placeholder = 'Contoh: Mengikuti kegiatan seminar kampus...';
             } else if (status === 'absent') {
                 if (leaveWrap) leaveWrap.classList.add('hidden');
                 if (timeFields) timeFields.classList.add('hidden');
+                if (holidayWrap) holidayWrap.classList.add('hidden');
+                if (reasonLabel) reasonLabel.textContent = 'Alasan Tidak Masuk / Alpha';
+                if (reasonInput) reasonInput.placeholder = 'Contoh: Sakit tanpa surat dokter / kendala pribadi...';
+            } else if (status === 'holiday') {
+                if (leaveWrap) leaveWrap.classList.add('hidden');
+                if (timeFields) timeFields.classList.add('hidden');
+                if (holidayWrap) holidayWrap.classList.remove('hidden');
+                if (reasonLabel) reasonLabel.textContent = 'Nama / Keterangan Libur (Contoh: Libur Nasional / Cuti Bersama)';
+                if (reasonInput) reasonInput.placeholder = 'Contoh: Hari Kemerdekaan RI / Libur Bersama Idul Fitri...';
             } else {
                 if (leaveWrap) leaveWrap.classList.add('hidden');
                 if (timeFields) timeFields.classList.remove('hidden');
+                if (holidayWrap) holidayWrap.classList.add('hidden');
+                if (reasonLabel) reasonLabel.textContent = 'Alasan / Keterangan Dispensasi / Catatan';
+                if (reasonInput) reasonInput.placeholder = 'Contoh: Dispensasi kegiatan seminar kampus, atau lupa absen...';
             }
         }
 
@@ -1456,6 +1695,10 @@ if ($db_query) {
                     if (rdo) rdo.checked = true;
                 }
                 if (deleteBtn) deleteBtn.classList.remove('hidden');
+            } else if (dbHolidaysMap[targetDate]) {
+                selectAdminStatus('holiday');
+                document.getElementById('admin-set-reason').value = dbHolidaysMap[targetDate].title || '';
+                if (deleteBtn) deleteBtn.classList.add('hidden');
             } else {
                 selectAdminStatus('present');
                 document.getElementById('admin-set-clock-in').value = '08:00';
@@ -1565,6 +1808,156 @@ if ($db_query) {
                 }
             } catch (err) {
                 alert(err.message || 'Gagal menghapus catatan');
+            }
+        }
+
+        // ============================================================
+        // MODAL & FITUR KELOLA HARI LIBUR / TANGGAL MERAH
+        // ============================================================
+        function openHolidayModal(optDate = null) {
+            const modal = document.getElementById('holiday-modal');
+            if (!modal) return;
+            const inputDate = document.getElementById('holiday-input-date');
+            const inputTitle = document.getElementById('holiday-input-title');
+            const inputDesc = document.getElementById('holiday-input-desc');
+            const msgEl = document.getElementById('holiday-form-msg');
+            if (msgEl) { msgEl.className = 'hidden'; msgEl.textContent = ''; }
+
+            const todayStr = fmt(getNowWIB());
+            const targetDate = optDate || todayStr;
+            if (inputDate) inputDate.value = targetDate;
+            if (inputTitle) inputTitle.value = '';
+            if (inputDesc) inputDesc.value = '';
+
+            renderHolidayList();
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function openHolidayModalWithDate(dateStr) {
+            closeDetailModal();
+            openHolidayModal(dateStr);
+        }
+
+        function closeHolidayModal() {
+            const modal = document.getElementById('holiday-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function renderHolidayList() {
+            const container = document.getElementById('holiday-list-container');
+            const badge = document.getElementById('holiday-count-badge');
+            if (!container) return;
+
+            const allHolidays = Object.values(dbHolidaysMap || {}).sort((a, b) => a.date.localeCompare(b.date));
+            if (badge) badge.textContent = `${allHolidays.length} Hari`;
+
+            if (allHolidays.length === 0) {
+                container.innerHTML = '<p class="text-xs text-on-surface-variant italic py-3 text-center">Belum ada hari libur yang terdaftar.</p>';
+                return;
+            }
+
+            container.innerHTML = allHolidays.map(h => `
+                <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-outline-variant bg-surface-container-lowest">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-lg bg-rose-100 dark:bg-rose-950/70 text-rose-600 dark:text-rose-300 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-[18px]">event_busy</span>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-xs font-bold text-on-surface truncate">${escHtml(h.title || 'Hari Libur')}</div>
+                            <div class="text-[11px] text-rose-600 dark:text-rose-400 font-semibold">${formatDateDisplay(h.date)}</div>
+                            ${h.description ? `<div class="text-[10px] text-on-surface-variant truncate">${escHtml(h.description)}</div>` : ''}
+                        </div>
+                    </div>
+                    <button type="button" onclick="deleteHolidayByDate('${h.date}')" class="px-2.5 py-1 text-[11px] font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-lg border border-red-200 dark:border-red-900 transition shrink-0 cursor-pointer" title="Hapus hari libur">
+                        Hapus
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function handleSaveHolidaySubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('holiday-submit-btn');
+            const msgEl = document.getElementById('holiday-form-msg');
+            const date = document.getElementById('holiday-input-date').value.trim();
+            const title = document.getElementById('holiday-input-title').value.trim();
+            const desc = document.getElementById('holiday-input-desc').value.trim();
+
+            if (!date || !title) {
+                alert('Tanggal libur dan judul wajib diisi!');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">refresh</span> Menyimpan...';
+
+            try {
+                const res = await fetch('../attendance-api.php?action=save_holiday', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date, title, description: desc })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || 'Gagal menyimpan hari libur');
+
+                dbHolidaysMap[date] = { date, title, description: desc };
+
+                msgEl.className = 'text-xs font-semibold p-2 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 block';
+                msgEl.textContent = data.message || 'Hari libur berhasil disimpan!';
+
+                document.getElementById('holiday-input-title').value = '';
+                document.getElementById('holiday-input-desc').value = '';
+
+                await fetchDbAttendance();
+                renderAll();
+                renderHolidayList();
+
+                setTimeout(() => {
+                    if (msgEl) msgEl.className = 'hidden';
+                }, 2500);
+            } catch (err) {
+                msgEl.className = 'text-xs font-semibold p-2 rounded-lg bg-red-50 text-red-800 border border-red-200 block';
+                msgEl.textContent = err.message || 'Terjadi kesalahan.';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[16px]">save</span> Simpan Hari Libur';
+            }
+        }
+
+        async function deleteHolidayByDate(dateStr) {
+            const h = dbHolidaysMap[dateStr];
+            const name = h ? h.title : dateStr;
+            if (!confirm(`Yakin ingin menghapus hari libur '${name}' (${dateStr})? Semua intern akan kembali mengikuti jadwal absensi normal.`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch('../attendance-api.php?action=delete_holiday', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date: dateStr })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || 'Gagal menghapus hari libur');
+
+                delete dbHolidaysMap[dateStr];
+
+                await fetchDbAttendance();
+                renderAll();
+                renderHolidayList();
+
+                // Jika modal detail sedang terbuka, refresh kontennya
+                const detailModal = document.getElementById('detail-modal');
+                if (detailModal && !detailModal.classList.contains('hidden')) {
+                    openDetailModal(dateStr);
+                }
+            } catch (err) {
+                alert('Gagal menghapus: ' + err.message);
             }
         }
 

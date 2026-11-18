@@ -464,6 +464,21 @@ ALTER TABLE `certificates`
 --
 ALTER TABLE `tasks`
   ADD CONSTRAINT `tasks_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE;
+
+--
+-- Table structure for table `holidays`
+--
+CREATE TABLE IF NOT EXISTS `holidays` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `holiday_date` date NOT NULL,
+  `title` varchar(150) NOT NULL,
+  `description` text,
+  `created_by` varchar(50) DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_holiday_date` (`holiday_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

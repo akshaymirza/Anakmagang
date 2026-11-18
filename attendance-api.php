@@ -89,6 +89,16 @@ if ($conn) {
     if ($chk_ey && mysqli_num_rows($chk_ey) === 0) {
         @mysqli_query($conn, "ALTER TABLE `users` ADD COLUMN `entry_year` INT DEFAULT NULL COMMENT 'Tahun angkatan intern'");
     }
+
+    // Auto-migrate tabel holidays jika belum ada
+    @mysqli_query($conn, "CREATE TABLE IF NOT EXISTS `holidays` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `holiday_date` DATE NOT NULL UNIQUE,
+        `title` VARCHAR(150) NOT NULL,
+        `description` TEXT DEFAULT NULL,
+        `created_by` VARCHAR(50) DEFAULT NULL,
+        `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 }
 
 // Helper: Hitung jarak GPS (Haversine formula dalam meter)
@@ -219,9 +229,24 @@ if ($action === 'all_summary' && $method === 'GET') {
         }
     }
 
+    // 3. Ambil data hari libur resmi (holidays)
+    $holidays = [];
+    $resHolidays = @mysqli_query($conn, "SELECT id, holiday_date, title, description FROM holidays ORDER BY holiday_date ASC");
+    if ($resHolidays) {
+        while ($h = mysqli_fetch_assoc($resHolidays)) {
+            $holidays[$h['holiday_date']] = [
+                'id'          => (int)$h['id'],
+                'date'        => $h['holiday_date'],
+                'title'       => $h['title'],
+                'description' => $h['description'] ?? ''
+            ];
+        }
+    }
+
     echo json_encode([
         'interns'       => $interns,
-        'attendanceMap' => $attendanceMap
+        'attendanceMap' => $attendanceMap,
+        'holidays'      => $holidays
     ]);
     exit;
 }
@@ -779,10 +804,29 @@ if ($action === 'admin_set_attendance' && $method === 'POST') {
         exit;
     }
 
-    $allowedStatuses = ['present', 'late', 'permit', 'absent'];
+    $allowedStatuses = ['present', 'late', 'permit', 'absent', 'holiday'];
     if (!in_array($status, $allowedStatuses, true)) {
         http_response_code(400);
-        echo json_encode(['error' => 'Status tidak valid (pilih: present, late, permit, absent)']);
+        echo json_encode(['error' => 'Status tidak valid (pilih: present, late, permit, absent, holiday)']);
+        exit;
+    }
+
+    $adminActor = $_SESSION['username'] ?? 'admin';
+
+    // Jika status adalah libur (holiday), simpan ke tabel holidays untuk tanggal ini
+    if ($status === 'holiday') {
+        $holidayTitle = !empty($reason) ? $reason : 'Hari Libur / Tanggal Merah';
+        $stmtH = mysqli_prepare($conn, "INSERT INTO holidays (holiday_date, title, description, created_by)
+            VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE title = VALUES(title), description = VALUES(description), created_by = VALUES(created_by)");
+        if ($stmtH) {
+            mysqli_stmt_bind_param($stmtH, "ssss", $date, $holidayTitle, $reason, $adminActor);
+            mysqli_stmt_execute($stmtH);
+        }
+        echo json_encode([
+            'success' => true,
+            'message' => "Tanggal {$date} berhasil ditetapkan sebagai Hari Libur ({$holidayTitle})"
+        ]);
         exit;
     }
 
@@ -799,8 +843,6 @@ if ($action === 'admin_set_attendance' && $method === 'POST') {
     if ($status === 'permit' && empty($leaveType)) {
         $leaveType = 'dispen';
     }
-
-    $adminActor = $_SESSION['username'] ?? 'admin';
 
     $sqlChk = "SELECT id FROM attendance WHERE username = ? AND date = ? LIMIT 1";
     $stmtChk = mysqli_prepare($conn, $sqlChk);
@@ -861,6 +903,147 @@ if ($action === 'admin_delete_attendance' && $method === 'POST') {
     mysqli_stmt_execute($stmt);
 
     echo json_encode(['success' => true, 'message' => "Catatan kehadiran {$targetUsername} pada {$date} berhasil dihapus"]);
+    exit;
+}
+
+// --------------------------------------------------------------
+// GET DAFTAR HARI LIBUR / TANGGAL MERAH (?action=get_holidays, GET)
+// --------------------------------------------------------------
+if ($action === 'get_holidays' && $method === 'GET') {
+    $year = isset($_GET['year']) ? (int)$_GET['year'] : null;
+    $month = isset($_GET['month']) ? (int)$_GET['month'] : null;
+
+    $where = [];
+    if ($year) {
+        $where[] = "YEAR(holiday_date) = " . $year;
+    }
+    if ($month) {
+        $where[] = "MONTH(holiday_date) = " . $month;
+    }
+    $whereSql = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+
+    $holidays = [];
+    $holidaysMap = [];
+    $resHolidays = @mysqli_query($conn, "SELECT id, holiday_date, title, description, created_by, created_at FROM holidays {$whereSql} ORDER BY holiday_date ASC");
+    if ($resHolidays) {
+        while ($h = mysqli_fetch_assoc($resHolidays)) {
+            $item = [
+                'id'          => (int)$h['id'],
+                'date'        => $h['holiday_date'],
+                'title'       => $h['title'],
+                'description' => $h['description'] ?? '',
+                'createdBy'   => $h['created_by'] ?? null,
+                'createdAt'   => $h['created_at'] ?? null
+            ];
+            $holidays[] = $item;
+            $holidaysMap[$h['holiday_date']] = $item;
+        }
+    }
+    echo json_encode([
+        'success'     => true,
+        'holidays'    => $holidays,
+        'holidaysMap' => $holidaysMap
+    ]);
+    exit;
+}
+
+// --------------------------------------------------------------
+// SIMPAN / UPDATE HARI LIBUR / TANGGAL MERAH (?action=save_holiday, POST)
+// Hanya Admin / Superadmin
+// --------------------------------------------------------------
+if ($action === 'save_holiday' && $method === 'POST') {
+    $userRole = $_SESSION['role'] ?? 'intern';
+    if (!in_array($userRole, ['admin', 'superadmin'], true)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Akses ditolak: Hanya Admin/Superadmin yang dapat mengatur hari libur']);
+        exit;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $date  = trim($input['date'] ?? $input['holiday_date'] ?? '');
+    $title = trim($input['title'] ?? '');
+    $desc  = trim($input['description'] ?? '');
+
+    if (empty($date) || empty($title)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Tanggal libur dan judul/nama libur wajib diisi']);
+        exit;
+    }
+
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Format tanggal tidak valid (harus YYYY-MM-DD)']);
+        exit;
+    }
+
+    $adminActor = $_SESSION['username'] ?? 'admin';
+
+    $stmt = mysqli_prepare($conn, "INSERT INTO holidays (holiday_date, title, description, created_by)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE title = VALUES(title), description = VALUES(description), created_by = VALUES(created_by)");
+    if (!$stmt) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Gagal menyiapkan query: ' . mysqli_error($conn)]);
+        exit;
+    }
+
+    mysqli_stmt_bind_param($stmt, "ssss", $date, $title, $desc, $adminActor);
+    $ok = mysqli_stmt_execute($stmt);
+
+    if (!$ok) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Gagal menyimpan hari libur: ' . mysqli_error($conn)]);
+        exit;
+    }
+
+    echo json_encode([
+        'success' => true,
+        'message' => "Hari libur '{$title}' pada tanggal {$date} berhasil disimpan."
+    ]);
+    exit;
+}
+
+// --------------------------------------------------------------
+// HAPUS HARI LIBUR / TANGGAL MERAH (?action=delete_holiday, POST)
+// Hanya Admin / Superadmin
+// --------------------------------------------------------------
+if ($action === 'delete_holiday' && $method === 'POST') {
+    $userRole = $_SESSION['role'] ?? 'intern';
+    if (!in_array($userRole, ['admin', 'superadmin'], true)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Akses ditolak: Hanya Admin/Superadmin yang dapat menghapus hari libur']);
+        exit;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $id   = isset($input['id']) ? (int)$input['id'] : null;
+    $date = trim($input['date'] ?? $input['holiday_date'] ?? '');
+
+    if (!$id && empty($date)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID atau tanggal hari libur wajib disertakan']);
+        exit;
+    }
+
+    if ($id) {
+        $stmt = mysqli_prepare($conn, "DELETE FROM holidays WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $id);
+    } else {
+        $stmt = mysqli_prepare($conn, "DELETE FROM holidays WHERE holiday_date = ?");
+        mysqli_stmt_bind_param($stmt, "s", $date);
+    }
+
+    $ok = mysqli_stmt_execute($stmt);
+    if (!$ok) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Gagal menghapus hari libur: ' . mysqli_error($conn)]);
+        exit;
+    }
+
+    echo json_encode([
+        'success' => true,
+        'message' => "Hari libur berhasil dihapus."
+    ]);
     exit;
 }
 

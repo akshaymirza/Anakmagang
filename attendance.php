@@ -420,6 +420,19 @@ if ($conn) {
                 <span id="intern-period-badge" class="px-3 py-1 font-bold text-xs rounded-full shrink-0"></span>
             </div>
 
+            <!-- Holiday Banner Today -->
+            <div id="holiday-today-banner"
+                class="hidden mb-5 items-center justify-between gap-3 px-4 py-3 rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-rose-950 dark:text-rose-200 text-xs sm:text-sm shadow-xs">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-rose-600 dark:text-rose-400 text-2xl shrink-0">event_busy</span>
+                    <div>
+                        <p id="holiday-today-title" class="font-bold text-sm sm:text-base text-rose-900 dark:text-rose-200">Hari Ini Libur Resmi 🎉</p>
+                        <p id="holiday-today-desc" class="text-xs text-rose-700 dark:text-rose-300 mt-0.5">Anda dibebaskan dari kewajiban presensi.</p>
+                    </div>
+                </div>
+                <span class="px-3 py-1 font-bold text-xs rounded-full bg-rose-200 dark:bg-rose-900 text-rose-900 dark:text-rose-200 border border-rose-300 dark:border-rose-800 shrink-0">Tanggal Merah</span>
+            </div>
+
             <!-- Stats Row -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 mb-6">
                 <div class="stat-present rounded-2xl p-3 sm:p-4 border border-green-200">
@@ -562,6 +575,17 @@ if ($conn) {
                                 <div>
                                     <div class="text-xs sm:text-sm font-semibold text-on-surface">Tidak Masuk</div>
                                     <div class="text-[11px] sm:text-xs text-on-surface-variant">Izin / Sakit / Alpha
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-rose-100 dark:bg-rose-950/70 border border-rose-300 dark:border-rose-800 flex items-center justify-center text-rose-700 dark:text-rose-300 text-xs font-bold shrink-0">
+                                    17</div>
+                                <div>
+                                    <div class="text-xs sm:text-sm font-semibold text-on-surface">Tanggal Merah / Libur
+                                    </div>
+                                    <div class="text-[11px] sm:text-xs text-on-surface-variant">Hari libur resmi nasional / instansi
                                     </div>
                                 </div>
                             </div>
@@ -1131,6 +1155,16 @@ if ($conn) {
                         lngOut: r.lng_out
                     }));
                 }
+
+                // Muat data hari libur resmi (holidays)
+                try {
+                    const holRes = await fetch('attendance-api.php?action=get_holidays');
+                    if (holRes.ok) {
+                        const holJson = await holRes.json();
+                        window.HOLIDAYS_MAP = holJson.holidaysMap || {};
+                    }
+                } catch (e) {}
+
                 applyInternPeriodBanner();
             } catch (err) {
                 console.error(err);
@@ -1179,6 +1213,21 @@ if ($conn) {
             } else {
                 banner.classList.add('hidden');
             }
+
+            // Tampilkan banner jika hari ini adalah Hari Libur / Tanggal Merah
+            const holBanner = document.getElementById('holiday-today-banner');
+            if (holBanner) {
+                const todayHoliday = (window.HOLIDAYS_MAP && window.HOLIDAYS_MAP[todayStr]);
+                if (todayHoliday && !isEnded && !isUpcoming) {
+                    holBanner.classList.remove('hidden');
+                    holBanner.classList.add('flex');
+                    document.getElementById('holiday-today-title').textContent = `Hari Ini Libur: ${todayHoliday.title || 'Tanggal Merah'}`;
+                    document.getElementById('holiday-today-desc').textContent = todayHoliday.description || 'Hari ini ditetapkan sebagai hari libur resmi. Seluruh intern dibebaskan dari kewajiban presensi.';
+                } else {
+                    holBanner.classList.add('hidden');
+                    holBanner.classList.remove('flex');
+                }
+            }
         }
 
         function loadData() {
@@ -1204,11 +1253,12 @@ if ($conn) {
                     const dateStr = formatDate(dateObj);
                     const dow = dateObj.getDay();
                     const isSunday = (dow === 0);
+                    const isHoliday = (window.HOLIDAYS_MAP && window.HOLIDAYS_MAP[dateStr]);
                     const isFuture = dateObj > today && dateStr !== todayStr;
                     const isToday = dateStr === todayStr;
                     const isPastDay = !isFuture && !isToday;
 
-                    if (isSunday || isFuture) continue;
+                    if (isSunday || isFuture || isHoliday) continue;
 
                     // Lewati hari di luar periode magang (tidak dihitung Alpha):
                     // 1. Hari sebelum tanggal mulai magang
@@ -1323,6 +1373,7 @@ if ($conn) {
                 const dateStr = formatDate(dateObj);
                 const dayOfWeek = dateObj.getDay(); // 0=Sun, 6=Sat
                 const isWeekend = (dayOfWeek === 0);
+                const isHoliday = (window.HOLIDAYS_MAP && window.HOLIDAYS_MAP[dateStr]);
                 const isFuture = dateObj > today && dateStr !== todayStr;
                 const isToday = dateStr === todayStr;
                 const rec = dataMap[dateStr];
@@ -1333,7 +1384,11 @@ if ($conn) {
                 const isTodayPastCutoff = isToday && isPastCutoff();
                 const isPastDay = !isFuture && !isToday;
 
-                if (isWeekend) {
+                if (isHoliday) {
+                    cell.classList.add('holiday');
+                    cell.title = `Libur: ${isHoliday.title || 'Tanggal Merah'}`;
+                    cell.addEventListener('click', () => openDetailModal(dateStr));
+                } else if (isWeekend) {
                     cell.classList.add('weekend');
                 } else if (isFuture) {
                     cell.classList.add('future');
@@ -1361,7 +1416,12 @@ if ($conn) {
                 if (isToday) cell.classList.add('today');
 
                 cell.innerHTML = `<span>${d}</span>`;
-                if (rec && !isWeekend) {
+                if (isHoliday) {
+                    const dot = document.createElement('div');
+                    dot.className = 'status-dot';
+                    dot.style.background = '#e11d48';
+                    cell.appendChild(dot);
+                } else if (rec && !isWeekend) {
                     const dot = document.createElement('div');
                     dot.className = 'status-dot';
                     if (rec.status === 'permit') {
@@ -1424,8 +1484,9 @@ if ($conn) {
             for (let i = 0; i < 60; i++) {
                 const ds = formatDate(checkDate);
                 const dow = checkDate.getDay();
-                // Skip weekends
-                if (dow === 0) {
+                const isHoliday = (window.HOLIDAYS_MAP && window.HOLIDAYS_MAP[ds]);
+                // Skip weekends and holidays
+                if (dow === 0 || isHoliday) {
                     checkDate.setDate(checkDate.getDate() - 1);
                     continue;
                 }
@@ -1686,21 +1747,30 @@ if ($conn) {
         // DETAIL MODAL
         // ============================================================
         function openDetailModal(dateStr) {
+            const isHoliday = window.HOLIDAYS_MAP && window.HOLIDAYS_MAP[dateStr];
             let rec = getRecord(dateStr);
             if (!rec) {
-                const todayStr = formatDate(getNowWIB());
-                const isTodayPastCutoff = (dateStr === todayStr) && isPastCutoff();
-                const isPastDay = dateStr < todayStr;
-                if (isPastDay || isTodayPastCutoff) {
-                    rec = { date: dateStr, status: 'absent', clockIn: '', clockOut: '', reason: `Tidak melakukan absensi hingga batas waktu (${getCutoffTime()} WIB)` };
+                if (isHoliday) {
+                    rec = { date: dateStr, status: 'holiday', clockIn: '', clockOut: '', reason: isHoliday.description || isHoliday.title || 'Hari Libur Resmi' };
                 } else {
-                    return;
+                    const todayStr = formatDate(getNowWIB());
+                    const isTodayPastCutoff = (dateStr === todayStr) && isPastCutoff();
+                    const isPastDay = dateStr < todayStr;
+                    if (isPastDay || isTodayPastCutoff) {
+                        rec = { date: dateStr, status: 'absent', clockIn: '', clockOut: '', reason: `Tidak melakukan absensi hingga batas waktu (${getCutoffTime()} WIB)` };
+                    } else {
+                        return;
+                    }
                 }
             }
             detailDate = dateStr;
 
             let statusLabel, badgeClass, iconName;
-            if (rec.status === 'permit') {
+            if (rec.status === 'holiday') {
+                statusLabel = isHoliday ? `Libur (${isHoliday.title})` : 'Hari Libur';
+                badgeClass = 'badge-holiday';
+                iconName = 'event_busy';
+            } else if (rec.status === 'permit') {
                 const lt = rec.leaveType || 'dispen';
                 statusLabel = lt === 'dispen' ? 'Dispensasi Instansi' : (lt === 'izin' ? 'Izin' : (lt === 'sakit' ? 'Sakit' : 'Tugas Dinas'));
                 badgeClass = 'badge-permit';
