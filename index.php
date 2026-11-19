@@ -193,9 +193,14 @@ if (!is_array($positions) || empty($positions)) {
             </p>
             <div id="hero-img-box"
                 class="w-full h-64 md:h-[400px] rounded-[24px] overflow-hidden border border-outline-variant shadow-md relative group mt-lg opacity-0">
-                <img id="hero-parallax-img" class="w-full h-full object-cover"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAf2c_JxDXo1KbLpFVJDn67XVBHdj1mnsNi7Qu-7UAr2hB9SmuW7CS49bF7djDMStwPzGjvpclkK49Gm3gICdZjnkqfw8eMc1C9LlUFSkErmQKK3ET0KGrdDyMNWDu08Q2u1EtP56g_-1VLvNfqAP18yuc1d9zVmLfS0atyrhngTBfqKaeYzexH-xYF_I88LmVkG9rqfcd2ezl-1Rc9TgUKQMA3dRkKV7M9c7e_8_88cJC15aMskLXb"
-                    alt="Modern collaborative workspace" />
+                <picture class="w-full h-full block">
+                    <source srcset="src/hero_anakmagang.webp" type="image/webp">
+                    <source srcset="src/hero_anakmagang.jpg" type="image/jpeg">
+                    <source srcset="src/hero_anakmagang.HEIC" type="image/heic">
+                    <img id="hero-parallax-img" class="w-full h-full object-cover"
+                        src="src/hero_anakmagang.jpg"
+                        alt="Pendaftaran Anak Magang Kedayweb" />
+                </picture>
                 <div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/40 to-transparent"></div>
             </div>
         </section>

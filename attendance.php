@@ -229,6 +229,16 @@ if ($conn) {
             color: #991b1b;
         }
 
+        .badge-holiday {
+            background: #ffe4e6;
+            color: #9f1239;
+        }
+
+        html.dark .badge-holiday {
+            background: #4c0519;
+            color: #fecdd3;
+        }
+
         /* Modal backdrop */
         .modal-backdrop {
             background: rgba(15, 23, 42, 0.5);
@@ -250,6 +260,10 @@ if ($conn) {
 
         .stat-rate {
             background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        }
+
+        .stat-holiday {
+            background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%);
         }
 
         /* Dark mode stat card overrides (Fix Blinding Pastel Boxes) */
@@ -303,6 +317,19 @@ if ($conn) {
         html.dark .stat-rate #stat-rate,
         html.dark .stat-rate [id^="stat-"] {
             color: #eff6ff !important;
+        }
+
+        html.dark .stat-holiday {
+            background: linear-gradient(135deg, rgba(136, 19, 55, 0.45) 0%, rgba(159, 18, 57, 0.3) 100%) !important;
+            border-color: rgba(244, 63, 94, 0.4) !important;
+        }
+        html.dark .stat-holiday,
+        html.dark .stat-holiday * {
+            color: #fecdd3 !important;
+        }
+        html.dark .stat-holiday #stat-holiday,
+        html.dark .stat-holiday [id^="stat-"] {
+            color: #fff1f2 !important;
         }
 
         /* Hide scrollbars for filter pill row */
@@ -434,7 +461,7 @@ if ($conn) {
             </div>
 
             <!-- Stats Row -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 mb-6">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 mb-6">
                 <div class="stat-present rounded-2xl p-3 sm:p-4 border border-green-200">
                     <div class="flex items-center gap-1.5 mb-1.5">
                         <span class="material-symbols-outlined text-green-700 text-[18px] sm:text-[20px]"
@@ -465,7 +492,16 @@ if ($conn) {
                     <div id="stat-absent" class="text-2xl sm:text-3xl font-geist font-bold text-red-800">0</div>
                     <div class="text-[11px] sm:text-xs text-red-700 mt-0.5">hari</div>
                 </div>
-                <div class="stat-rate rounded-2xl p-3 sm:p-4 border border-blue-200">
+                <div class="stat-holiday rounded-2xl p-3 sm:p-4 border border-rose-200">
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                        <span class="material-symbols-outlined text-rose-700 text-[18px] sm:text-[20px]"
+                            style="font-variation-settings:'FILL' 1;">event_busy</span>
+                        <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-rose-700">Tanggal Merah</span>
+                    </div>
+                    <div id="stat-holiday" class="text-2xl sm:text-3xl font-geist font-bold text-rose-800">0</div>
+                    <div class="text-[11px] sm:text-xs text-rose-700 mt-0.5">hari libur</div>
+                </div>
+                <div class="stat-rate rounded-2xl p-3 sm:p-4 border border-blue-200 col-span-2 sm:col-span-1 lg:col-span-1">
                     <div class="flex items-center gap-1.5 mb-1.5">
                         <span class="material-symbols-outlined text-blue-700 text-[18px] sm:text-[20px]"
                             style="font-variation-settings:'FILL' 1;">insights</span>
@@ -619,6 +655,10 @@ if ($conn) {
                             <div class="flex justify-between items-center text-xs sm:text-sm">
                                 <span class="text-on-surface-variant">Tidak Masuk</span>
                                 <span id="month-absent" class="font-bold text-red-700">0 hari</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs sm:text-sm">
+                                <span class="text-on-surface-variant">Tanggal Merah</span>
+                                <span id="month-holiday" class="font-bold text-rose-600">0 hari</span>
                             </div>
                             <div class="h-px bg-outline-variant my-1"></div>
                             <div class="flex justify-between items-center text-xs sm:text-sm">
@@ -1243,9 +1283,10 @@ if ($conn) {
             const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
             const currentPrefix = todayStr.slice(0, 7);
 
-            // Bulan dianggap aktif jika bulan berjalan ATAU ada riwayat absensi di bulan ini
+            // Bulan dianggap aktif jika bulan berjalan ATAU ada riwayat absensi di bulan ini ATAU ada tanggal merah
+            const hasHolidaysInMonth = Object.keys(window.HOLIDAYS_MAP || {}).some(d => d.startsWith(prefix));
             const hasMonthRecords = attendanceData.some(r => r.date && r.date.startsWith(prefix));
-            const isMonthActive = (prefix === currentPrefix) || hasMonthRecords;
+            const isMonthActive = (prefix === currentPrefix) || hasMonthRecords || hasHolidaysInMonth;
 
             if (isMonthActive) {
                 for (let d = 1; d <= daysInMonth; d++) {
@@ -1258,7 +1299,7 @@ if ($conn) {
                     const isToday = dateStr === todayStr;
                     const isPastDay = !isFuture && !isToday;
 
-                    if (isSunday || isFuture || isHoliday) continue;
+                    if (isSunday) continue;
 
                     // Lewati hari di luar periode magang (tidak dihitung Alpha):
                     // 1. Hari sebelum tanggal mulai magang
@@ -1266,6 +1307,29 @@ if ($conn) {
 
                     // 2. Hari setelah tanggal selesai magang (magang telah usai, tidak perlu absen)
                     if (internEndDate && dateStr > internEndDate) continue;
+
+                    // Jika hari ini adalah Hari Libur / Tanggal Merah resmi
+                    if (isHoliday) {
+                        if (!datesWithRec.has(dateStr)) {
+                            result.push({
+                                date: dateStr,
+                                status: 'holiday',
+                                clockIn: '',
+                                clockOut: '',
+                                reason: isHoliday.description || isHoliday.title || 'Hari libur resmi',
+                                holidayTitle: isHoliday.title || 'Tanggal Merah',
+                                leaveType: null,
+                                photoIn: '',
+                                locationIn: '',
+                                isHoliday: true,
+                                isFuture: isFuture
+                            });
+                            datesWithRec.add(dateStr);
+                        }
+                        continue;
+                    }
+
+                    if (isFuture) continue;
 
                     if (!datesWithRec.has(dateStr)) {
                         if (isPastDay || isTodayPastCutoff) {
@@ -1452,6 +1516,7 @@ if ($conn) {
             const present = monthData.filter(r => r.status === 'present').length;
             const late = monthData.filter(r => r.status === 'late').length;
             const absent = monthData.filter(r => r.status === 'absent').length;
+            const holidays = Object.keys(window.HOLIDAYS_MAP || {}).filter(d => d.startsWith(prefix)).length;
             const total = present + late + absent;
             const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
 
@@ -1459,6 +1524,9 @@ if ($conn) {
             document.getElementById('stat-late').textContent = late;
             document.getElementById('stat-absent').textContent = absent;
             document.getElementById('stat-rate').textContent = rate + '%';
+            if (document.getElementById('stat-holiday')) {
+                document.getElementById('stat-holiday').textContent = holidays;
+            }
 
             // Streak dihitung dari seluruh data kehadiran
             const streak = calcStreak(loadData());
@@ -1507,9 +1575,13 @@ if ($conn) {
             const p = monthly.filter(r => r.status === 'present').length;
             const l = monthly.filter(r => r.status === 'late').length;
             const a = monthly.filter(r => r.status === 'absent').length;
+            const h = Object.keys(window.HOLIDAYS_MAP || {}).filter(d => d.startsWith(prefix)).length;
             document.getElementById('month-present').textContent = `${p} hari`;
             document.getElementById('month-late').textContent = `${l} hari`;
             document.getElementById('month-absent').textContent = `${a} hari`;
+            if (document.getElementById('month-holiday')) {
+                document.getElementById('month-holiday').textContent = `${h} hari`;
+            }
             document.getElementById('month-total').textContent = `${p + l + a} hari`;
         }
 
@@ -1517,9 +1589,12 @@ if ($conn) {
         // RENDER TABLE
         // ============================================================
         function renderTable(filter = 'all') {
-            const all = loadData().sort((a, b) => b.date.localeCompare(a.date));
+            const todayStr = formatDate(getNowWIB());
+            const all = loadData()
+                .filter(r => !r.isFuture || r.date === todayStr)
+                .sort((a, b) => b.date.localeCompare(a.date));
             const data = filter === 'all' ? all :
-                         filter === 'leave' ? all.filter(r => r.status === 'absent' && !!r.leaveType) :
+                         filter === 'leave' ? all.filter(r => (r.status === 'absent' && !!r.leaveType) || r.status === 'holiday' || r.isHoliday) :
                          filter === 'absent' ? all.filter(r => r.status === 'absent' && !r.leaveType) :
                          all.filter(r => r.status === filter);
 
@@ -1539,7 +1614,10 @@ if ($conn) {
                 tr.addEventListener('click', () => openDetailModal(rec.date));
 
                 let statusHtml;
-                if (rec.status === 'permit') {
+                if (rec.status === 'holiday' || rec.isHoliday) {
+                    const title = rec.holidayTitle || 'Tanggal Merah';
+                    statusHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold badge-holiday"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1;">event_busy</span>Libur (${escHtml(title)})</span>`;
+                } else if (rec.status === 'permit') {
                     const lt = rec.leaveType || 'dispen';
                     const label = lt === 'dispen' ? 'Dispensasi Instansi' : (lt === 'izin' ? 'Izin' : (lt === 'sakit' ? 'Sakit' : 'Tugas Dinas'));
                     statusHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold badge-permit"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1;">assignment_turned_in</span>${label}</span>`;
@@ -1993,7 +2071,8 @@ if ($conn) {
                 present: 'Hadir',
                 late: 'Terlambat',
                 absent: 'Tidak Masuk',
-                permit: 'Izin / Dispensasi'
+                permit: 'Izin / Dispensasi',
+                holiday: 'Hari Libur'
             };
 
             function cleanDateDisplay(ds) {
@@ -2007,7 +2086,9 @@ if ($conn) {
             const rows = [['Tanggal', 'Jam Masuk', 'Jam Keluar', 'Status', 'Alasan']];
             data.forEach(r => {
                 let stLabel = statusLabel[r.status] || r.status;
-                if (r.status === 'permit') {
+                if (r.status === 'holiday' || r.isHoliday) {
+                    stLabel = r.holidayTitle ? `Libur (${r.holidayTitle})` : 'Hari Libur';
+                } else if (r.status === 'permit') {
                     const lt = (r.leaveType || '').toLowerCase();
                     if (lt === 'dispen' || lt === 'dispensasi') stLabel = 'Dispensasi Instansi';
                     else if (lt === 'sakit') stLabel = 'Sakit';

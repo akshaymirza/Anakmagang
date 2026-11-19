@@ -84,13 +84,22 @@ if (!function_exists('calculate_intern_scores')) {
             'Sunday'    => 'Minggu',
         ];
 
-        // ── 4. Hitung jumlah hari kerja wajib dalam periode ──
+        // ── 4. Hitung jumlah hari kerja wajib dalam periode (dikecualikan tanggal merah resmi) ──
+        $holidaysSet = [];
+        $holRes = @mysqli_query($conn, "SELECT holiday_date FROM holidays WHERE holiday_date >= '" . mysqli_real_escape_string($conn, $startDate) . "' AND holiday_date <= '" . mysqli_real_escape_string($conn, $calcEnd) . "'");
+        if ($holRes) {
+            while ($hRow = mysqli_fetch_assoc($holRes)) {
+                $holidaysSet[$hRow['holiday_date']] = true;
+            }
+        }
+
         $totalWorkDays = 0;
         $current = new DateTime($startDate);
         $end     = new DateTime($calcEnd);
         while ($current <= $end) {
+            $curDateStr = $current->format('Y-m-d');
             $dayName = $dayMap[$current->format('l')] ?? '';
-            if (isset($workDaysMap[$dayName])) {
+            if (isset($workDaysMap[$dayName]) && !isset($holidaysSet[$curDateStr])) {
                 $totalWorkDays++;
             }
             $current->modify('+1 day');
