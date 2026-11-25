@@ -5,7 +5,7 @@ require_once __DIR__ . '/../Login/koneksi.php';
 
 // Ambil data intern dari database MySQL db_internspace
 $db_interns = [];
-$db_query = mysqli_query($conn, "SELECT id, username, role FROM users WHERE role = 'intern' ORDER BY id ASC");
+$db_query = mysqli_query($conn, "SELECT id, username, role, intern_start_date, intern_end_date FROM users WHERE role = 'intern' ORDER BY id ASC");
 if ($db_query) {
     while ($row = mysqli_fetch_assoc($db_query)) {
         $db_interns[] = $row;
@@ -1170,17 +1170,28 @@ if ($db_query) {
             // Gunakan HANYA data dari DB MySQL
             let interns = dbInternsList;
             if (!interns.length && window.DB_INTERNS && window.DB_INTERNS.length) {
-                interns = window.DB_INTERNS.map(u => ({ name: u.username, division: 'Intern Kedayweb' }));
+                interns = window.DB_INTERNS.map(u => ({
+                    name: u.username,
+                    division: 'Intern Kedayweb',
+                    intern_start_date: u.intern_start_date || null,
+                    intern_end_date: u.intern_end_date || null
+                }));
             }
             if (!interns.length) return { entries: [], total: 0, present: 0, late: 0, absent: 0, unmarked: 0 };
 
-            const entries = interns.map(intern => {
-                let rec = null;
+            const entries = [];
+            interns.forEach(intern => {
                 const dbUserAtt = getInternAttendanceMap(intern.name);
-                if (dbUserAtt && dbUserAtt[dateStr]) {
-                    rec = dbUserAtt[dateStr];
+                const rec = (dbUserAtt && dbUserAtt[dateStr]) ? dbUserAtt[dateStr] : null;
+                const startDateStr = intern.intern_start_date || null;
+                const endDateStr = intern.intern_end_date || null;
+
+                // Kecualikan intern yang belum mulai magang atau sudah selesai magang pada tanggal tersebut (kecuali sudah ada catatan absen)
+                if (!rec) {
+                    if (startDateStr && dateStr < startDateStr) return;
+                    if (endDateStr && dateStr > endDateStr) return;
                 }
-                return { intern, record: rec };
+                entries.push({ intern, record: rec });
             });
 
             const present = entries.filter(e => e.record?.status === 'present').length;
@@ -1189,7 +1200,7 @@ if ($db_query) {
             const absent = entries.filter(e => e.record?.status === 'absent').length;
             const unmarked = entries.filter(e => !e.record).length;
 
-            return { entries, total: interns.length, present, late, permit, absent, unmarked };
+            return { entries, total: entries.length, present, late, permit, absent, unmarked };
         }
 
         function changeMonth(dir) {
