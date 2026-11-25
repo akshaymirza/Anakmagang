@@ -922,6 +922,244 @@ if ($action === 'admin_delete_attendance' && $method === 'POST') {
 }
 
 // --------------------------------------------------------------
+// BULK EDIT / SET KEHADIRAN BANYAK INTERN & RENTANG TANGGAL OLEH ADMIN
+// (?action=admin_bulk_set_attendance, POST)
+// --------------------------------------------------------------
+if ($action === 'admin_bulk_set_attendance' && $method === 'POST') {
+    $userRole = $_SESSION['role'] ?? 'intern';
+    if (!in_array($userRole, ['admin', 'superadmin'], true)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Akses ditolak: Hanya Admin/Superadmin yang dapat melakukan bulk edit kehadiran']);
+        exit;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $usernames    = $input['usernames'] ?? [];
+    $startDate    = trim($input['start_date'] ?? $input['date'] ?? '');
+    $endDate      = trim($input['end_date'] ?? $startDate);
+    $skipSundays  = isset($input['skip_sundays']) ? (bool)$input['skip_sundays'] : true;
+    $skipHolidays = isset($input['skip_holidays']) ? (bool)$input['skip_holidays'] : true;
+    $status       = trim($input['status'] ?? 'present');
+    $leaveType    = trim($input['leave_type'] ?? '');
+    $clockIn      = trim($input['clock_in'] ?? $input['clockIn'] ?? '');
+    $clockOut     = trim($input['clock_out'] ?? $input['clockOut'] ?? '');
+    $reason       = trim($input['reason'] ?? '');
+
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Format tanggal mulai/selesai tidak valid (harus YYYY-MM-DD)']);
+        exit;
+    }
+
+    if ($startDate > $endDate) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Tanggal mulai tidak boleh lebih besar dari tanggal selesai']);
+        exit;
+    }
+
+    $d1 = new DateTime($startDate);
+    $d2 = new DateTime($endDate);
+    $diffDays = (int)$d1->diff($d2)->days;
+    if ($diffDays > 90) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Rentang tanggal bulk edit maksimal 90 hari dalam satu kali proses']);
+        exit;
+    }
+
+    $allowedStatuses = ['present', 'late', 'permit', 'absent', 'holiday', 'delete'];
+    if (!in_array($status, $allowedStatuses, true)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Status tidak valid']);
+        exit;
+    }
+
+    // Ambil daftar hari libur di rentang tanggal tersebut
+    $holidaysSet = [];
+    if ($skipHolidays && $status !== 'holiday') {
+        $stmtHol = mysqli_prepare($conn, "SELECT holiday_date FROM holidays WHERE holiday_date >= ? AND holiday_date <= ?");
+        if ($stmtHol) {
+            mysqli_stmt_bind_param($stmtHol, "ss", $startDate, $endDate);
+            mysqli_stmt_execute($stmtHol);
+            $resHol = mysqli_stmt_get_result($stmtHol);
+            while ($hRow = mysqli_fetch_assoc($resHol)) {
+                $holidaysSet[$hRow['holiday_date']] = true;
+            }
+            mysqli_stmt_close($stmtHol);
+        }
+    }
+
+    // Bangun daftar tanggal target
+    $targetDates = [];
+    $cur = clone $d1;
+    while ($cur <= $d2) {
+        $ds = $cur->format('Y-m-d');
+        $dow = (int)$cur->format('w'); // 0 = Minggu
+        $cur->modify('+1 day');
+
+        if ($status !== 'holiday') {
+            if ($skipSundays && $dow === 0) continue;
+            if ($skipHolidays && isset($holidaysSet[$ds])) continue;
+        }
+        $targetDates[] = $ds;
+    }
+
+    if (empty($targetDates)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Tidak ada tanggal yang memenuhi kriteria (semua tanggal terlewati sebagai Minggu/Libur)']);
+        exit;
+    }
+
+    $adminActor = $_SESSION['username'] ?? 'admin';
+
+    // Jika status holiday, terapkan ke tabel holidays untuk semua tanggal target
+    if ($status === 'holiday') {
+        $holidayTitle = !empty($reason) ? $reason : 'Hari Libur / Tanggal Merah';
+        $stmtH = mysqli_prepare($conn, "INSERT INTO holidays (holiday_date, title, description, created_by)
+            VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE title = VALUES(title), description = VALUES(description), created_by = VALUES(created_by)");
+        if (!$stmtH) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Gagal menyiapkan query libur: ' . mysqli_error($conn)]);
+            exit;
+        }
+        mysqli_begin_transaction($conn);
+        $cnt = 0;
+        foreach ($targetDates as $td) {
+            mysqli_stmt_bind_param($stmtH, "ssss", $td, $holidayTitle, $reason, $adminActor);
+            if (mysqli_stmt_execute($stmtH)) $cnt++;
+        }
+        mysqli_commit($conn);
+        mysqli_stmt_close($stmtH);
+
+        echo json_encode([
+            'success'     => true,
+            'affected'    => $cnt,
+            'dates_count' => $cnt,
+            'users_count' => 0,
+            'message'     => "Berhasil menetapkan {$cnt} tanggal sebagai Hari Libur ({$holidayTitle})"
+        ]);
+        exit;
+    }
+
+    // Untuk status kehadiran / hapus catatan: wajib ada intern yang dipilih
+    if (!is_array($usernames) || empty($usernames)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Pilih minimal 1 intern untuk melakukan bulk edit']);
+        exit;
+    }
+
+    // Normalisasi username terhadap tabel users (canonical casing)
+    $canonicalMap = [];
+    $resUsers = mysqli_query($conn, "SELECT username FROM users");
+    if ($resUsers) {
+        while ($uRow = mysqli_fetch_assoc($resUsers)) {
+            $canonicalMap[strtolower($uRow['username'])] = $uRow['username'];
+        }
+    }
+
+    $normalizedUsers = [];
+    foreach ($usernames as $rawU) {
+        $trimmed = trim((string)$rawU);
+        if ($trimmed === '') continue;
+        $canon = $canonicalMap[strtolower($trimmed)] ?? $trimmed;
+        $normalizedUsers[$canon] = true;
+    }
+    $targetUsers = array_keys($normalizedUsers);
+
+    if (empty($targetUsers)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Daftar intern yang dipilih tidak valid']);
+        exit;
+    }
+
+    // Default jam & leave_type
+    if ($status === 'present' && empty($clockIn)) {
+        $clockIn = '08:00';
+    } elseif ($status === 'late' && empty($clockIn)) {
+        $clockIn = '09:15';
+    } elseif ($status === 'permit' || $status === 'absent') {
+        if (empty($clockIn)) $clockIn = null;
+        if (empty($clockOut)) $clockOut = null;
+    }
+
+    if ($status === 'permit' && empty($leaveType)) {
+        $leaveType = 'dispen';
+    } elseif ($status !== 'permit') {
+        $leaveType = '';
+    }
+
+    mysqli_begin_transaction($conn);
+    $affected = 0;
+
+    try {
+        if ($status === 'delete') {
+            $stmtDel = mysqli_prepare($conn, "DELETE FROM attendance WHERE username = ? AND date = ?");
+            if (!$stmtDel) throw new Exception(mysqli_error($conn));
+            foreach ($targetUsers as $u) {
+                foreach ($targetDates as $td) {
+                    mysqli_stmt_bind_param($stmtDel, "ss", $u, $td);
+                    mysqli_stmt_execute($stmtDel);
+                    if (mysqli_stmt_affected_rows($stmtDel) > 0) $affected++;
+                }
+            }
+            mysqli_stmt_close($stmtDel);
+            mysqli_commit($conn);
+
+            echo json_encode([
+                'success'     => true,
+                'affected'    => $affected,
+                'dates_count' => count($targetDates),
+                'users_count' => count($targetUsers),
+                'message'     => "Bulk hapus selesai: {$affected} catatan kehadiran dihapus (" . count($targetUsers) . " intern, " . count($targetDates) . " hari)."
+            ]);
+            exit;
+        }
+
+        $stmtChk = mysqli_prepare($conn, "SELECT id FROM attendance WHERE username = ? AND date = ? LIMIT 1");
+        $stmtUpd = mysqli_prepare($conn, "UPDATE attendance SET username = ?, status = ?, leave_type = ?, clock_in = ?, clock_out = ?, reason = ?, override_by = ? WHERE id = ?");
+        $stmtIns = mysqli_prepare($conn, "INSERT INTO attendance (username, date, status, leave_type, clock_in, clock_out, reason, override_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        if (!$stmtChk || !$stmtUpd || !$stmtIns) throw new Exception(mysqli_error($conn));
+
+        foreach ($targetUsers as $u) {
+            foreach ($targetDates as $td) {
+                mysqli_stmt_bind_param($stmtChk, "ss", $u, $td);
+                mysqli_stmt_execute($stmtChk);
+                $resChk = mysqli_stmt_get_result($stmtChk);
+                $existing = mysqli_fetch_assoc($resChk);
+
+                if ($existing) {
+                    $exId = (int)$existing['id'];
+                    mysqli_stmt_bind_param($stmtUpd, "sssssssi", $u, $status, $leaveType, $clockIn, $clockOut, $reason, $adminActor, $exId);
+                    if (mysqli_stmt_execute($stmtUpd)) $affected++;
+                } else {
+                    mysqli_stmt_bind_param($stmtIns, "ssssssss", $u, $td, $status, $leaveType, $clockIn, $clockOut, $reason, $adminActor);
+                    if (mysqli_stmt_execute($stmtIns)) $affected++;
+                }
+            }
+        }
+
+        mysqli_stmt_close($stmtChk);
+        mysqli_stmt_close($stmtUpd);
+        mysqli_stmt_close($stmtIns);
+        mysqli_commit($conn);
+
+        echo json_encode([
+            'success'     => true,
+            'affected'    => $affected,
+            'dates_count' => count($targetDates),
+            'users_count' => count($targetUsers),
+            'message'     => "Bulk edit berhasil: {$affected} catatan diperbarui (" . count($targetUsers) . " intern × " . count($targetDates) . " hari)."
+        ]);
+        exit;
+    } catch (Exception $ex) {
+        mysqli_rollback($conn);
+        http_response_code(500);
+        echo json_encode(['error' => 'Gagal memproses bulk edit: ' . $ex->getMessage()]);
+        exit;
+    }
+}
+
+// --------------------------------------------------------------
 // GET DAFTAR HARI LIBUR / TANGGAL MERAH (?action=get_holidays, GET)
 // --------------------------------------------------------------
 if ($action === 'get_holidays' && $method === 'GET') {

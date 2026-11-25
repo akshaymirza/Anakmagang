@@ -516,6 +516,11 @@ if ($db_query) {
                             <span class="material-symbols-outlined text-[18px]">add_circle</span>
                             <span>+ Set Kehadiran Intern</span>
                         </button>
+                        <button onclick="openAdminBulkAttendanceModal()"
+                            class="w-full mt-2 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-95">
+                            <span class="material-symbols-outlined text-[18px]">checklist</span>
+                            <span>Bulk Edit Kehadiran</span>
+                        </button>
 
                     </div>
 
@@ -784,6 +789,225 @@ if ($db_query) {
                             <span>Simpan Kehadiran</span>
                         </button>
                     </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Bulk Edit Kehadiran Intern (Admin) -->
+    <div id="admin-bulk-attendance-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+        <div class="bg-surface-bright dark:bg-[#111a33] text-on-surface rounded-2xl w-full max-w-xl shadow-2xl border border-outline-variant overflow-hidden max-h-[92vh] flex flex-col">
+            <div class="p-5 border-b border-outline-variant flex justify-between items-center bg-indigo-50/70 dark:bg-[#0c1326]">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-[20px]">checklist</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline-md font-bold text-on-surface text-base">Bulk Edit Kehadiran</h3>
+                        <p class="text-xs text-on-surface-variant">Atur status kehadiran banyak intern &amp; rentang tanggal sekaligus</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAdminBulkAttendanceModal(true)" class="text-on-surface-variant hover:text-primary transition p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+            </div>
+
+            <form id="admin-bulk-att-form" onsubmit="handleAdminBulkAttendanceSubmit(event)" class="p-5 space-y-4 overflow-y-auto flex-1">
+                <!-- Rentang Tanggal -->
+                <div class="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1">
+                                Tanggal Mulai <span class="text-red-500">*</span>
+                            </label>
+                            <input type="date" id="bulk-start-date" required onchange="updateBulkSummary()" class="w-full rounded-xl border border-outline-variant bg-surface-bright px-3 py-2 text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-primary focus:outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1">
+                                Tanggal Selesai <span class="text-red-500">*</span>
+                            </label>
+                            <input type="date" id="bulk-end-date" required onchange="updateBulkSummary()" class="w-full rounded-xl border border-outline-variant bg-surface-bright px-3 py-2 text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-primary focus:outline-none" />
+                        </div>
+                    </div>
+                    <div id="bulk-skip-options" class="flex flex-wrap gap-4 pt-1">
+                        <label class="flex items-center gap-2 text-xs font-medium text-on-surface cursor-pointer select-none">
+                            <input type="checkbox" id="bulk-skip-sundays" checked onchange="updateBulkSummary()" class="rounded border-outline-variant text-indigo-600 focus:ring-indigo-500" />
+                            <span>Lewati hari Minggu</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-xs font-medium text-on-surface cursor-pointer select-none">
+                            <input type="checkbox" id="bulk-skip-holidays" checked onchange="updateBulkSummary()" class="rounded border-outline-variant text-indigo-600 focus:ring-indigo-500" />
+                            <span>Lewati tanggal merah / libur</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Status Target -->
+                <div>
+                    <label class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1.5">
+                        Aksi / Status Kehadiran <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <label onclick="selectBulkStatus('present')" id="bulk-status-card-present" class="flex items-center gap-2 border-2 border-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-xl p-2.5 cursor-pointer transition select-none">
+                            <input type="radio" name="bulk_status" value="present" checked class="sr-only" />
+                            <span class="material-symbols-outlined text-emerald-600 text-[19px]">check_circle</span>
+                            <div>
+                                <span class="block text-xs font-bold text-emerald-900 dark:text-emerald-200">Hadir</span>
+                                <span class="block text-[10px] text-emerald-700/80 dark:text-emerald-400/80">Tepat Waktu</span>
+                            </div>
+                        </label>
+                        <label onclick="selectBulkStatus('late')" id="bulk-status-card-late" class="flex items-center gap-2 border-2 border-outline-variant bg-surface-container-lowest rounded-xl p-2.5 cursor-pointer transition select-none">
+                            <input type="radio" name="bulk_status" value="late" class="sr-only" />
+                            <span class="material-symbols-outlined text-amber-500 text-[19px]">schedule</span>
+                            <div>
+                                <span class="block text-xs font-bold text-amber-900 dark:text-amber-200">Terlambat</span>
+                                <span class="block text-[10px] text-amber-700/80 dark:text-amber-400/80">Lewat batas</span>
+                            </div>
+                        </label>
+                        <label onclick="selectBulkStatus('permit')" id="bulk-status-card-permit" class="flex items-center gap-2 border-2 border-outline-variant bg-surface-container-lowest rounded-xl p-2.5 cursor-pointer transition select-none">
+                            <input type="radio" name="bulk_status" value="permit" class="sr-only" />
+                            <span class="material-symbols-outlined text-purple-600 text-[19px]">verified</span>
+                            <div>
+                                <span class="block text-xs font-bold text-purple-900 dark:text-purple-200">Izin / Dispen</span>
+                                <span class="block text-[10px] text-purple-700/80 dark:text-purple-400/80">Izin resmi</span>
+                            </div>
+                        </label>
+                        <label onclick="selectBulkStatus('absent')" id="bulk-status-card-absent" class="flex items-center gap-2 border-2 border-outline-variant bg-surface-container-lowest rounded-xl p-2.5 cursor-pointer transition select-none">
+                            <input type="radio" name="bulk_status" value="absent" class="sr-only" />
+                            <span class="material-symbols-outlined text-red-500 text-[19px]">cancel</span>
+                            <div>
+                                <span class="block text-xs font-bold text-red-900 dark:text-red-200">Alpha</span>
+                                <span class="block text-[10px] text-red-700/80 dark:text-red-400/80">Tidak Masuk</span>
+                            </div>
+                        </label>
+                        <label onclick="selectBulkStatus('holiday')" id="bulk-status-card-holiday" class="flex items-center gap-2 border-2 border-outline-variant bg-surface-container-lowest rounded-xl p-2.5 cursor-pointer transition select-none">
+                            <input type="radio" name="bulk_status" value="holiday" class="sr-only" />
+                            <span class="material-symbols-outlined text-rose-500 text-[19px]">event_busy</span>
+                            <div>
+                                <span class="block text-xs font-bold text-rose-900 dark:text-rose-200">Libur</span>
+                                <span class="block text-[10px] text-rose-700/80 dark:text-rose-400/80">Tanggal Merah</span>
+                            </div>
+                        </label>
+                        <label onclick="selectBulkStatus('delete')" id="bulk-status-card-delete" class="flex items-center gap-2 border-2 border-outline-variant bg-surface-container-lowest rounded-xl p-2.5 cursor-pointer transition select-none">
+                            <input type="radio" name="bulk_status" value="delete" class="sr-only" />
+                            <span class="material-symbols-outlined text-slate-600 dark:text-slate-400 text-[19px]">delete_sweep</span>
+                            <div>
+                                <span class="block text-xs font-bold text-slate-800 dark:text-slate-200">Hapus</span>
+                                <span class="block text-[10px] text-slate-500 dark:text-slate-400">Reset catatan</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Banner Info Holiday -->
+                <div id="bulk-holiday-info-wrap" class="hidden p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 space-y-1">
+                    <div class="text-xs font-bold text-rose-900 dark:text-rose-200 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[16px]">info</span>
+                        <span>Berlaku Untuk Seluruh Intern</span>
+                    </div>
+                    <p class="text-[11px] text-rose-700 dark:text-rose-300/80 leading-relaxed">
+                        Semua tanggal pada rentang di atas akan ditandai sebagai Hari Libur / Tanggal Merah resmi untuk seluruh intern.
+                    </p>
+                </div>
+
+                <!-- Banner Info Delete -->
+                <div id="bulk-delete-info-wrap" class="hidden p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 space-y-1">
+                    <div class="text-xs font-bold text-red-900 dark:text-red-200 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[16px]">warning</span>
+                        <span>Hapus Catatan Kehadiran</span>
+                    </div>
+                    <p class="text-[11px] text-red-700 dark:text-red-300/80 leading-relaxed">
+                        Catatan absensi yang tersimpan di database untuk intern dan rentang tanggal terpilih akan dihapus permanen.
+                    </p>
+                </div>
+
+                <!-- Sub-type Dispensasi / Izin -->
+                <div id="bulk-leave-type-wrap" class="hidden p-3 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 space-y-2">
+                    <label class="block text-xs font-bold text-purple-900 dark:text-purple-200">
+                        Kategori Dispensasi / Izin <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center gap-1.5 font-medium cursor-pointer">
+                            <input type="radio" name="bulk_leave_type" value="dispen" checked class="text-purple-600 focus:ring-purple-400" />
+                            <span>Dispensasi instansi</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 font-medium cursor-pointer">
+                            <input type="radio" name="bulk_leave_type" value="izin" class="text-purple-600 focus:ring-purple-400" />
+                            <span>Izin Keperluan</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 font-medium cursor-pointer">
+                            <input type="radio" name="bulk_leave_type" value="sakit" class="text-purple-600 focus:ring-purple-400" />
+                            <span>Sakit</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 font-medium cursor-pointer">
+                            <input type="radio" name="bulk_leave_type" value="dinas" class="text-purple-600 focus:ring-purple-400" />
+                            <span>Tugas Luar / Dinas</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Jam Masuk & Jam Keluar -->
+                <div id="bulk-time-fields" class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1">Jam Masuk</label>
+                        <input type="time" id="bulk-clock-in" value="08:00" class="w-full rounded-xl border border-outline-variant bg-surface-bright px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1">Jam Keluar (Opsional)</label>
+                        <input type="time" id="bulk-clock-out" value="16:00" class="w-full rounded-xl border border-outline-variant bg-surface-bright px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                </div>
+
+                <!-- Alasan / Keterangan -->
+                <div id="bulk-reason-wrap">
+                    <label id="bulk-reason-label" class="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1.5">
+                        Alasan / Keterangan / Catatan
+                    </label>
+                    <textarea id="bulk-reason" rows="2" placeholder="Contoh: Dispensasi kegiatan bersama, atau koreksi absensi massal..." class="w-full rounded-xl border border-outline-variant bg-surface-bright px-3 py-2 text-xs leading-relaxed focus:ring-2 focus:ring-primary focus:outline-none resize-none"></textarea>
+                </div>
+
+                <!-- Daftar Pilih Intern -->
+                <div id="bulk-interns-section" class="border border-outline-variant rounded-xl overflow-hidden bg-surface-container-lowest">
+                    <div class="p-3 bg-surface-container-low border-b border-outline-variant flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wide text-on-surface">Pilih Intern</span>
+                            <span id="bulk-selected-count" class="ml-1.5 text-[11px] font-bold text-indigo-600 dark:text-indigo-400">(0 dipilih)</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="toggleAllBulkInterns(true)" class="px-2 py-1 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 rounded-lg border border-indigo-200 dark:border-indigo-800 transition cursor-pointer">
+                                Pilih Semua
+                            </button>
+                            <button type="button" onclick="toggleAllBulkInterns(false)" class="px-2 py-1 text-[11px] font-bold text-on-surface-variant bg-surface-bright hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg border border-outline-variant transition cursor-pointer">
+                                Batal Semua
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-2 border-b border-outline-variant bg-surface-bright">
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[16px]">search</span>
+                            <input type="text" id="bulk-intern-search" oninput="filterBulkInterns()" placeholder="Cari nama atau divisi intern..."
+                                class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-outline-variant bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary font-medium" />
+                        </div>
+                    </div>
+                    <div id="bulk-interns-list" class="max-h-44 overflow-y-auto divide-y divide-outline-variant/60 p-1"></div>
+                </div>
+
+                <!-- Ringkasan Eksekusi -->
+                <div id="bulk-summary-bar" class="text-xs font-semibold px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800/70 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[16px]">info</span>
+                    <span id="bulk-summary-text">Pilih tanggal dan intern untuk melihat ringkasan.</span>
+                </div>
+
+                <div id="bulk-msg" class="hidden text-xs font-semibold p-2.5 rounded-xl"></div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-outline-variant">
+                    <button type="button" onclick="closeAdminBulkAttendanceModal(true)" class="px-3.5 py-2 border border-outline-variant rounded-xl text-xs font-semibold text-on-surface-variant hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit" id="bulk-submit-btn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+                        <span class="material-symbols-outlined text-[16px]">done_all</span>
+                        <span>Terapkan Bulk Edit</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -1115,10 +1339,23 @@ if ($db_query) {
                     </button>
                 `;
                 list.appendChild(holCard);
+                const bulkWrap = document.createElement('div');
+                bulkWrap.className = 'mb-2 flex items-center justify-end';
+                bulkWrap.innerHTML = `
+                    <button type="button" onclick="openAdminBulkAttendanceModal('${dateStr}', true)" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
+                        <span class="material-symbols-outlined text-[15px]">checklist</span>
+                        <span>Bulk Edit Tanggal Ini</span>
+                    </button>
+                `;
+                list.appendChild(bulkWrap);
             } else {
                 const addHolWrap = document.createElement('div');
-                addHolWrap.className = 'mb-2 flex items-center justify-end';
+                addHolWrap.className = 'mb-2 flex items-center justify-between gap-2 flex-wrap';
                 addHolWrap.innerHTML = `
+                    <button type="button" onclick="openAdminBulkAttendanceModal('${dateStr}', true)" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
+                        <span class="material-symbols-outlined text-[15px]">checklist</span>
+                        <span>Bulk Edit Tanggal Ini</span>
+                    </button>
                     <button type="button" onclick="openHolidayModalWithDate('${dateStr}')" class="text-xs font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 flex items-center gap-1 cursor-pointer">
                         <span class="material-symbols-outlined text-[15px]">event_busy</span>
                         <span>+ Tandai Tanggal Ini Sebagai Libur</span>
@@ -1866,6 +2103,310 @@ if ($db_query) {
                 }
             } catch (err) {
                 alert(err.message || 'Gagal menghapus catatan');
+            }
+        }
+
+        // ============================================================
+        // FITUR BULK EDIT KEHADIRAN INTERN (ADMIN)
+        // ============================================================
+        let currentBulkStatus = 'present';
+        let returnToDetailBulkDate = null;
+
+        function openAdminBulkAttendanceModal(optDate = '', fromDetail = false) {
+            const modal = document.getElementById('admin-bulk-attendance-modal');
+            if (!modal) return;
+
+            returnToDetailBulkDate = fromDetail ? (optDate || lastOpenedDetailDate || null) : null;
+            if (fromDetail) {
+                closeDetailModal();
+            }
+
+            const todayStr = fmt(getNowWIB());
+            const targetDate = optDate || todayStr;
+            const startEl = document.getElementById('bulk-start-date');
+            const endEl = document.getElementById('bulk-end-date');
+            if (startEl) startEl.value = targetDate;
+            if (endEl) endEl.value = targetDate;
+
+            const searchEl = document.getElementById('bulk-intern-search');
+            if (searchEl) searchEl.value = '';
+
+            const reasonEl = document.getElementById('bulk-reason');
+            if (reasonEl) reasonEl.value = '';
+
+            const msgEl = document.getElementById('bulk-msg');
+            if (msgEl) { msgEl.className = 'hidden'; msgEl.textContent = ''; }
+
+            document.getElementById('bulk-clock-in').value = '08:00';
+            document.getElementById('bulk-clock-out').value = '16:00';
+            document.getElementById('bulk-skip-sundays').checked = true;
+            document.getElementById('bulk-skip-holidays').checked = true;
+
+            selectBulkStatus('present');
+            renderBulkInternList();
+            updateBulkSummary();
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeAdminBulkAttendanceModal(cancelled = false) {
+            const modal = document.getElementById('admin-bulk-attendance-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            if (cancelled && returnToDetailBulkDate) {
+                const backDate = returnToDetailBulkDate;
+                returnToDetailBulkDate = null;
+                openDetailModal(backDate);
+            }
+        }
+
+        function selectBulkStatus(status) {
+            currentBulkStatus = status;
+            const cards = ['present', 'late', 'permit', 'absent', 'holiday', 'delete'];
+            cards.forEach(s => {
+                const card = document.getElementById(`bulk-status-card-${s}`);
+                if (!card) return;
+                const radio = card.querySelector('input[type="radio"]');
+                if (s === status) {
+                    if (radio) radio.checked = true;
+                    if (s === 'present') card.className = 'flex items-center gap-2 border-2 border-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-xl p-2.5 cursor-pointer transition select-none';
+                    else if (s === 'late') card.className = 'flex items-center gap-2 border-2 border-amber-400 bg-amber-50/70 dark:bg-amber-950/40 rounded-xl p-2.5 cursor-pointer transition select-none';
+                    else if (s === 'permit') card.className = 'flex items-center gap-2 border-2 border-purple-400 bg-purple-50/70 dark:bg-purple-950/40 rounded-xl p-2.5 cursor-pointer transition select-none';
+                    else if (s === 'absent') card.className = 'flex items-center gap-2 border-2 border-red-400 bg-red-50/70 dark:bg-red-950/40 rounded-xl p-2.5 cursor-pointer transition select-none';
+                    else if (s === 'holiday') card.className = 'flex items-center gap-2 border-2 border-rose-400 bg-rose-50/70 dark:bg-rose-950/40 rounded-xl p-2.5 cursor-pointer transition select-none';
+                    else if (s === 'delete') card.className = 'flex items-center gap-2 border-2 border-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl p-2.5 cursor-pointer transition select-none';
+                } else {
+                    if (radio) radio.checked = false;
+                    card.className = 'flex items-center gap-2 border-2 border-outline-variant bg-surface-container-lowest rounded-xl p-2.5 cursor-pointer transition select-none';
+                }
+            });
+
+            const leaveWrap = document.getElementById('bulk-leave-type-wrap');
+            const timeFields = document.getElementById('bulk-time-fields');
+            const holidayWrap = document.getElementById('bulk-holiday-info-wrap');
+            const deleteWrap = document.getElementById('bulk-delete-info-wrap');
+            const reasonWrap = document.getElementById('bulk-reason-wrap');
+            const reasonLabel = document.getElementById('bulk-reason-label');
+            const reasonInput = document.getElementById('bulk-reason');
+            const internsSection = document.getElementById('bulk-interns-section');
+            const skipOptions = document.getElementById('bulk-skip-options');
+            const submitBtn = document.getElementById('bulk-submit-btn');
+
+            if (leaveWrap) leaveWrap.classList.toggle('hidden', status !== 'permit');
+            if (timeFields) timeFields.classList.toggle('hidden', !(status === 'present' || status === 'late'));
+            if (holidayWrap) holidayWrap.classList.toggle('hidden', status !== 'holiday');
+            if (deleteWrap) deleteWrap.classList.toggle('hidden', status !== 'delete');
+            if (reasonWrap) reasonWrap.classList.toggle('hidden', status === 'delete');
+            if (internsSection) internsSection.classList.toggle('hidden', status === 'holiday');
+            if (skipOptions) skipOptions.classList.toggle('hidden', status === 'holiday');
+
+            if (status === 'late') {
+                const ci = document.getElementById('bulk-clock-in');
+                if (ci && ci.value === '08:00') ci.value = '09:15';
+            } else if (status === 'present') {
+                const ci = document.getElementById('bulk-clock-in');
+                if (ci && ci.value === '09:15') ci.value = '08:00';
+            }
+
+            if (reasonLabel && reasonInput) {
+                if (status === 'holiday') {
+                    reasonLabel.textContent = 'Nama / Keterangan Libur';
+                    reasonInput.placeholder = 'Contoh: Libur Nasional / Cuti Bersama...';
+                } else if (status === 'permit') {
+                    reasonLabel.textContent = 'Alasan / Keterangan Dispensasi / Izin';
+                    reasonInput.placeholder = 'Contoh: Mengikuti kegiatan seminar / workshop bersama...';
+                } else if (status === 'absent') {
+                    reasonLabel.textContent = 'Alasan Tidak Masuk / Alpha';
+                    reasonInput.placeholder = 'Contoh: Tidak hadir tanpa keterangan...';
+                } else {
+                    reasonLabel.textContent = 'Alasan / Keterangan / Catatan';
+                    reasonInput.placeholder = 'Contoh: Koreksi absensi massal atau kegiatan bersama...';
+                }
+            }
+
+            if (submitBtn) {
+                if (status === 'delete') {
+                    submitBtn.className = 'px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center gap-1.5 cursor-pointer';
+                    submitBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">delete_sweep</span><span>Hapus Catatan Terpilih</span>';
+                } else {
+                    submitBtn.className = 'px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center gap-1.5 cursor-pointer';
+                    submitBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">done_all</span><span>Terapkan Bulk Edit</span>';
+                }
+            }
+
+            updateBulkSummary();
+        }
+
+        function renderBulkInternList() {
+            const container = document.getElementById('bulk-interns-list');
+            if (!container) return;
+            const interns = dbInternsList || [];
+            if (!interns.length) {
+                container.innerHTML = '<div class="p-3 text-xs text-on-surface-variant italic text-center">Belum ada intern terdaftar.</div>';
+                return;
+            }
+            container.innerHTML = interns.map(intern => `
+                <label class="bulk-intern-item flex items-center gap-2.5 p-2 rounded-lg hover:bg-surface-container-low cursor-pointer transition select-none" data-name="${escHtml(intern.name.toLowerCase())}" data-div="${escHtml((intern.division || '').toLowerCase())}">
+                    <input type="checkbox" class="bulk-intern-cb rounded border-outline-variant text-indigo-600 focus:ring-indigo-500" value="${escHtml(intern.name)}" onchange="updateBulkSummary()" />
+                    <div class="w-7 h-7 rounded-full bg-primary-container text-on-primary-container font-bold flex items-center justify-center text-xs shrink-0">
+                        ${escHtml(intern.name.charAt(0).toUpperCase())}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-xs font-bold text-on-surface truncate">${escHtml(intern.name)}</div>
+                        <div class="text-[10px] text-on-surface-variant truncate">${escHtml(intern.division || 'Intern Kedayweb')}</div>
+                    </div>
+                </label>
+            `).join('');
+        }
+
+        function toggleAllBulkInterns(checked) {
+            document.querySelectorAll('.bulk-intern-item').forEach(row => {
+                if (row.style.display === 'none') return;
+                const cb = row.querySelector('.bulk-intern-cb');
+                if (cb) cb.checked = checked;
+            });
+            updateBulkSummary();
+        }
+
+        function filterBulkInterns() {
+            const q = (document.getElementById('bulk-intern-search')?.value || '').trim().toLowerCase();
+            document.querySelectorAll('.bulk-intern-item').forEach(row => {
+                const name = row.dataset.name || '';
+                const div = row.dataset.div || '';
+                row.style.display = (!q || name.includes(q) || div.includes(q)) ? '' : 'none';
+            });
+        }
+
+        function computeBulkTargetDatesCount() {
+            const sVal = document.getElementById('bulk-start-date')?.value;
+            const eVal = document.getElementById('bulk-end-date')?.value;
+            if (!sVal || !eVal || sVal > eVal) return 0;
+
+            const skipSun = document.getElementById('bulk-skip-sundays')?.checked ?? true;
+            const skipHol = document.getElementById('bulk-skip-holidays')?.checked ?? true;
+            const [sy, sm, sd] = sVal.split('-').map(Number);
+            const [ey, em, ed] = eVal.split('-').map(Number);
+            const cur = new Date(sy, sm - 1, sd);
+            const end = new Date(ey, em - 1, ed);
+
+            let count = 0;
+            let guard = 0;
+            while (cur <= end && guard < 120) {
+                guard++;
+                const ds = fmt(cur);
+                const dow = cur.getDay();
+                cur.setDate(cur.getDate() + 1);
+                if (currentBulkStatus !== 'holiday') {
+                    if (skipSun && dow === 0) continue;
+                    if (skipHol && dbHolidaysMap && dbHolidaysMap[ds]) continue;
+                }
+                count++;
+            }
+            return count;
+        }
+
+        function updateBulkSummary() {
+            const selectedUsers = Array.from(document.querySelectorAll('.bulk-intern-cb:checked')).map(cb => cb.value);
+            const countBadge = document.getElementById('bulk-selected-count');
+            if (countBadge) countBadge.textContent = `(${selectedUsers.length} dipilih)`;
+
+            const daysCount = computeBulkTargetDatesCount();
+            const sumEl = document.getElementById('bulk-summary-text');
+            if (!sumEl) return;
+
+            if (daysCount === 0) {
+                sumEl.textContent = 'Rentang tanggal tidak valid atau semua tanggal terlewati (Minggu/Libur).';
+                return;
+            }
+            if (currentBulkStatus === 'holiday') {
+                sumEl.textContent = `Akan menetapkan ${daysCount} hari sebagai Tanggal Merah / Libur untuk seluruh intern.`;
+                return;
+            }
+            if (selectedUsers.length === 0) {
+                sumEl.textContent = `${daysCount} hari terpilih. Silakan centang minimal 1 intern di atas.`;
+                return;
+            }
+            const totalOps = selectedUsers.length * daysCount;
+            const verb = currentBulkStatus === 'delete' ? 'menghapus hingga' : 'memperbarui';
+            sumEl.textContent = `Siap ${verb} ${selectedUsers.length} intern × ${daysCount} hari = ${totalOps} catatan.`;
+        }
+
+        async function handleAdminBulkAttendanceSubmit(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('bulk-submit-btn');
+            const msgEl = document.getElementById('bulk-msg');
+            const startDate = document.getElementById('bulk-start-date').value.trim();
+            const endDate = document.getElementById('bulk-end-date').value.trim();
+            const skipSundays = document.getElementById('bulk-skip-sundays').checked;
+            const skipHolidays = document.getElementById('bulk-skip-holidays').checked;
+            const status = currentBulkStatus;
+            const clockIn = document.getElementById('bulk-clock-in').value.trim();
+            const clockOut = document.getElementById('bulk-clock-out').value.trim();
+            const reason = document.getElementById('bulk-reason').value.trim();
+            const leaveType = document.querySelector('input[name="bulk_leave_type"]:checked')?.value || 'dispen';
+            const usernames = Array.from(document.querySelectorAll('.bulk-intern-cb:checked')).map(cb => cb.value);
+
+            if (!startDate || !endDate || startDate > endDate) {
+                alert('Pastikan tanggal mulai dan tanggal selesai valid!');
+                return;
+            }
+            if (status !== 'holiday' && usernames.length === 0) {
+                alert('Pilih minimal 1 intern terlebih dahulu!');
+                return;
+            }
+            if (status === 'delete') {
+                if (!confirm(`Yakin ingin menghapus catatan kehadiran untuk ${usernames.length} intern pada rentang ${startDate} s/d ${endDate}?`)) {
+                    return;
+                }
+            }
+
+            const prevHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">refresh</span> Memproses...';
+
+            try {
+                const res = await fetch('../attendance-api.php?action=admin_bulk_set_attendance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        usernames,
+                        start_date: startDate,
+                        end_date: endDate,
+                        skip_sundays: skipSundays,
+                        skip_holidays: skipHolidays,
+                        status,
+                        leave_type: (status === 'permit') ? leaveType : null,
+                        clock_in: (status === 'present' || status === 'late') ? clockIn : null,
+                        clock_out: (status === 'present' || status === 'late') ? clockOut : null,
+                        reason
+                    })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || 'Gagal memproses bulk edit');
+
+                msgEl.className = 'text-xs font-semibold p-2.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 block';
+                msgEl.textContent = data.message || 'Bulk edit berhasil diterapkan!';
+
+                await fetchDbAttendance();
+                renderAll();
+
+                setTimeout(() => {
+                    const backDate = returnToDetailBulkDate;
+                    returnToDetailBulkDate = null;
+                    closeAdminBulkAttendanceModal(false);
+                    if (backDate) {
+                        openDetailModal(backDate);
+                    }
+                }, 450);
+            } catch (err) {
+                msgEl.className = 'text-xs font-semibold p-2.5 rounded-xl bg-red-50 text-red-800 border border-red-200 block';
+                msgEl.textContent = err.message || 'Terjadi kesalahan saat memproses bulk edit.';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = prevHtml;
             }
         }
 
